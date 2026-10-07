@@ -14,7 +14,9 @@ You can be brought back with soul related items/blocks.
 ### Ghost Mechanics
 - The world around you appears to be much brighter, you can see in the dark great, but the bright places look insanely bright (The reason is the contrast of your entire screen increases).
 - You can still see the world.
-- You still can’t go through blocks.
-- There is a visible transparent light blue chain connecting you to where you died that you can see whenever you approach the limit of how far you can walk.
-- How far you can walk is three blocks + an extra block per xp level you had when you died, away from your death position.
-- You will be able to glean(kill) mobs in one shot by punching them giving you the xp you would normally get.
+- You can go through blocks.
+- There is a visible transparent light blue chain connecting you to where you died that you can start to see whenever you approach the limit of how far you can walk.
+- You can move three blocks + an extra block per xp level you had when you died, away from your death position.
+- You will be able to glean(kill) mobs or players by punching them to drain 1 hp a second (you will get the xp they drop).
+- The XP drain will stop once the mob or player walks double your walking limit.
+- The mob will not notice the damage and the player will it will be very obvious for them.
