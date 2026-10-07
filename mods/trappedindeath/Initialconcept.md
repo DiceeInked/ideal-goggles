@@ -5,6 +5,7 @@ When you die you turn into a ghost stuck in a copy of how the world was when you
 You can be brought back with soul related items/blocks.
 
 ## Mechanics
+
 ### Death
 - When you die you turn into a ghost.
 - Players can’t see you.
@@ -17,6 +18,10 @@ You can be brought back with soul related items/blocks.
 - You can go through blocks.
 - There is a visible transparent light blue chain connecting you to where you died that you can start to see whenever you approach the limit of how far you can walk.
 - You can move three blocks + an extra block per xp level you had when you died, away from your death position.
-- You will be able to glean(kill) mobs or players by punching them to drain 1 hp a second (you will get the xp they drop).
+- You will be able to glean(kill) mobs or players by punching them to drain 1 hp a second (you will get the xp they drop(for players you will get the XP they would drop)).
 - The XP drain will stop once the mob or player walks double your walking limit.
-- The mob will not notice the damage and the player will it will be very obvious for them.
+- The mob will not notice the damage but for the player it will be very obvious.
+- If a ghost enters a light level of 10 or more you will lose 1 XP per second.
+
+### Reviving
+- 
