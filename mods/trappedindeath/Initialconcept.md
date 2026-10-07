@@ -1,8 +1,7 @@
 # Concept For Trapped In Death
 
 ## Summary
-When you die you turn into a ghost stuck in a copy of how the world was when you die. 
-You can be brought back with soul related items/blocks.
+When you die you turn into a ghost. :)
 
 ## Mechanics
 
