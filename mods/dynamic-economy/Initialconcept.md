@@ -4,7 +4,7 @@
 
 A Minecraft server economy with one global market shared by every player. Every item has infinite shop stock, and every item starts with a base price of $1.00. Item prices change in response to purchases and sales, using a market score rather than storing the actual market price as the score.
 
-The immediate design focus is the market-price system. Sales tax and other economy features are deliberately left for later.
+The economy is intended to evolve continuously as players farm, buy, sell, build, and compete. Periodic economy resets are a possible way to begin a new economic era without resetting the Minecraft world.
 
 ## Core Market Rules
 
@@ -33,7 +33,7 @@ With `R > 1`, a positive score raises the price and a negative score lowers it. 
 
 The growth factor and the number of score points added or removed per item are tuning settings, not final balance decisions.
 
-## Integer Currency Storage And Large Numbers
+## Currency Storage
 
 The initial implementation preference is Java `long` values for player balances and transaction amounts, rather than storing currency balances as floating-point values.
 
@@ -44,19 +44,13 @@ The initial implementation preference is Java `long` values for player balances 
 - A signed 64-bit Java `long` has a maximum value of 9,223,372,036,854,775,807. At 10^12 units per dollar, this caps a balance at roughly $9.22 million, so this scale may be too large for the desired economy.
 - Guard against `long` overflow when multiplying, adding, or accumulating transaction totals. A transaction that cannot be represented safely must not corrupt balances or market state.
 
-### Tiny prices as a mechanic
+### When a price reaches the minimum
 
-The mathematical formula stays positive for every finite score, but the stored currency uses discrete integer units. If the theoretical price becomes less than one internal unit, the plugin can deliberately apply a minimum price of 1 internal unit ($0.000000000001 at the proposed scale). This turns a precision limit into a market mechanic: an item can become extremely cheap but never sell for zero or a negative amount.
+A theoretical price can become too small for the chosen currency precision and round to zero. For the first version, the plugin may clamp the transaction price to the minimum positive internal unit instead of allowing a zero-value transaction.
 
-The plugin must not silently round a positive theoretical price to zero. Display formatting can show a readable small-price value, while the internal amount remains at least one unit.
+An item that reaches this floor could be considered oversaturated. The price can remain at the floor until market activity raises it above the threshold or a market reset occurs. The plugin could display a unique message or list the item on a future “Oversaturated Items” page, but those interface details are not required for the first version.
 
-### Could we add more digits than a long can store?
-
-Yes. Instead of storing the entire balance in one `long`, an arbitrary-precision integer can store a number as multiple chunks. For example, a number can be split into groups of nine decimal digits, with each group stored separately; arithmetic carries between the groups when needed. This is the basic idea behind arbitrary-precision integer implementations, and Java already provides `BigInteger`.
-
-This does not provide literally infinite digits: the number is limited in practice by available memory, processing time, and implementation limits. But it can grow far beyond the fixed maximum of one `long`. Scientific notation is different: a normal `double` can represent huge magnitudes compactly, but only keeps a limited number of significant digits, so it is not suitable for exact money balances.
-
-Design decision still open: use one `long` per balance for simplicity, or use Java `BigInteger` / a chunk-based arbitrary-precision integer if the economy needs balances beyond the `long` limit. A fixed currency scale also needs to be chosen carefully: a trillion internal units per dollar provides tiny increments but leaves a maximum `long` balance of only about $9.22 million.
+The minimum price is not, by itself, an infinite-money exploit: if buying costs one unit and selling pays one unit while the item remains at the floor, a round trip earns nothing. Transaction order, rounding, bulk trades, overflow checks, and atomic balance/inventory updates still need to be implemented consistently. Trades separated by other players' market activity may legitimately produce a profit or a loss.
 
 ## Transaction Pricing
 
@@ -87,16 +81,42 @@ Prices are calculated using the item's current global market score, and the scor
 - Market updates, item transfers, and balance updates must succeed or fail together. Avoid partially completed trades if an inventory or balance check fails.
 - Prevent guaranteed money creation caused by rounding, overflow, or inconsistent transaction ordering. Do not prevent all profit or loss caused by market movement.
 
+## Economy Evolution
+
+The economy is expected to flex and change as the server ages. Resources that are easy to mass-produce can become oversupplied and extremely cheap. Sticks are one possible example because players can turn logs into sticks and produce large quantities; bamboo and sugarcane are other possible candidates depending on player behavior and the server's builds.
+
+As a resource becomes less profitable, players may stop selling it, change what they farm, or build larger farms and bases around more profitable goods. Meanwhile, high-demand or difficult-to-obtain items, such as maces, netherite armor, and enchanted books, may become very expensive. This can encourage specialization, trading, competition, and large player-built industrial areas. These are expected possibilities, not guaranteed outcomes; actual behavior will depend on the price multiplier, score changes, and what players choose to do.
+
+A risk is that the economy may eventually become unpleasant: common farmed goods may be worth almost nothing while desired items become prohibitively expensive. The minimum-price state and periodic resets are potential ways to make this long-term evolution playable rather than trying to prevent all inflation or deflation forever.
+
+## Periodic Economy Reset
+
+A possible feature is a full economy reset on a configurable schedule, such as once per real-world year or on a server-admin-selected date. The Minecraft world itself would remain intact: player builds, farms, bases, and world resources would not be wiped by this economy reset.
+
+At reset, economy data could return to its starting state:
+- Player money balances return to $0.
+- Item market scores return to 0, so prices return to their $1.00 base prices.
+- Any other economy-only numeric state returns to its defined starting value.
+- The world and player-built structures remain unchanged.
+
+Not every value should literally be set to the number 1. Zero is the natural neutral market score and starting player balance, while $1.00 is the starting base price. Each value should return to its own defined baseline.
+
+### The pre-reset spending rush
+
+Players may try to spend their remaining balance on items shortly before a reset, then sell those items after prices return to their base values. This could create an exciting, player-driven end-of-era rush, but it also creates a real exploit risk across reset boundaries: items bought at the minimum price could be sold after the reset at the normal base price, potentially turning a tiny cost into a much larger payout. Repeating this across multiple reset cycles could let players compound their wealth through carried inventory even though balances reset.
+
+That behavior should be treated as a deliberate economic choice, not assumed to be harmless. Before implementing resets, decide whether carrying items across the reset is meant to preserve wealth, create a risky investment opportunity, or be limited by some other rule. A reset should not accidentally create a guaranteed money multiplication loop unless that is explicitly desired gameplay.
+
 ## Not Yet Designed
 
 - Sales tax (intended to apply only to sales, after the sale proceeds are calculated).
 - The final value of `R` and the score change per item.
 - Whether different item types need different score-change rates.
-- The exact minimum-price and rounding rules.
-- Whether balances use `long` or arbitrary-precision integers.
-- Display formatting for extremely small prices.
-- Shop interface, commands, persistence format, and other plugin implementation details.
+- Exact minimum-price and rounding rules.
+- The final currency scale and balance limits.
+- Whether economy resets will be included, how often they occur, and how carried items are handled across them.
+- Display formatting, shop interface, commands, persistence, and other plugin implementation details.
 
 ## Design Principle
 
-When a technical limitation cannot be removed entirely, consider turning it into a deliberate game mechanic. In this economy, the finite precision of integer currency can become a defined minimum positive transaction amount rather than allowing item prices to reach zero or become negative.
+When a technical limitation cannot be removed entirely, consider turning it into a deliberate game mechanic. In this economy, a price reaching the minimum can become a recognizable oversaturated market state and an opportunity for a future feature, rather than a problem that must be hidden or forced above the floor.
