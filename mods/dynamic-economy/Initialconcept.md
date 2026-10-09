@@ -4,7 +4,7 @@
 
 A Minecraft server economy with one global market shared by every player. Every item has infinite shop stock, and every item starts with a base price of $1.00. Item prices change in response to purchases and sales, using a market score rather than storing the actual market price as the score.
 
-The economy is intended to evolve continuously as players farm, buy, sell, build, and compete. Periodic economy resets are a possible way to begin a new economic era without resetting the Minecraft world.
+The economy is intended to evolve continuously as players farm, buy, sell, build, and compete. The core plugin should provide the market system without forcing scheduled resets, apocalypse events, or other server-specific story mechanics.
 
 ## Core Market Rules
 
@@ -48,7 +48,7 @@ The initial implementation preference is Java `long` values for player balances 
 
 A theoretical price can become too small for the chosen currency precision and round to zero. For the first version, the plugin may clamp the transaction price to the minimum positive internal unit instead of allowing a zero-value transaction.
 
-An item that reaches this floor could be considered oversaturated. The price can remain at the floor until market activity raises it above the threshold or a market reset occurs. The plugin could display a unique message or list the item on a future “Oversaturated Items” page, but those interface details are not required for the first version.
+An item that reaches this floor could be considered oversaturated. The price can remain at the floor until market activity raises it above the threshold. The plugin could display a unique message or list the item on an “Oversaturated Items” page, but the exact interface is not required for the first version.
 
 The minimum price is not, by itself, an infinite-money exploit: if buying costs one unit and selling pays one unit while the item remains at the floor, a round trip earns nothing. Transaction order, rounding, bulk trades, overflow checks, and atomic balance/inventory updates still need to be implemented consistently. Trades separated by other players' market activity may legitimately produce a profit or a loss.
 
@@ -85,27 +85,15 @@ Prices are calculated using the item's current global market score, and the scor
 
 The economy is expected to flex and change as the server ages. Resources that are easy to mass-produce can become oversupplied and extremely cheap. Sticks are one possible example because players can turn logs into sticks and produce large quantities; bamboo and sugarcane are other possible candidates depending on player behavior and the server's builds.
 
-As a resource becomes less profitable, players may stop selling it, change what they farm, or build larger farms and bases around more profitable goods. Meanwhile, high-demand or difficult-to-obtain items, such as maces, netherite armor, and enchanted books, may become very expensive. This can encourage specialization, trading, competition, and large player-built industrial areas. These are expected possibilities, not guaranteed outcomes; actual behavior will depend on the price multiplier, score changes, and what players choose to do.
+As a resource becomes less profitable, players may stop selling it, change what they farm, or build larger farms and bases around more profitable goods. Meanwhile, high-demand or difficult-to-obtain items, such as maces, netherite armor, and enchanted books, may become very expensive. This can encourage specialization, trading, competition, and large player-built industrial areas. These are possible outcomes, not guaranteed ones; actual behavior will depend on the price multiplier, score changes, and what players choose to do.
 
-A risk is that the economy may eventually become unpleasant: common farmed goods may be worth almost nothing while desired items become prohibitively expensive. The minimum-price state and periodic resets are potential ways to make this long-term evolution playable rather than trying to prevent all inflation or deflation forever.
+An item reaching the minimum price does not automatically mean the entire economy has failed. It can simply reflect low demand relative to supply. The core plugin should not force an item to become valuable again just because its price has reached the floor.
 
-## Periodic Economy Reset
+## Optional Extensions Outside The Core Plugin
 
-A possible feature is a full economy reset on a configurable schedule, such as once per real-world year or on a server-admin-selected date. The Minecraft world itself would remain intact: player builds, farms, bases, and world resources would not be wiped by this economy reset.
+Server owners may independently build optional features around the economy, such as a configurable economy reset or an apocalypse event triggered after a certain number of oversaturated items. For example, an extension could make shop announcements go quiet, display an ominous countdown, and reset economy values when the countdown ends.
 
-At reset, economy data could return to its starting state:
-- Player money balances return to $0.
-- Item market scores return to 0, so prices return to their $1.00 base prices.
-- Any other economy-only numeric state returns to its defined starting value.
-- The world and player-built structures remain unchanged.
-
-Not every value should literally be set to the number 1. Zero is the natural neutral market score and starting player balance, while $1.00 is the starting base price. Each value should return to its own defined baseline.
-
-### The pre-reset spending rush
-
-Players may try to spend their remaining balance on items shortly before a reset, then sell those items after prices return to their base values. This could create an exciting, player-driven end-of-era rush, but it also creates a real exploit risk across reset boundaries: items bought at the minimum price could be sold after the reset at the normal base price, potentially turning a tiny cost into a much larger payout. Repeating this across multiple reset cycles could let players compound their wealth through carried inventory even though balances reset.
-
-That behavior should be treated as a deliberate economic choice, not assumed to be harmless. Before implementing resets, decide whether carrying items across the reset is meant to preserve wealth, create a risky investment opportunity, or be limited by some other rule. A reset should not accidentally create a guaranteed money multiplication loop unless that is explicitly desired gameplay.
+These are not part of the core plugin's required behavior. Any reset extension must decide what happens to player balances, market scores, and items carried across the reset. In particular, buying items at the minimum price before a reset and selling them at restored prices afterward could multiply wealth, so this interaction should be a deliberate design choice rather than an accidental exploit.
 
 ## Not Yet Designed
 
@@ -114,9 +102,9 @@ That behavior should be treated as a deliberate economic choice, not assumed to 
 - Whether different item types need different score-change rates.
 - Exact minimum-price and rounding rules.
 - The final currency scale and balance limits.
-- Whether economy resets will be included, how often they occur, and how carried items are handled across them.
+- How the oversaturated-items status will be exposed in the first version.
 - Display formatting, shop interface, commands, persistence, and other plugin implementation details.
 
 ## Design Principle
 
-When a technical limitation cannot be removed entirely, consider turning it into a deliberate game mechanic. In this economy, a price reaching the minimum can become a recognizable oversaturated market state and an opportunity for a future feature, rather than a problem that must be hidden or forced above the floor.
+When a technical limitation cannot be removed entirely, consider turning it into a deliberate game mechanic. In this economy, a price reaching the minimum can become a recognizable oversaturated market state, rather than a problem that must be hidden or automatically reversed.
