@@ -1020,67 +1020,147 @@ function pickLoot(pool, x, z, salt) {
   return pool[seededValue(x, z, salt) % pool.length];
 }
 
-function fillRoomChest(dim, chestInfo) {
+function getBlockContainer(block) {
+  if (!block) return undefined;
+  // The official sample uses "inventory"; the namespaced ID is kept as a fallback
+  // for compatibility with scripting API builds that prefer explicit namespaces.
   try {
-    const block = dim.getBlock(chestInfo.chest);
-    const container = block?.getComponent("minecraft:inventory")?.container;
-    if (!container) return false;
-    container.clear();
+    const plain = block.getComponent("inventory");
+    if (plain?.container) return plain.container;
+  } catch {}
+  try {
+    const namespaced = block.getComponent("minecraft:inventory");
+    if (namespaced?.container) return namespaced.container;
+  } catch {}
+  return undefined;
+}
 
-    const profile = BIOME_CATALOG.find(item => item.key === chestInfo.profileKey) || BIOME_CATALOG[0];
-    const structure = STRUCTURE_ROOMS.find(item => item.key === chestInfo.structureKey) || STRUCTURE_ROOMS[0];
-    const biomePool = BIOME_LOOT_POOLS[profile.loot] || COMMON_LOOT;
-    const structurePool = STRUCTURE_LOOT_POOLS[structure.loot] || COMMON_LOOT;
-
-    if (chestInfo.starterRegion) {
-      const starterItems = ["wooden_pickaxe", "bread", "torch", "oak_log"];
-      for (let i = 0; i < starterItems.length; i++) {
-        try {
-          container.setItem(i, new ItemStack(blockId(starterItems[i]), 1));
-        } catch {}
-      }
+function containerHasItems(container) {
+  try {
+    for (let slot = 0; slot < container.size; slot++) {
+      if (container.getItem(slot)) return true;
     }
+  } catch {
+    return false;
+  }
+  return false;
+}
 
-    const desired = chestInfo.starterRegion ? 11 : 8;
-    const slots = [];
-    for (let i = 0; i < container.size; i++) slots.push(i);
-    for (let i = slots.length - 1; i > 0; i--) {
-      const j = seededValue(chestInfo.chest.x, chestInfo.chest.z, chestInfo.seed + i) % (i + 1);
-      [slots[i], slots[j]] = [slots[j], slots[i]];
-    }
-
-    let placed = chestInfo.starterRegion ? 4 : 0;
-    for (let i = 0; i < slots.length && placed < desired; i++) {
-      const slot = slots[i];
-      if (chestInfo.starterRegion && slot < 4) continue;
-      const roll = seededUnit(chestInfo.chest.x + slot, chestInfo.chest.z - slot, chestInfo.seed + 100);
-      let itemId;
-      if (roll < 0.40) {
-        itemId = pickLoot(COMMON_LOOT, chestInfo.chest.x, chestInfo.chest.z, chestInfo.seed + slot);
-      } else if (roll < 0.66) {
-        itemId = pickLoot(biomePool, chestInfo.chest.x + slot, chestInfo.chest.z, chestInfo.seed + slot + 500);
-      } else if (roll < 0.87) {
-        itemId = pickLoot(structurePool, chestInfo.chest.x, chestInfo.chest.z + slot, chestInfo.seed + slot + 900);
-      } else if (roll < 0.96) {
-        itemId = pickLoot(RARE_LOOT, chestInfo.chest.x + slot, chestInfo.chest.z - slot, chestInfo.seed + slot + 1300);
-      } else {
-        itemId = pickLoot(COMMON_LOOT, chestInfo.chest.x - slot, chestInfo.chest.z + slot, chestInfo.seed + slot + 1600);
-      }
-      if (!itemId) continue;
-      const amount = SINGLE_ITEM_LOOT.has(itemId) ? 1 :
-        1 + (seededValue(chestInfo.chest.x, chestInfo.chest.z, chestInfo.seed + slot + 1700) % 4);
-      try {
-        container.setItem(slot, new ItemStack(blockId(itemId), amount));
-        placed++;
-      } catch {}
-    }
-    return placed > 0;
+function setContainerItem(container, slot, itemId, amount = 1) {
+  try {
+    container.setItem(slot, new ItemStack(blockId(itemId), amount));
+    return true;
   } catch {
     return false;
   }
 }
 
+function fillOneContainer(dim, position, typeId, kind, roomInfo, rx, rz, salt) {
+  let block;
+  try {
+    block = dim.getBlock(position);
+  } catch {
+    return false;
+  }
+  if (!block) return false;
 
+  // A player may have mined or replaced a container. Never recreate or overwrite it.
+  if (block.typeId !== "minecraft:chest" && block.typeId !== "minecraft:barrel") {
+    return true;
+  }
+  const container = getBlockContainer(block);
+  if (!container) return false;
+
+  // Existing contents are left untouched. This prevents loot from refreshing after
+  // players take it, including when a region is revisited during a migration.
+  if (containerHasItems(container)) return true;
+
+  const starterItems = ["wooden_pickaxe", "bread", "torch", "oak_log", "coal", "iron_ingot"];
+  const chestBasics = ["bread", "torch", "oak_log", "cobblestone", "coal", "iron_ingot"];
+  const barrelBasics = ["bread", "wheat", "torch", "stick", "coal"];
+  const guaranteed = roomInfo?.starterRegion && kind === "chest"
+    ? starterItems
+    : kind === "barrel" ? barrelBasics : chestBasics;
+
+  let successfulWrites = 0;
+  for (let slot = 0; slot < guaranteed.length && slot < container.size; slot++) {
+    if (setContainerItem(container, slot, guaranteed[slot], 1)) successfulWrites++;
+  }
+
+  const profile = roomInfo?.profileKey
+    ? BIOME_CATALOG.find(item => item.key === roomInfo.profileKey) || BIOME_CATALOG[0]
+    : BIOME_CATALOG[positiveModulo(rx + rz * 5 + salt, BIOME_CATALOG.length)];
+  const structure = roomInfo?.structureKey
+    ? STRUCTURE_ROOMS.find(item => item.key === roomInfo.structureKey) || STRUCTURE_ROOMS[0]
+    : STRUCTURE_ROOMS[positiveModulo(rx + rz * 7 + salt, STRUCTURE_ROOMS.length)];
+  const biomePool = BIOME_LOOT_POOLS[profile.loot] || COMMON_LOOT;
+  const structurePool = STRUCTURE_LOOT_POOLS[structure.loot] || COMMON_LOOT;
+
+  const targetWrites = Math.min(container.size, guaranteed.length + 5 +
+    (seededValue(position.x, position.z, salt + 19) % 4));
+  for (let slot = guaranteed.length; slot < targetWrites; slot++) {
+    const roll = seededUnit(position.x + slot, position.z - slot, salt + 31);
+    let itemId;
+    if (roll < 0.40) {
+      itemId = pickLoot(COMMON_LOOT, position.x, position.z, salt + slot);
+    } else if (roll < 0.70) {
+      itemId = pickLoot(biomePool, position.x + slot, position.z, salt + slot + 200);
+    } else if (roll < 0.91) {
+      itemId = pickLoot(structurePool, position.x, position.z + slot, salt + slot + 500);
+    } else {
+      itemId = pickLoot(RARE_LOOT, position.x - slot, position.z + slot, salt + slot + 900);
+    }
+    if (!itemId) continue;
+    const amount = SINGLE_ITEM_LOOT.has(itemId) ? 1 :
+      1 + (seededValue(position.x, position.z, salt + slot + 1300) % 3);
+    if (setContainerItem(container, slot, itemId, amount)) successfulWrites++;
+  }
+
+  if (successfulWrites === 0) {
+    lastError = "Inventory API refused every item for " + block.typeId +
+      " at " + position.x + "," + position.y + "," + position.z;
+    return false;
+  }
+  return true;
+}
+
+function fillRoomContainers(dim, room, rx, rz) {
+  if (!room) return true;
+  for (let i = 0; i < room.containers.length; i++) {
+    const c = room.containers[i];
+    if (!fillOneContainer(dim, c, c.typeId, c.kind, room, rx, rz, room.seed + i * 97)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function fillLegacyContainerLocations(dim, rx, rz, currentRoom = null) {
+  const sx = rx * REGION_SIZE;
+  const sz = rz * REGION_SIZE;
+  const legacy = [
+    { x: sx + 10, y: -11, z: sz + 10 },
+    { x: sx + 3, y: -9, z: sz + 3 },
+    { x: sx + 12, y: -9, z: sz + 3 },
+    { x: sx + 3, y: -9, z: sz + 12 },
+    { x: sx + 12, y: -9, z: sz + 12 }
+  ];
+  for (let i = 0; i < legacy.length; i++) {
+    let block;
+    try {
+      block = dim.getBlock(legacy[i]);
+    } catch {
+      return false;
+    }
+    if (!block) return false;
+    if (block.typeId !== "minecraft:chest" && block.typeId !== "minecraft:barrel") continue;
+    const kind = block.typeId === "minecraft:barrel" ? "barrel" : "chest";
+    if (!fillOneContainer(dim, legacy[i], block.typeId, kind, currentRoom, rx, rz, 8800 + i)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function queueRegion(rx, rz, force = false) {
   const key = regionKey(rx, rz);
@@ -1092,19 +1172,35 @@ function queueRegion(rx, rz, force = false) {
     jobs.delete(key);
   }
 
-  const includeStructures = !hasPersistentRegion(rx, rz);
-  const built = buildTasks(rx, rz, includeStructures);
+  if (hasPersistentRegion(rx, rz)) {
+    // Critical persistence fix: a previously generated region gets NO terrain
+    // tasks on a restart or re-entry. Only missing loot migration is allowed.
+    if (hasPersistentLoot(rx, rz)) {
+      generatedRegions.add(key);
+      return;
+    }
+    const descriptor = describeRegion(rx, rz);
+    jobs.set(key, {
+      rx, rz, tasks: [], index: 0, startedAt: system.currentTick,
+      needsPersistentMarker: false, lootOnly: true, room: descriptor.room,
+      profileName: descriptor.profileName, structureName: descriptor.structureName,
+      finalizingAttempts: 0
+    });
+    return;
+  }
+
+  const built = buildTasks(rx, rz);
   jobs.set(key, {
     rx,
     rz,
     tasks: built.tasks,
     index: 0,
     startedAt: system.currentTick,
-    needsPersistentMarker: includeStructures,
+    needsPersistentMarker: true,
+    lootOnly: false,
     room: built.room,
     profileName: built.profileName,
     structureName: built.structureName,
-    chestFilled: false,
     finalizingAttempts: 0
   });
 }
@@ -1153,9 +1249,6 @@ function processJobs() {
   let selectedJob = null;
   let selectedDistance = Infinity;
 
-  // Work on the nearest queued region that should be inside a player's
-  // configured render-radius approximation. Chunks outside it remain queued
-  // until a player moves closer.
   for (const [key, job] of jobs) {
     const distance = distanceToNearestPlayer(job.rx, job.rz);
     if (distance > NEARBY_REGION_RADIUS) continue;
@@ -1174,36 +1267,54 @@ function processJobs() {
       selectedJob.index++;
       writes++;
     }
-    if (selectedJob.index >= selectedJob.tasks.length) {
-      if (selectedJob.room && !selectedJob.chestFilled) {
-        const chestDone = fillRoomChest(dim, selectedJob.room);
-        if (!chestDone) {
-          selectedJob.finalizingAttempts++;
-          if (selectedJob.finalizingAttempts < 10) return;
-          throw new Error("Could not fill structure room chest at " +
-            selectedJob.room.chest.x + "," + selectedJob.room.chest.y + "," +
-            selectedJob.room.chest.z);
-        }
-        selectedJob.chestFilled = true;
+
+    if (selectedJob.index < selectedJob.tasks.length) return;
+
+    if (selectedJob.lootOnly) {
+      // The region is already persistent, so this branch fills containers only.
+      // It never rebuilds lattice blocks or rooms.
+      const plannedFilled = fillRoomContainers(
+        dim, selectedJob.room, selectedJob.rx, selectedJob.rz
+      );
+      const legacyFilled = plannedFilled && fillLegacyContainerLocations(
+        dim, selectedJob.rx, selectedJob.rz, selectedJob.room
+      );
+      if (!legacyFilled) {
+        selectedJob.finalizingAttempts++;
+        lastError = "Loot-only retry could not access a chest/barrel in region " + selectedKey;
+        jobs.delete(selectedKey);
+        retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
+        return;
       }
+      world.setDynamicProperty(persistentLootKey(selectedJob.rx, selectedJob.rz), true);
+    } else {
+      // Commit terrain persistence BEFORE touching inventories. If a chest API call
+      // fails, the retry will be loot-only and cannot trigger a destructive rebuild.
       if (selectedJob.needsPersistentMarker) {
         world.setDynamicProperty(persistentRegionKey(selectedJob.rx, selectedJob.rz), true);
       }
-      jobs.delete(selectedKey);
-      retryAfterTick.delete(selectedKey);
-      generatedRegions.add(selectedKey);
-      totalRegionsBuilt++;
-      lastError = "none";
-      console.warn("[Lattice of Greed] Built region " + selectedKey +
-        " (" + selectedJob.profileName + " / " + selectedJob.structureName +
-        ") with " + selectedJob.tasks.length + " verified block placements.");
+      if (!fillRoomContainers(dim, selectedJob.room, selectedJob.rx, selectedJob.rz)) {
+        selectedJob.finalizingAttempts++;
+        lastError = "Terrain saved but loot fill needs retry in region " + selectedKey;
+        jobs.delete(selectedKey);
+        retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
+        return;
+      }
+      world.setDynamicProperty(persistentLootKey(selectedJob.rx, selectedJob.rz), true);
     }
+
+    jobs.delete(selectedKey);
+    retryAfterTick.delete(selectedKey);
+    generatedRegions.add(selectedKey);
+    totalRegionsBuilt++;
+    lastError = "none";
+    console.warn("[Lattice of Greed] Completed " + selectedKey +
+      " (" + selectedJob.profileName + " / " + selectedJob.structureName +
+      "; " + selectedJob.tasks.length + " terrain writes; loot saved).");
   } catch (error) {
     lastError = "Region " + selectedKey + ", task " + selectedJob.index + "/" +
       selectedJob.tasks.length + ": " + String(error).slice(0, 220);
     console.warn("[Lattice of Greed] Generation paused: " + lastError);
-    // A chunk at the edge of the radius may not actually be loaded on this
-    // device. Drop this attempt and let the nearby scanner retry after a pause.
     jobs.delete(selectedKey);
     retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
   }
@@ -1287,8 +1398,8 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   const { rx, rz } = regionForPlayer(player);
   queueRegion(rx, rz, true);
   queueNearbyRegions(player);
-  player.sendMessage("§8[Lattice] Rebuilding the lattice and queueing nearby regions within " +
-    NEARBY_REGION_RADIUS + " chunks. Already generated island clusters and room loot are preserved.");
+  player.sendMessage("§8[Lattice] Checking nearby regions within " + NEARBY_REGION_RADIUS +
+    " chunks. Saved terrain is never rebuilt; only missing container loot may be filled.");
 });
 
 system.runInterval(() => {
