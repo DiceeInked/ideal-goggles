@@ -1,21 +1,21 @@
-# Lattice of Greed: Full Version 1.0.3
+# Lattice of Greed: Full Version 1.0.4
 
-**A full-feature source build and installable behavior pack, not a verified release.** I have checked the source and package structure, but this code has not yet been executed inside Minecraft Bedrock. Treat it as an experimental build and use a brand-new test world.
+**An experimental behavior pack.** The previous build relied on checking whether chunks were loaded, then gave up if Bedrock unloaded one midway through block placement. Version 1.0.4 adds temporary Script API ticking areas to keep each lattice or structure region loaded for the entire build. Automated checks still cannot prove in-game behavior, so use a brand-new test world.
 
 ## Install
 
 1. Delete the old **Lattice of Greed: Prototype** behavior pack from Minecraft's storage / pack list if it is still imported.
-2. Import `Lattice-of-Greed-Full-1.0.3.mcpack`.
+2. Import `Lattice-of-Greed-Full-1.0.4.mcpack`.
 3. Create a **new world**. Do not test this in a world you care about.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
-5. Enable **Beta APIs** under Experiments. Cheats are optional and only needed for the developer `/scriptevent` test commands; enabling them may disable achievements.
+5. Enable **Beta APIs** under Experiments. Cheats are needed to run the test functions listed below; enabling them may disable achievements.
 6. Create the world. The add-on moves players into its own custom void dimension; it does not replace normal Overworld terrain while the survival world is running.
 
-The manifest uses newly generated UUIDs and a new version number. The custom dimensions use the `log:` namespace, not the old prototype's `lattice:dream` dimension ID.
+The manifest uses newly generated UUIDs and targets `@minecraft/server` 2.8.0, which includes the ticking-area API used by this build. Use a Bedrock version that supports that module and enable Beta APIs. The custom dimensions use the `log:` namespace, not the old prototype's `lattice:dream` dimension ID.
 
 ## What this build attempts to implement
 
-- **The abyss lattice:** a four-block-spaced bedrock grid from Y=-32 to Y=0, with no roof and open space between beams. The player starts without items.
+- **The abyss lattice:** a four-block-spaced bedrock grid from Y=-32 to Y=0, with no roof and open space between beams. Generation now queues nearby regions even before they are loaded, creates a temporary ticking area before placing blocks, and releases it after completion. A lightweight queue handles the lattice separately from heavier structures, so towers cannot hold up lattice extension. The player starts without items.
 - **The single tree and resource platforms:** a main oak on a full 3×3×3 island, with grass on top and bedrock at the exact center of the middle layer, plus a separate lower marker. Other rare 3×3×3 islands have grass tops and a randomized center block in the middle layer: 50% ordinary stone, or 50% one of eight ordinary stone ores, with every ore equally likely. Platform spawn odds are weighted toward the tree.
 - **Ruined city towers:** several sizes of tall buildings, openings, floor levels, water elevator shafts, treasure chests, clues, restricted block-breaking inside, and a one-time top-ledge collapse.
 - **The nested Tesseract:** nested square frames, a protected central crying-obsidian portal block that the player deliberately interacts with to enter, a repeatable mining loophole on a block placed above it, a one-use entry that consumes the structure, and a temporary memory dimension.
@@ -27,17 +27,19 @@ The manifest uses newly generated UUIDs and a new version number. The custom dim
 - **Bedrock serpent:** a five-segment bedrock system that moves in cardinal directions and erases blocks around its segments within the intended lower vertical band.
 - **Ending:** activating a Nether portal in the custom survival dimension, if Bedrock permits portal creation there, triggers an Overworld return and changes nearby surface blocks according to the world's accumulated state. `/scriptevent log:finish` is provided as a testing fallback.
 
-## Testing commands
+## Testing functions
 
-With cheats enabled, run these from chat:
+With cheats enabled, enter these commands in chat. **The function names contain no colons.**
 
-- `/scriptevent log:daymare` starts an open-ended daymare.
-- `/scriptevent log:nightmare` starts a timed nightmare.
-- `/scriptevent log:memory` enters the temporary memory dimension.
-- `/scriptevent log:status` prints internal restoration / damage counters for debugging.
-- `/scriptevent log:finish` runs the ending sequence.
+- `/function lattice_status` shows the current region, chunk-loaded state, lattice/structure queue counts, ticking-area usage, generation failures, and the latest recorded error.
+- `/function lattice_recheck` queues nearby ungenerated regions again. It does not deliberately reset regions already marked complete.
+- `/function status` prints restoration, damage, and Tesseract counters.
+- `/function daymare` starts an open-ended daymare.
+- `/function nightmare` starts a timed nightmare.
+- `/function memory` enters the temporary memory dimension and consumes the one-use Tesseract.
+- `/function finish` triggers the ending and teleports the player to the Overworld.
 
-These command events are developer test hooks, not intended as normal player progression.
+These are developer test functions, not normal player progression. Use `finish` only when you intend to end the test run.
 
 ## Important limitations
 
