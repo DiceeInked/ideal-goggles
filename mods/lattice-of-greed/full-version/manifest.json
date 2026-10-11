@@ -3,27 +3,27 @@
   "header": {
     "name": "Lattice of Greed: Full Version",
     "description": "A surreal scarcity survival world with a bedrock lattice, city towers, a Tesseract, dreams, restoration, and a world that remembers.",
-    "uuid": "c84a1f37-9d62-4b08-a5e3-7f1c2d6b904e",
+    "uuid": "1bc9a3fe-7d54-4b26-9e80-5a2c7f1d634b",
     "version": [
       1,
       0,
-      3
+      4
     ],
     "min_engine_version": [
       1,
-      21,
-      80
+      26,
+      10
     ]
   },
   "modules": [
     {
       "type": "script",
       "language": "javascript",
-      "uuid": "f19b6d42-3a87-4e51-9c20-6d8f2a4b715c",
+      "uuid": "83a4f1d2-6c95-4e07-bb31-9d2f8a6c507e",
       "version": [
         1,
         0,
-        3
+        4
       ],
       "entry": "scripts/main.js"
     }
@@ -31,7 +31,7 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "beta"
+      "version": "2.8.0"
     }
   ],
   "metadata": {
