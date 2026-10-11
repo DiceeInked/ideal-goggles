@@ -4,7 +4,7 @@
 
 ## Install
 
-1. Delete the old **Lattice of Greed: Prototype** behavior pack from Minecraft's storage / pack list if it is still imported.
+1. Remove or deactivate older **Lattice of Greed: Full Version** releases and the old **Lattice of Greed: Prototype** from Minecraft's storage and world settings. Activate only version 1.0.6.
 2. Import `Lattice-of-Greed-Full-1.0.6.mcpack`.
 3. For the cleanest test, create a **new world**. Versioned region markers also let you revisit an existing test world, but old structures are rebuilt gradually as you approach their chunks.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
