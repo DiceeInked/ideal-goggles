@@ -862,7 +862,7 @@ function restoreSerializedBackup(player) {
   }
   restoreHud(player, { hiddenHud: payload.hiddenHud || [] });
   try { player.setGameMode(GameMode.Survival); } catch {}
-  try { world.setDynamicProperty(backupKey(player), null); } catch {}
+  try { world.setDynamicProperty(backupKey(player), undefined); } catch {}
   return true;
 }
 
@@ -890,16 +890,33 @@ function restoreInventory(player, saved) {
   }
 }
 
+const DREAM_HIDDEN_HUD = [
+  HudElement.PaperDoll,
+  HudElement.Armor,
+  HudElement.ToolTips,
+  HudElement.Crosshair,
+  HudElement.Hotbar,
+  HudElement.Health,
+  HudElement.ProgressBar,
+  HudElement.Hunger,
+  HudElement.AirBubbles,
+  HudElement.HorseHealth,
+  HudElement.StatusEffects,
+  HudElement.ItemText
+];
+
 function hideDreamHud(player) {
-  try { player.onScreenDisplay.hideAllExcept([HudElement.TouchControls]); }
-  catch {
-    try { player.onScreenDisplay.setHudVisibility(HudVisibility.Hide, [HudElement.All]); } catch {}
+  try {
+    player.onScreenDisplay.hideAllExcept([HudElement.TouchControls]);
+  } catch {
+    // HudElement has no "All" member. Explicitly list valid elements as fallback.
+    try { player.onScreenDisplay.setHudVisibility(HudVisibility.Hide, DREAM_HIDDEN_HUD); } catch {}
   }
 }
 
 function restoreHud(player, saved) {
   try {
-    player.onScreenDisplay.setHudVisibility(HudVisibility.Reset, [HudElement.All]);
+    player.onScreenDisplay.resetHudElementsVisibility();
     if (saved?.hiddenHud?.length) player.onScreenDisplay.setHudVisibility(HudVisibility.Hide, saved.hiddenHud);
   } catch {}
 }
@@ -949,7 +966,7 @@ async function startDream(player, type) {
       restoreInventory(player, saved.inventory);
       restoreHud(player, saved.inventory);
       player.setGameMode(saved.inventory.gameMode);
-      world.setDynamicProperty(backupKey(player), null);
+      world.setDynamicProperty(backupKey(player), undefined);
     } catch {}
     world.sendMessage("[Lattice of Greed] The dream could not start safely: " + String(error));
   }
@@ -974,7 +991,7 @@ function endDream(player, reason = "returned") {
   restoreHud(player, saved.inventory);
   try { player.setGameMode(saved.inventory.gameMode); } catch {}
   try { player.removeEffect("blindness"); player.removeEffect("slow_falling"); player.removeEffect("darkness"); } catch {}
-  try { world.setDynamicProperty(backupKey(player), null); } catch {}
+  try { world.setDynamicProperty(backupKey(player), undefined); } catch {}
   if (reason === "nightmare ended" || reason === "respawned") {
     try { player.sendMessage("§8The dream fades. The world is still here."); } catch {}
   }
