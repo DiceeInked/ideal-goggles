@@ -1,11 +1,11 @@
-# Lattice of Greed: Full Version 1.0.2
+# Lattice of Greed: Full Version 1.0.3
 
 **A full-feature source build and installable behavior pack, not a verified release.** I have checked the source and package structure, but this code has not yet been executed inside Minecraft Bedrock. Treat it as an experimental build and use a brand-new test world.
 
 ## Install
 
 1. Delete the old **Lattice of Greed: Prototype** behavior pack from Minecraft's storage / pack list if it is still imported.
-2. Import `Lattice-of-Greed-Full-1.0.2.mcpack`.
+2. Import `Lattice-of-Greed-Full-1.0.3.mcpack`.
 3. Create a **new world**. Do not test this in a world you care about.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
 5. Enable **Beta APIs** under Experiments. Cheats are optional and only needed for the developer `/scriptevent` test commands; enabling them may disable achievements.
@@ -16,7 +16,7 @@ The manifest uses newly generated UUIDs and a new version number. The custom dim
 ## What this build attempts to implement
 
 - **The abyss lattice:** a four-block-spaced bedrock grid from Y=-32 to Y=0, with no roof and open space between beams. The player starts without items.
-- **The single tree and resource platforms:** a main oak on a full 3×3×3 island, with grass on top and bedrock at the exact center of the middle layer, plus a separate lower marker. Other rare 3×3×3 islands have grass tops and one random ordinary stone ore at the center of the middle layer, with odds weighted toward the tree.
+- **The single tree and resource platforms:** a main oak on a full 3×3×3 island, with grass on top and bedrock at the exact center of the middle layer, plus a separate lower marker. Other rare 3×3×3 islands have grass tops and a randomized center block in the middle layer: 50% ordinary stone, or 50% one of eight ordinary stone ores, with every ore equally likely. Platform spawn odds are weighted toward the tree.
 - **Ruined city towers:** several sizes of tall buildings, openings, floor levels, water elevator shafts, treasure chests, clues, restricted block-breaking inside, and a one-time top-ledge collapse.
 - **The nested Tesseract:** nested square frames, a protected central crying-obsidian portal block that the player deliberately interacts with to enter, a repeatable mining loophole on a block placed above it, a one-use entry that consumes the structure, and a temporary memory dimension.
 - **The memory collapse:** an initially calm Overworld-like patch, then gradual black-concrete infection, block removal, and a return to the lattice. Mining 64 blocks during the memory can trigger a daymare.
