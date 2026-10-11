@@ -59,6 +59,8 @@ const watcherEntities = new Map();
 const specialBarrelDrops = new Map();
 const topTrapVisits = new Set();
 const tesseractRestoreDelay = new Map();
+const lastRegionCheck = new Map();
+let lastTesseractClearTick = -10000;
 let lastNightDay = -1;
 let lastNightState = false;
 let worldLoadAnnounced = false;
@@ -223,11 +225,6 @@ async function applyTasks(dim, tasks, chunkX, chunkZ, batchSize = 420) {
 /* ------------------------------ main lattice ------------------------------ */
 
 function enqueueLattice(tasks, sx, sz) {
-  for (let y = GRID_MIN; y <= GRID_MAX; y += GRID_STEP) {
-    for (let x = sx; x < sx + REGION_SIZE; x++) {
-      if (isGridLine(x)) addTask(tasks, x, y, 0, "minecraft:air"); // replaced below by full X/Z rail loops
-    }
-  }
   for (let y = GRID_MIN; y <= GRID_MAX; y += GRID_STEP) {
     for (let x = sx; x < sx + REGION_SIZE; x++) {
       if (isGridLine(x)) {
@@ -619,7 +616,7 @@ function enqueueDreamRegion(tasks, sx, sz, damage, restoration, tesseractDamage,
       if (treesCut > 0 && edge > 5 && hash(x, z, 18) < Math.min(0.018, treesCut * 0.003)) {
         const alongX = hash(x, z, 19) < 0.5;
         for (let k = -1; k <= 1; k++) {
-          safeSetPermutation;
+
           addTask(tasks, x + (alongX ? k : 0), h + 1, z + (alongX ? 0 : k), "minecraft:oak_log");
           if (k !== 0) addTask(tasks, x + (alongX ? k : 0), h + 2, z + (alongX ? 0 : k), "minecraft:oak_leaves");
         }
@@ -929,16 +926,6 @@ function endDream(player, reason = "returned") {
   if (reason === "nightmare ended") {
     try { player.sendMessage("§8The dream fades. The world is still here."); } catch {}
   }
-  if (typeHasQueuedDaymare(player)) {
-    system.runTimeout(() => startDream(player, "daymare"), 5);
-  }
-}
-
-const queuedDaymares = new Set();
-function typeHasQueuedDaymare(player) {
-  if (!queuedDaymares.has(player.id)) return false;
-  queuedDaymares.delete(player.id);
-  return true;
 }
 
 /* ----------------------------- memory dimension ---------------------------- */
@@ -1103,7 +1090,7 @@ function returnFromMemory(player, reason = "returned") {
   if (reason === "the place collapsed") player.sendMessage("§8The memory fractures, and you fall back into the lattice.");
   else player.sendMessage("§8You return to the lattice.");
   if (trip.mined >= 64) {
-    queuedDaymares.add(player.id);
+
     system.runTimeout(() => {
       const online = world.getAllPlayers().find(p => p.id === player.id);
       if (online && online.dimension.id === DIM.main) startDream(online, "daymare");
@@ -1219,46 +1206,52 @@ function checkSaplingGrowth() {
 
 async function buildTemiVillage(player) {
   if (stat("temi_built") > 0 || player.dimension.id !== DIM.main) return;
-  setStat("temi_built", 1);
   const dim = mainDim();
-  const baseX = Math.floor(player.location.x / 4) * 4 + 28;
-  const baseZ = Math.floor(player.location.z / 4) * 4 + 28;
-  const foundationY = 0;
+  const rx = floorDiv(player.location.x, REGION_SIZE);
+  const rz = floorDiv(player.location.z, REGION_SIZE);
+  if (!regionIsLoaded(dim, rx, rz)) return;
+  const baseX = rx * REGION_SIZE;
+  const baseZ = rz * REGION_SIZE;
   const tasks = [];
-  for (let hx = 0; hx < 3; hx++) {
-    for (let hz = 0; hz < 3; hz++) {
-      const houseX = baseX + hx * 10;
-      const houseZ = baseZ + hz * 10;
-      for (let x = 0; x < 6; x++) {
-        for (let z = 0; z < 6; z++) {
-          addTask(tasks, houseX + x, foundationY, houseZ + z, "minecraft:oak_planks");
-          if (x === 0 || x === 5 || z === 0 || z === 5) {
+
+  // Four compact huts stay inside one active 16x16 chunk.
+  for (let hx = 0; hx < 2; hx++) {
+    for (let hz = 0; hz < 2; hz++) {
+      const houseX = baseX + 1 + hx * 7;
+      const houseZ = baseZ + 1 + hz * 7;
+      for (let x = 0; x < 5; x++) {
+        for (let z = 0; z < 5; z++) {
+          addTask(tasks, houseX + x, 0, houseZ + z, "minecraft:oak_planks");
+          const wall = x === 0 || x === 4 || z === 0 || z === 4;
+          if (wall) {
             for (let y = 1; y <= 3; y++) {
-              const door = z === 0 && x >= 2 && x <= 3 && y <= 2;
-              if (!door) addTask(tasks, houseX + x, y, houseZ + z, "minecraft:oak_planks");
+              const door = z === 0 && x === 2 && y <= 2;
+              const window = y === 2 && (x === 0 || x === 4 || z === 4) && (x + z) % 2 === 0;
+              if (!door && !window) addTask(tasks, houseX + x, y, houseZ + z, "minecraft:oak_planks");
             }
           }
-        }
-      }
-      for (let x = 0; x < 6; x++) {
-        for (let z = 0; z < 6; z++) {
-          if (x === 0 || x === 5 || z === 0 || z === 5 || (x === 2 && z >= 2 && z <= 3)) {
+          if (x === 0 || x === 4 || z === 0 || z === 4) {
             addTask(tasks, houseX + x, 4, houseZ + z, "minecraft:oak_planks");
           }
         }
       }
       setSign(dim, houseX + 2, 2, houseZ, "Thank you for helping us be here.");
       try {
-        const villager = dim.spawnEntity("minecraft:villager_v2", { x: houseX + 2.5, y: 1, z: houseZ + 2.5 });
+        const villager = dim.spawnEntity("minecraft:villager_v2", {
+          x: houseX + 2.5, y: 1, z: houseZ + 2.5
+        });
         villager.nameTag = "Temi";
         try { villager.addEffect("resistance", 999999, { showParticles: false }); } catch {}
       } catch {}
     }
   }
-  if (regionIsLoaded(dim, floorDiv(baseX, 16), floorDiv(baseZ, 16))) {
-    await applyTasks(dim, tasks, floorDiv(baseX, 16), floorDiv(baseZ, 16), 280);
+  try {
+    await applyTasks(dim, tasks, rx, rz, 280);
+    setStat("temi_built", 1);
+    player.sendMessage("§aYou hear a small village coming to life nearby.");
+  } catch (error) {
+    console.warn("[Lattice of Greed] Temi village deferred: " + String(error));
   }
-  player.sendMessage("§aYou hear a small village coming to life nearby.");
 }
 
 /* ---------------------------- city interactions --------------------------- */
@@ -1564,7 +1557,7 @@ world.afterEvents.playerBreakBlock.subscribe(event => {
         tesseractRestoreDelay.delete(key);
       }, 12);
       if (count % 64 === 0) {
-        queuedDaymares.add(player.id);
+
         system.runTimeout(() => {
           const online = world.getAllPlayers().find(p => p.id === player.id);
           if (online && online.dimension.id === DIM.main) startDream(online, "daymare");
@@ -1596,6 +1589,8 @@ world.afterEvents.playerInteractWithBlock.subscribe(openBiomeBarrel);
 // Nightmares happen once per night. Daymares remain open-ended until the
 // player deliberately jumps into the central shaft.
 system.runInterval(() => {
+  const onlineIds = new Set(world.getAllPlayers().map(p => p.id));
+  for (const id of lastRegionCheck.keys()) if (!onlineIds.has(id)) lastRegionCheck.delete(id);
   let time = 0;
   try { time = world.getTimeOfDay(); } catch { return; }
   const isNight = time >= 13000 && time < 23000;
@@ -1612,15 +1607,43 @@ system.runInterval(() => {
 
   for (const player of world.getAllPlayers()) {
     if (player.dimension.id === DIM.main) {
+      if (system.currentTick % 40 === 0) {
+        if (isNight) {
+          try { player.addEffect("darkness", 55, { showParticles: false, amplifier: 0 }); } catch {}
+        } else {
+          try { player.removeEffect("darkness"); } catch {}
+        }
+      }
       const rx = floorDiv(player.location.x, REGION_SIZE);
       const rz = floorDiv(player.location.z, REGION_SIZE);
-      // Finish clearing old Tesseract fragments as their chunks become active.
-      if (stat("tesseract_consumed") > 0 && Math.abs(player.location.x - TESS.x) < 40 && Math.abs(player.location.z - TESS.z) < 40) {
+      // Clear removed Tesseract pieces at a limited rate, avoiding a large
+      // synchronous edit burst on every game tick.
+      if (stat("tesseract_consumed") > 0 &&
+          Math.abs(player.location.x - TESS.x) < 40 &&
+          Math.abs(player.location.z - TESS.z) < 40 &&
+          system.currentTick - lastTesseractClearTick >= 80) {
+        lastTesseractClearTick = system.currentTick;
         for (let dx = -5; dx <= -3; dx++) for (let dz = 3; dz <= 5; dz++) {
           if (regionIsLoaded(mainDim(), dx, dz)) clearTesseractChunk(mainDim(), dx, dz);
         }
       }
-      generateLoadedMainRegions(player);
+
+      // The open center shaft is the portal. Entering it removes the nested
+      // structure and transports the player into the temporary memory dimension.
+      if (stat("tesseract_consumed") === 0 &&
+          Math.abs(player.location.x - TESS.x) < 1.2 &&
+          Math.abs(player.location.z - TESS.z) < 1.2 &&
+          player.location.y < 4 &&
+          blockAt(mainDim(), TESS.x, 2, TESS.z)?.typeId === "minecraft:air" &&
+          !sessions.has(player.id) && !memoryTrips.has(player.id)) {
+        enterTesseract(player);
+      }
+
+      const checkedAt = lastRegionCheck.get(player.id) ?? -10000;
+      if (system.currentTick - checkedAt >= 20) {
+        lastRegionCheck.set(player.id, system.currentTick);
+        generateLoadedMainRegions(player);
+      }
       updateTowerTopTraps(player);
       if (!sessions.has(player.id) && !memoryTrips.has(player.id) && nearbyPortal(mainDim(), player)) finishGame(player);
     } else if (player.dimension.id === DIM.dream) {
@@ -1679,10 +1702,4 @@ world.afterEvents.playerDimensionChange.subscribe(event => {
   }
 });
 
-world.afterEvents.playerLeave.subscribe(event => {
-  const player = world.getAllPlayers().find(p => p.name === event.playerName);
-  if (player && sessions.has(player.id)) {
-    try { world.setDynamicProperty(backupKey(player), JSON.stringify({ interrupted: true })); } catch {}
-  }
-});
 
