@@ -1305,7 +1305,6 @@ async function buildTemiVillage(player) {
           }
         }
       }
-      setSign(dim, houseX + 2, 2, houseZ, "Thank you for helping us be here.");
       try {
         const villager = dim.spawnEntity("minecraft:villager_v2", {
           x: houseX + 2.5, y: 1, z: houseZ + 2.5
@@ -1317,6 +1316,13 @@ async function buildTemiVillage(player) {
   }
   try {
     await applyTasks(dim, tasks, rx, rz, 280);
+    for (let hx = 0; hx < 2; hx++) {
+      for (let hz = 0; hz < 2; hz++) {
+        const houseX = baseX + 1 + hx * 7;
+        const houseZ = baseZ + 1 + hz * 7;
+        setSign(dim, houseX + 2, 2, houseZ, "Thank you for helping us be here.");
+      }
+    }
     setStat("temi_built", 1);
     player.sendMessage("§aYou hear a small village coming to life nearby.");
   } catch (error) {
@@ -1668,9 +1674,28 @@ world.beforeEvents.playerBreakBlock.subscribe(event => {
   if (isInsideBuilding(player)) event.cancel = true;
 });
 
+world.beforeEvents.playerPlaceBlock.subscribe(event => {
+  if (sessions.has(event.player.id)) event.cancel = true;
+});
+
 world.afterEvents.playerPlaceBlock.subscribe(recordPlant);
 
 world.afterEvents.playerInteractWithBlock.subscribe(openBiomeBarrel);
+
+// The Tesseract is a deliberate choice, not a proximity trap. Interacting with
+// its center block enters the memory dimension; mining a block placed above it
+// remains the separate, repeatable extraction loophole.
+world.afterEvents.playerInteractWithBlock.subscribe(event => {
+  const player = event.player;
+  const block = event.block;
+  if (!player || !block || player.dimension.id !== DIM.main) return;
+  if (stat("tesseract_consumed") > 0) return;
+  const loc = block.location;
+  if (loc.x === TESS.x && loc.y === 1 && loc.z === TESS.z &&
+      block.typeId === "minecraft:crying_obsidian") {
+    enterTesseract(player);
+  }
+});
 
 // Nightmares happen once per night. Daymares remain open-ended until the
 // player deliberately jumps into the central shaft.
@@ -1713,17 +1738,6 @@ system.runInterval(() => {
         for (let dx = -5; dx <= -3; dx++) for (let dz = 3; dz <= 5; dz++) {
           if (regionIsLoaded(mainDim(), dx, dz)) clearTesseractChunk(mainDim(), dx, dz);
         }
-      }
-
-      // The open center shaft is the portal. Entering it removes the nested
-      // structure and transports the player into the temporary memory dimension.
-      if (stat("tesseract_consumed") === 0 &&
-          Math.abs(player.location.x - TESS.x) < 1.2 &&
-          Math.abs(player.location.z - TESS.z) < 1.2 &&
-          player.location.y < 4 &&
-          blockAt(mainDim(), TESS.x, 2, TESS.z)?.typeId === "minecraft:air" &&
-          !sessions.has(player.id) && !memoryTrips.has(player.id)) {
-        enterTesseract(player);
       }
 
       const checkedAt = lastRegionCheck.get(player.id) ?? -10000;
