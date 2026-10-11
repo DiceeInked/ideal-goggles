@@ -1,15 +1,12 @@
 import { world, system, ItemStack } from "@minecraft/server";
 
 /*
- * Lattice of Greed - biome-island build, version 1.3.1.
- * This release returns to the lean 1.1 generator and adds:
- * - the original tiny resource islets around the starter oak tree;
- * - a rotating catalog of Overworld and cave biome island clusters;
- * - eight satellite islets around every biome main island;
- * - a walkable themed room inside the lower lattice with a survival loot chest.
- *
- * Structure markers persist across sessions so mined islands and claimed room
- * loot do not respawn when players leave and return.
+ * Lattice of Greed - biome-island build, version 1.4.0.
+ * Generated terrain is written once and never reconstructed after its region is
+ * saved, so player mining and builds survive chunk re-entry and script restarts.
+ * Biome clusters now occupy only one region in each 3x3 region tile, leaving more
+ * empty lattice between larger-looking island groups. The themed rooms use varied
+ * layouts and explicitly-filled chests/barrels with independent loot markers.
  */
 
 const DIMENSION_ID = "log:abyss";
@@ -199,7 +196,7 @@ const STRUCTURE_ROOMS = [
   structureRoom("jungle_temple", "Jungle Temple", "mossy_cobblestone", "cobblestone", "chiseled_stone_bricks", "jungle_temple"),
   structureRoom("ocean_monument", "Ocean Monument", "prismarine_bricks", "dark_prismarine", "sea_lantern", "ocean_monument"),
   structureRoom("ocean_ruins", "Ocean Ruins", "mossy_stone_bricks", "stone_bricks", "mossy_cobblestone", "ocean_ruins"),
-  structureRoom("shipwreck", "Shipwreck Hold", "oak_planks", "stripped_oak_log", "barrel", "shipwreck"),
+  structureRoom("shipwreck", "Shipwreck Hold", "oak_planks", "stripped_oak_log", "stripped_oak_log", "shipwreck"),
   structureRoom("buried_treasure", "Buried Treasure", "sandstone", "sandstone", "gold_block", "treasure"),
   structureRoom("ruined_portal", "Ruined Portal", "obsidian", "crying_obsidian", "gold_block", "ruined_portal"),
   structureRoom("igloo", "Igloo Basement", "snow_block", "packed_ice", "furnace", "igloo"),
@@ -435,14 +432,36 @@ function hasPersistentRegion(rx, rz) {
   }
 }
 
+function persistentLootKey(rx, rz) {
+  return "log:biome_loot_" + rx + "_" + rz;
+}
+
+function hasPersistentLoot(rx, rz) {
+  try {
+    return world.getDynamicProperty(persistentLootKey(rx, rz)) === true;
+  } catch {
+    return false;
+  }
+}
+
 function chooseStructure(rx, rz) {
-  return STRUCTURE_ROOMS[positiveModulo(rx + rz * 7 + 5, STRUCTURE_ROOMS.length)];
+  const macroX = floorDiv(rx, 3);
+  const macroZ = floorDiv(rz, 3);
+  return STRUCTURE_ROOMS[positiveModulo(macroX + macroZ * 7 + 5, STRUCTURE_ROOMS.length)];
 }
 
 function chooseBiome(rx, rz) {
-  // A 9x9 neighbourhood spans at least 81 consecutive indices, ensuring
-  // every one of the 56 catalogue entries occurs near every explored region.
-  return BIOME_CATALOG[positiveModulo(rx + rz * 9 + 17, BIOME_CATALOG.length)];
+  // Biome profiles are assigned per 3x3 region tile, not per chunk.
+  // Across the macro-grid, every catalogue entry is reached deterministically.
+  const macroX = floorDiv(rx, 3);
+  const macroZ = floorDiv(rz, 3);
+  return BIOME_CATALOG[positiveModulo(macroX + macroZ * 8 + 17, BIOME_CATALOG.length)];
+}
+
+function isBiomeClusterRegion(rx, rz) {
+  // One biome structure group per 3x3 region tile. The surrounding eight
+  // regions remain empty lattice (plus the old, distance-weighted tiny islets).
+  return positiveModulo(rx, 3) === 1 && positiveModulo(rz, 3) === 1;
 }
 
 function addResourceIsletTasks(tasks, cx, cz, blockType) {
@@ -675,13 +694,218 @@ function addBiomeIslandTasks(tasks, cx, cz, profile, isMain) {
   addBiomeSurfaceDecorations(tasks, cx, cz, profile, isMain);
 }
 
-function addUndergroundRoomTasks(tasks, sx, sz, structure, chest) {
-  // 10x10 themed room between the lower lattice floors at Y=-8 and Y=-12.
-  // The existing bedrock beams at Y=-8 remain visible as its open ceiling.
-  const minX = sx + 3;
-  const maxX = sx + 12;
-  const minZ = sz + 3;
-  const maxZ = sz + 12;
+function roomCellReserved(sx, sz, x, z, starterRegion) {
+  const starterPath = [
+    [sx + 7, sz + 6], [sx + 8, sz + 6], [sx + 9, sz + 6],
+    [sx + 10, sz + 6], [sx + 10, sz + 7], [sx + 10, sz + 8],
+    [sx + 9, sz + 8], [sx + 8, sz + 8], [sx + 7, sz + 8],
+    [sx + 6, sz + 8]
+  ];
+  const clusterPath = starterPath.map(([px, pz]) => [px + 2, pz + 2]);
+  const reserved = starterRegion ? starterPath : clusterPath;
+  return reserved.some(([px, pz]) => px === x && pz === z);
+}
+
+function addRoomColumn(tasks, sx, sz, room, x, z, blockType, starterRegion) {
+  if (x <= room.minX || x >= room.maxX || z <= room.minZ || z >= room.maxZ) return;
+  if (roomCellReserved(sx, sz, x, z, starterRegion)) return;
+  for (let y = -11; y <= -9; y++) {
+    addTask(tasks, x, y, z, blockType);
+  }
+}
+
+function addRoomInteriorDesign(tasks, sx, sz, structure, room, starterRegion) {
+  const width = room.width;
+  const depth = room.depth;
+  const midX = Math.floor((room.minX + room.maxX) / 2);
+  const midZ = Math.floor((room.minZ + room.maxZ) / 2);
+  const stone = structure.wall;
+  const accent = structure.accent;
+  const seed = room.seed;
+  const style = room.style;
+
+  // Each room gets a different architectural silhouette, beyond its palette.
+  if (style === 0) {
+    // Reliquary: four stout columns and an accent block above the central cache.
+    addRoomColumn(tasks, sx, sz, room, room.minX + 2, room.minZ + 2, stone, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, room.maxX - 2, room.minZ + 2, stone, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, room.minX + 2, room.maxZ - 2, accent, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, room.maxX - 2, room.maxZ - 2, accent, starterRegion);
+    addTask(tasks, midX, -10, midZ, accent);
+  } else if (style === 1) {
+    // Split hall: cross partitions leave a doorway-sized opening on each axis.
+    for (let x = room.minX + 1; x < room.maxX; x++) {
+      if (Math.abs(x - midX) <= 1) continue;
+      if (!roomCellReserved(sx, sz, x, midZ, starterRegion)) {
+        addTask(tasks, x, -11, midZ, stone);
+        addTask(tasks, x, -10, midZ, stone);
+      }
+    }
+    for (let z = room.minZ + 1; z < room.maxZ; z++) {
+      if (Math.abs(z - midZ) <= 1) continue;
+      if (!roomCellReserved(sx, sz, midX, z, starterRegion)) {
+        addTask(tasks, midX, -11, z, stone);
+        addTask(tasks, midX, -10, z, stone);
+      }
+    }
+    addRoomColumn(tasks, sx, sz, room, midX, midZ, accent, starterRegion);
+  } else if (style === 2) {
+    // Colonnade: repeated pillars form long aisles.
+    for (let x = room.minX + 2; x < room.maxX - 1; x += 3) {
+      for (let z = room.minZ + 2; z < room.maxZ - 1; z += 3) {
+        addRoomColumn(tasks, sx, sz, room, x, z,
+          seededValue(x, z, seed) % 3 === 0 ? accent : stone, starterRegion);
+      }
+    }
+  } else if (style === 3) {
+    // Archive: short shelf-like ledges and pillars on alternating sides.
+    for (let x = room.minX + 2; x <= room.maxX - 2; x += 2) {
+      if (!roomCellReserved(sx, sz, x, room.minZ + 2, starterRegion)) {
+        addTask(tasks, x, -10, room.minZ + 2, accent);
+      }
+      if (!roomCellReserved(sx, sz, x, room.maxZ - 2, starterRegion)) {
+        addTask(tasks, x, -10, room.maxZ - 2, stone);
+      }
+    }
+    addRoomColumn(tasks, sx, sz, room, room.minX + 2, midZ, accent, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, room.maxX - 2, midZ, stone, starterRegion);
+  } else if (style === 4) {
+    // Central dais with offset corner plinths.
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        const x = midX + dx;
+        const z = midZ + dz;
+        if (!roomCellReserved(sx, sz, x, z, starterRegion)) {
+          addTask(tasks, x, -11, z, (dx === 0 && dz === 0) ? accent : stone);
+        }
+      }
+    }
+    addRoomColumn(tasks, sx, sz, room, midX - 3, midZ, accent, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, midX + 3, midZ, accent, starterRegion);
+  } else if (style === 5) {
+    // Bent corridors: offset partitions create a small, navigable maze.
+    const wallZ1 = room.minZ + Math.max(3, Math.floor(depth * 0.35));
+    const wallZ2 = room.minZ + Math.max(5, Math.floor(depth * 0.68));
+    for (let x = room.minX + 1; x < room.maxX; x++) {
+      if (positiveModulo(x + seed, 5) === 0 || roomCellReserved(sx, sz, x, wallZ1, starterRegion)) continue;
+      addTask(tasks, x, -11, wallZ1, stone);
+      addTask(tasks, x, -10, wallZ1, stone);
+    }
+    for (let x = room.minX + 1; x < room.maxX; x++) {
+      if (positiveModulo(x + seed, 4) === 1 || roomCellReserved(sx, sz, x, wallZ2, starterRegion)) continue;
+      addTask(tasks, x, -11, wallZ2, accent);
+      addTask(tasks, x, -10, wallZ2, accent);
+    }
+  } else if (style === 6) {
+    // Broken hall: missing-looking stretches in the perimeter, rubble columns inside.
+    for (const [x, z] of [
+      [room.minX, room.minZ + 3], [room.maxX, room.maxZ - 3],
+      [room.minX + 3, room.maxZ], [room.maxX - 3, room.minZ]
+    ]) {
+      addTask(tasks, x, -10, z, "minecraft:air");
+      addTask(tasks, x, -9, z, "minecraft:air");
+      addTask(tasks, x, -10, z, accent);
+    }
+    addRoomColumn(tasks, sx, sz, room, room.minX + 3, midZ - 1, stone, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, room.maxX - 3, midZ + 1, accent, starterRegion);
+  } else if (style === 7) {
+    // Vault ring with a guarded central alcove.
+    for (let offset = 2; offset <= Math.min(width, depth) / 2 - 1; offset += 2) {
+      for (let x = room.minX + offset; x <= room.maxX - offset; x++) {
+        for (const z of [room.minZ + offset, room.maxZ - offset]) {
+          if (seededValue(x, z, seed) % 4 !== 0 &&
+              !roomCellReserved(sx, sz, x, z, starterRegion)) {
+            addTask(tasks, x, -10, z, stone);
+          }
+        }
+      }
+      for (let z = room.minZ + offset; z <= room.maxZ - offset; z++) {
+        for (const x of [room.minX + offset, room.maxX - offset]) {
+          if (seededValue(x, z, seed + 1) % 4 !== 0 &&
+              !roomCellReserved(sx, sz, x, z, starterRegion)) {
+            addTask(tasks, x, -10, z, accent);
+          }
+        }
+      }
+    }
+  } else {
+    // Workshop: side benches and a few offset stone supports.
+    for (let x = room.minX + 2; x <= room.maxX - 2; x += 3) {
+      for (const z of [room.minZ + 2, room.maxZ - 2]) {
+        if (!roomCellReserved(sx, sz, x, z, starterRegion)) {
+          addTask(tasks, x, -11, z, structure.floor);
+          addTask(tasks, x, -10, z, accent);
+        }
+      }
+    }
+    addRoomColumn(tasks, sx, sz, room, midX - 2, midZ - 2, stone, starterRegion);
+    addRoomColumn(tasks, sx, sz, room, midX + 2, midZ + 2, accent, starterRegion);
+  }
+}
+
+function makeRoomDetails(rx, rz, profile, structure, starterRegion) {
+  const sx = rx * REGION_SIZE;
+  const sz = rz * REGION_SIZE;
+  const seed = seededValue(rx, rz, 7001);
+  const width = 10 + (seed % 5);
+  const depth = 10 + (seededValue(rx, rz, 7002) % 5);
+  const minX = Math.floor((REGION_SIZE - width) / 2);
+  const minZ = Math.floor((REGION_SIZE - depth) / 2);
+  const room = {
+    minX: sx + minX,
+    maxX: sx + minX + width - 1,
+    minZ: sz + minZ,
+    maxZ: sz + minZ + depth - 1,
+    width,
+    depth,
+    style: seededValue(rx, rz, 7003) % 9,
+    seed,
+    profileKey: profile.key,
+    profileName: starterRegion ? "Starter Tree" : profile.name,
+    structureKey: structure.key,
+    structureName: structure.name,
+    starterRegion,
+    chest: { x: sx + 5, y: -11, z: sz + 10 },
+    containers: []
+  };
+
+  room.containers.push({
+    x: room.chest.x, y: room.chest.y, z: room.chest.z,
+    typeId: "minecraft:chest", kind: "chest"
+  });
+
+  // The number and arrangement of barrels changes by region while remaining
+  // inside the room. At least two barrels are present in every generated room.
+  const barrelSpots = [
+    { x: sx + 4, y: -11, z: sz + 4 },
+    { x: sx + 11, y: -11, z: sz + 4 },
+    { x: sx + 4, y: -11, z: sz + 11 },
+    { x: sx + 11, y: -11, z: sz + 11 }
+  ];
+  const barrelCount = 2 + (seededValue(rx, rz, 7010) % 3);
+  const barrelOffset = seededValue(rx, rz, 7011) % barrelSpots.length;
+  for (let i = 0; i < barrelCount; i++) {
+    const p = barrelSpots[(barrelOffset + i) % barrelSpots.length];
+    room.containers.push({ ...p, typeId: "minecraft:barrel", kind: "barrel" });
+  }
+
+  // Most rooms use block accents. Legacy 1.3.1 shipwreck rooms put barrels in
+  // the four upper corners; include those positions in the planned container set.
+  if (structure.accent === "minecraft:barrel") {
+    for (const [x, z] of [
+      [room.minX, room.minZ], [room.maxX, room.minZ],
+      [room.minX, room.maxZ], [room.maxX, room.maxZ]
+    ]) {
+      room.containers.push({ x, y: -9, z, typeId: "minecraft:barrel", kind: "barrel" });
+    }
+  }
+  return room;
+}
+
+function addUndergroundRoomTasks(tasks, sx, sz, structure, room) {
+  const { minX, maxX, minZ, maxZ } = room;
+  // Variable footprint and shape: 10–14 blocks in each direction rather than
+  // the same fixed room in every chunk. The open lattice stays visible overhead.
   for (let x = minX; x <= maxX; x++) {
     for (let z = minZ; z <= maxZ; z++) {
       addTask(tasks, x, -12, z, structure.floor);
@@ -692,17 +916,27 @@ function addUndergroundRoomTasks(tasks, sx, sz, structure, chest) {
     }
   }
 
-  addTask(tasks, minX, -9, minZ, structure.accent);
-  addTask(tasks, maxX, -9, minZ, structure.accent);
-  addTask(tasks, minX, -9, maxZ, structure.accent);
-  addTask(tasks, maxX, -9, maxZ, structure.accent);
-  addTask(tasks, sx + 4, -11, sz + 4, "minecraft:crafting_table");
-  addTask(tasks, sx + 11, -11, sz + 4, "minecraft:furnace");
-  addTask(tasks, chest.x, chest.y, chest.z, "minecraft:chest");
+  // Every fifth room gets a small entry arch; all rooms retain a clear route.
+  const archX = room.minX + 1 + (room.style % Math.max(1, room.width - 2));
+  addTask(tasks, archX, -10, room.minZ, structure.accent);
+  addTask(tasks, archX, -9, room.minZ, structure.accent);
+  addTask(tasks, room.minX, -9, room.minZ, structure.accent);
+  addTask(tasks, room.maxX, -9, room.minZ, structure.accent);
+  addTask(tasks, room.minX, -9, room.maxZ, structure.accent);
+  addTask(tasks, room.maxX, -9, room.maxZ, structure.accent);
+
+  addRoomInteriorDesign(tasks, sx, sz, structure, room, room.starterRegion);
+  addTask(tasks, sx + 4, -11, sz + 5, "minecraft:crafting_table");
+  addTask(tasks, sx + 11, -11, sz + 5, "minecraft:furnace");
+
+  // Put every loot container into the plan so its inventory can be filled after
+  // all terrain writes finish. Containers are never re-created on later visits.
+  for (const c of room.containers) {
+    addTask(tasks, c.x, c.y, c.z, c.typeId);
+  }
 }
 
-function addRoomStairwayTasks(tasks, sx, sz, structure) {
-  // Walkable blocks form a one-block-at-a-time ramp from the main island to the room.
+function addRoomStairwayTasks(tasks, sx, sz, structure, starterRegion) {
   const steps = [
     { dx: 1, dz: 0, y: -2 },
     { dx: 2, dz: 0, y: -3 },
@@ -715,65 +949,71 @@ function addRoomStairwayTasks(tasks, sx, sz, structure) {
     { dx: 1, dz: 2, y: -10 },
     { dx: 0, dz: 2, y: -11 }
   ];
-  addTask(tasks, sx + 7, -1, sz + 6, "minecraft:air");
+  const shift = starterRegion ? 0 : 2;
+  addTask(tasks, sx + 7 + shift, -1, sz + 6 + shift, "minecraft:air");
   for (const step of steps) {
-    addTask(tasks, sx + 6 + step.dx, step.y, sz + 6 + step.dz, structure.floor);
+    addTask(tasks, sx + 6 + shift + step.dx, step.y,
+      sz + 6 + shift + step.dz, structure.floor);
   }
 }
 
-function buildTasks(rx, rz, includeStructures) {
+function describeRegion(rx, rz) {
   const sx = rx * REGION_SIZE;
   const sz = rz * REGION_SIZE;
-  const tasks = new Map();
-  addLatticeTasks(tasks, sx, sz);
-
-  if (!includeStructures) {
-    return { tasks: [...tasks.values()], room: null, profileName: "already generated", structureName: "none" };
-  }
-
   const starterRegion = rx === 0 && rz === 0;
+  const clusterRegion = !starterRegion && isBiomeClusterRegion(rx, rz);
+  if (!starterRegion && !clusterRegion) {
+    return {
+      rx, rz, sx, sz, starterRegion: false, clusterRegion: false,
+      profile: null, structure: null, room: null,
+      profileName: "resource islets", structureName: "none"
+    };
+  }
   const profile = starterRegion
     ? BIOME_CATALOG.find(item => item.key === "forest")
     : chooseBiome(rx, rz);
   const structure = starterRegion
     ? STRUCTURE_ROOMS.find(item => item.key === "village")
     : chooseStructure(rx, rz);
+  const room = makeRoomDetails(rx, rz, profile, structure, starterRegion);
+  return {
+    rx, rz, sx, sz, starterRegion, clusterRegion, profile, structure, room,
+    profileName: room.profileName, structureName: room.structureName
+  };
+}
 
-  if (starterRegion) {
-    addTreeTasks(tasks, sx, sz);
-    addStarterIslets(tasks, sx, sz);
-  } else {
-    const centerX = sx + 6;
-    const centerZ = sz + 6;
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dz = -1; dz <= 1; dz++) {
+function buildTasks(rx, rz) {
+  const plan = describeRegion(rx, rz);
+  const tasks = new Map();
+  addLatticeTasks(tasks, plan.sx, plan.sz);
+
+  if (plan.starterRegion) {
+    addTreeTasks(tasks, plan.sx, plan.sz);
+    addStarterIslets(tasks, plan.sx, plan.sz);
+  } else if (plan.clusterRegion) {
+    // Nine 3x3 islands cover most of the region with visible empty gaps between.
+    const centers = [plan.sx + 2, plan.sx + 8, plan.sx + 14];
+    const zCenters = [plan.sz + 2, plan.sz + 8, plan.sz + 14];
+    for (let ix = 0; ix < centers.length; ix++) {
+      for (let iz = 0; iz < zCenters.length; iz++) {
         addBiomeIslandTasks(
-          tasks, centerX + dx * GRID_STEP, centerZ + dz * GRID_STEP,
-          profile, dx === 0 && dz === 0
+          tasks, centers[ix], zCenters[iz], plan.profile,
+          ix === 1 && iz === 1
         );
       }
     }
+  } else {
+    addStarterIslets(tasks, plan.sx, plan.sz);
   }
 
-  const chest = { x: sx + 10, y: -11, z: sz + 10 };
-  addUndergroundRoomTasks(tasks, sx, sz, structure, chest);
-  addRoomStairwayTasks(tasks, sx, sz, structure);
+  if (plan.room) {
+    addUndergroundRoomTasks(tasks, plan.sx, plan.sz, plan.structure, plan.room);
+    addRoomStairwayTasks(tasks, plan.sx, plan.sz, plan.structure, plan.starterRegion);
+  }
 
-  return {
-    tasks: [...tasks.values()],
-    room: {
-      chest,
-      profileKey: profile.key,
-      profileName: starterRegion ? "Starter Tree" : profile.name,
-      structureKey: structure.key,
-      structureName: structure.name,
-      starterRegion,
-      seed: seededValue(rx, rz, 7001)
-    },
-    profileName: starterRegion ? "Starter Tree" : profile.name,
-    structureName: structure.name
-  };
+  return { ...plan, tasks: [...tasks.values()] };
 }
+
 
 function pickLoot(pool, x, z, salt) {
   if (!pool || pool.length === 0) return null;
