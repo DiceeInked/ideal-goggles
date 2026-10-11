@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.1
+ * Lattice of Greed - full-system build, version 1.0.2
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -53,6 +53,10 @@ const EQUIPMENT_SLOTS = [
 const sessions = new Map();
 const memoryTrips = new Map();
 const generatingMain = new Set();
+const queuedMainRegions = new Set();
+const mainRegionQueue = [];
+let activeMainRegions = 0;
+const MAX_ACTIVE_MAIN_REGIONS = 2;
 const generatingDream = new Set();
 const newlyPlantedSaplings = new Map();
 const watcherEntities = new Map();
@@ -249,13 +253,18 @@ function enqueueLattice(tasks, sx, sz) {
 
 function enqueueMainTree(tasks, sx, sz) {
   if (sx !== 0 || sz !== 0) return;
+  // The tree uses the same full 3x3x3 island as the other resource cells.
+  // Grass forms the top, dirt fills the body, and bedrock occupies the exact
+  // center block of the middle layer directly beneath the tree.
   for (let x = TREE.x - 1; x <= TREE.x + 1; x++) {
     for (let z = TREE.z - 1; z <= TREE.z + 1; z++) {
-      addTask(tasks, x, -1, z, "minecraft:dirt");
+      addTask(tasks, x, -3, z, "minecraft:dirt");
+      addTask(tasks, x, -2, z, "minecraft:dirt");
+      addTask(tasks, x, -1, z, "minecraft:grass_block");
       addTask(tasks, x, -64, z, "minecraft:dirt");
     }
   }
-  addTask(tasks, TREE.x, -1, TREE.z, "minecraft:bedrock");
+  addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock");
   for (let y = 0; y <= 6; y++) addTask(tasks, TREE.x, y, TREE.z, "minecraft:oak_log");
   for (const layer of [
     { y: 3, r: 2 }, { y: 4, r: 2 }, { y: 5, r: 2 }, { y: 6, r: 1 }, { y: 7, r: 1 }
@@ -271,7 +280,7 @@ function enqueueMainTree(tasks, sx, sz) {
 }
 
 const PLATFORM_BLOCKS = [
-  "minecraft:stone",
+  // Ordinary stone ores only: never deepslate or Nether ore variants.
   "minecraft:coal_ore",
   "minecraft:iron_ore",
   "minecraft:copper_ore",
@@ -279,9 +288,7 @@ const PLATFORM_BLOCKS = [
   "minecraft:redstone_ore",
   "minecraft:lapis_ore",
   "minecraft:emerald_ore",
-  "minecraft:diamond_ore",
-  "minecraft:oak_log",
-  "minecraft:glass"
+  "minecraft:diamond_ore"
 ];
 
 function enqueueExtraPlatforms(tasks, sx, sz) {
@@ -593,24 +600,46 @@ async function generateMainRegion(rx, rz) {
   }
 }
 
-async function generateLoadedMainRegions(player) {
+function pumpMainRegionQueue() {
+  while (activeMainRegions < MAX_ACTIVE_MAIN_REGIONS && mainRegionQueue.length > 0) {
+    const next = mainRegionQueue.shift();
+    queuedMainRegions.delete(next.rx + "," + next.rz);
+    const key = regionKey("region_main", next.rx, next.rz);
+    if (world.getDynamicProperty(key) === true || generatingMain.has(key)) continue;
+    if (!regionIsLoaded(mainDim(), next.rx, next.rz)) continue;
+
+    activeMainRegions++;
+    void generateMainRegion(next.rx, next.rz).finally(() => {
+      activeMainRegions = Math.max(0, activeMainRegions - 1);
+      pumpMainRegionQueue();
+    });
+  }
+}
+
+function generateLoadedMainRegions(player) {
   if (player.dimension.id !== DIM.main) return;
   const rx = floorDiv(player.location.x, REGION_SIZE);
   const rz = floorDiv(player.location.z, REGION_SIZE);
-  // Include diagonals so movement in any direction keeps the lattice ahead
-  // of the player. Regions start independently; each lays its lattice first.
-  const offsets = [
-    [0, 0],
-    [1, 0], [-1, 0], [0, 1], [0, -1],
-    [1, 1], [1, -1], [-1, 1], [-1, -1]
-  ];
-  for (const [dx, dz] of offsets) {
-    const x = rx + dx;
-    const z = rz + dz;
-    if (regionIsLoaded(mainDim(), x, z)) {
-      void generateMainRegion(x, z);
+  // Recheck every nearby region as the player moves. Queueing prevents nine
+  // heavy builds from competing at once, while prioritizing the player's
+  // current region and immediate neighbors keeps the walkable lattice ahead.
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      const x = rx + dx;
+      const z = rz + dz;
+      const key = regionKey("region_main", x, z);
+      const queueId = x + "," + z;
+      if (world.getDynamicProperty(key) === true || generatingMain.has(key) ||
+          queuedMainRegions.has(queueId) || !regionIsLoaded(mainDim(), x, z)) continue;
+      queuedMainRegions.add(queueId);
+      mainRegionQueue.push({ rx: x, rz: z });
     }
   }
+  mainRegionQueue.sort((a, b) =>
+    (Math.abs(a.rx - rx) + Math.abs(a.rz - rz)) -
+    (Math.abs(b.rx - rx) + Math.abs(b.rz - rz))
+  );
+  pumpMainRegionQueue();
 }
 
 function enqueueDreamRegion(tasks, sx, sz, damage, restoration, tesseractDamage, treesCut) {
