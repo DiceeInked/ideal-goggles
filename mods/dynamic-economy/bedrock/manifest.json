@@ -1,0 +1,37 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Dynamic Economy",
+    "description": "Global, dynamically priced economy for Minecraft Bedrock Edition.",
+    "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
+    "version": [
+      0,
+      1,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a1c21b7e-2b22-4d41-b63f-5c22a4c81f10",
+      "version": [
+        0,
+        1,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    }
+  ]
+}
