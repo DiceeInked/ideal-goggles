@@ -626,7 +626,7 @@ function addBiomeSurfaceDecorations(tasks, cx, cz, profile, isMain) {
     const plant = roll % 3 === 0 ? "minecraft:azalea" :
       roll % 3 === 1 ? "minecraft:flowering_azalea" : "minecraft:moss_carpet";
     addTask(tasks, cx, 0, cz, plant);
-    if (isMain) addTask(tasks, cx, 1, cz, "minecraft:glow_berries");
+    // Glow berries are supplied as an item in the loot pool; they are not a block type.
   }
 
   if (profile.loot === "dripstone_caves") {
@@ -1250,6 +1250,7 @@ function processJobs() {
   let selectedDistance = Infinity;
 
   for (const [key, job] of jobs) {
+    if ((retryAfterTick.get(key) || 0) > system.currentTick) continue;
     const distance = distanceToNearestPlayer(job.rx, job.rz);
     if (distance > NEARBY_REGION_RADIUS) continue;
     if (distance < selectedDistance) {
@@ -1315,8 +1316,33 @@ function processJobs() {
     lastError = "Region " + selectedKey + ", task " + selectedJob.index + "/" +
       selectedJob.tasks.length + ": " + String(error).slice(0, 220);
     console.warn("[Lattice of Greed] Generation paused: " + lastError);
-    jobs.delete(selectedKey);
-    retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
+
+    if (selectedJob.index < selectedJob.tasks.length) {
+      if (selectedJob.failedTaskIndex === selectedJob.index) {
+        selectedJob.failedTaskAttempts = (selectedJob.failedTaskAttempts || 0) + 1;
+      } else {
+        selectedJob.failedTaskIndex = selectedJob.index;
+        selectedJob.failedTaskAttempts = 1;
+      }
+
+      if (selectedJob.failedTaskAttempts >= 5) {
+        const skipped = selectedJob.tasks[selectedJob.index];
+        console.warn("[Lattice of Greed] Skipping one repeatedly failing placement at " +
+          skipped.x + "," + skipped.y + "," + skipped.z + " (" + skipped.typeId +
+          "). Remaining region work continues without rewriting completed blocks.");
+        selectedJob.index++;
+        selectedJob.failedTaskIndex = -1;
+        selectedJob.failedTaskAttempts = 0;
+        retryAfterTick.delete(selectedKey);
+      } else {
+        retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
+      }
+    } else {
+      // The task list is already complete. If a persistence call fails, preserve
+      // this completed job and retry finalization only, never the terrain writes.
+      selectedJob.finalizationFailures = (selectedJob.finalizationFailures || 0) + 1;
+      retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
+    }
   }
 }
 
