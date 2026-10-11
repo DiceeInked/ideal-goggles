@@ -64,6 +64,11 @@ let activeMainStructures = 0;
 const MAX_ACTIVE_MAIN_STRUCTURES = 1;
 let focusMainRegionX = 0;
 let focusMainRegionZ = 0;
+let latticeGenerationFailures = 0;
+let structureGenerationFailures = 0;
+let lastLatticeGenerationError = "none";
+let lastStructureGenerationError = "none";
+const dimensionRegistrationErrors = [];
 const generatingDream = new Set();
 const newlyPlantedSaplings = new Map();
 const watcherEntities = new Map();
@@ -147,6 +152,44 @@ function regionIsLoaded(dim, rx, rz) {
     return dim.isChunkLoaded({ x: rx * REGION_SIZE + 8, y: 0, z: rz * REGION_SIZE + 8 });
   } catch {
     return false;
+  }
+}
+
+// Keep the target chunk loaded throughout each asynchronous generation pass.
+// Merely checking isChunkLoaded lets Bedrock unload a chunk during a long build.
+function regionTickingAreaOptions(dim, rx, rz, minY, maxY) {
+  const sx = rx * REGION_SIZE;
+  const sz = rz * REGION_SIZE;
+  return {
+    dimension: dim,
+    from: { x: sx, y: minY, z: sz },
+    to: { x: sx + REGION_SIZE - 1, y: maxY, z: sz + REGION_SIZE - 1 }
+  };
+}
+
+async function acquireRegionTickingArea(kind, dim, rx, rz, minY, maxY) {
+  const manager = world.tickingAreaManager;
+  const identifier = "log_" + kind + "_" + rx + "_" + rz;
+  const options = regionTickingAreaOptions(dim, rx, rz, minY, maxY);
+  try {
+    if (manager.hasTickingArea(identifier)) manager.removeTickingArea(identifier);
+    if (!manager.hasCapacity(options)) {
+      throw new Error("No free Script API ticking-area chunk capacity");
+    }
+    await manager.createTickingArea(identifier, options);
+    return identifier;
+  } catch (error) {
+    throw new Error("Could not load " + kind + " region " + rx + "," + rz + ": " + String(error));
+  }
+}
+
+function releaseRegionTickingArea(identifier) {
+  if (!identifier) return;
+  try {
+    const manager = world.tickingAreaManager;
+    if (manager.hasTickingArea(identifier)) manager.removeTickingArea(identifier);
+  } catch (error) {
+    console.warn("[Lattice of Greed] Could not remove ticking area " + identifier + ": " + String(error));
   }
 }
 
@@ -555,21 +598,24 @@ async function generateMainRegion(rx, rz) {
     return;
   }
   const dim = mainDim();
-  if (!regionIsLoaded(dim, rx, rz)) return;
   generatingMain.add(latticeKey);
-  world.setDynamicProperty(latticeKey, "building");
+  let areaId;
   try {
-    // This queue handles only the lattice. Do not let large city/tower tasks
-    // occupy a lattice worker after the walkable grid is already complete.
+    areaId = await acquireRegionTickingArea("lattice", dim, rx, rz, GRID_MIN, GRID_MAX);
+    world.setDynamicProperty(latticeKey, "building");
     const latticeTasks = [];
     enqueueLattice(latticeTasks, rx * REGION_SIZE, rz * REGION_SIZE);
     await applyTasks(dim, latticeTasks, rx, rz, 300);
     world.setDynamicProperty(latticeKey, true);
+    lastLatticeGenerationError = "none";
     queueMainStructures(rx, rz);
   } catch (error) {
-    world.setDynamicProperty(latticeKey, false);
+    latticeGenerationFailures++;
+    lastLatticeGenerationError = String(error).slice(0, 180);
+    try { world.setDynamicProperty(latticeKey, false); } catch {}
     console.warn("[Lattice of Greed] Lattice generation paused: " + String(error));
   } finally {
+    releaseRegionTickingArea(areaId);
     generatingMain.delete(latticeKey);
   }
 }
@@ -578,7 +624,7 @@ function queueMainStructures(rx, rz) {
   const key = regionKey("region_main", rx, rz);
   const id = rx + "," + rz;
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key) ||
-      queuedMainStructures.has(id) || !regionIsLoaded(mainDim(), rx, rz)) return;
+      queuedMainStructures.has(id)) return;
   queuedMainStructures.add(id);
   mainStructureQueue.push({ rx, rz });
   pumpMainStructureQueue();
@@ -594,7 +640,6 @@ function pumpMainStructureQueue() {
     queuedMainStructures.delete(next.rx + "," + next.rz);
     const key = regionKey("region_main", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) continue;
-    if (!regionIsLoaded(mainDim(), next.rx, next.rz)) continue;
     activeMainStructures++;
     void generateMainStructures(next.rx, next.rz).finally(() => {
       activeMainStructures = Math.max(0, activeMainStructures - 1);
@@ -607,9 +652,8 @@ async function generateMainStructures(rx, rz) {
   const key = regionKey("region_main", rx, rz);
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) return;
   const dim = mainDim();
-  if (!regionIsLoaded(dim, rx, rz)) return;
   generatingMainStructures.add(key);
-  world.setDynamicProperty(key, "building");
+  let areaId;
   const sx = rx * REGION_SIZE;
   const sz = rz * REGION_SIZE;
   const tasks = [];
@@ -617,6 +661,8 @@ async function generateMainStructures(rx, rz) {
   const signs = [];
   const barrels = [];
   try {
+    areaId = await acquireRegionTickingArea("structure", dim, rx, rz, Y_MIN, Y_MAX);
+    world.setDynamicProperty(key, "building");
     enqueueMainTree(tasks, sx, sz);
     enqueueExtraPlatforms(tasks, sx, sz);
     enqueueTowerSlices(tasks, chests, signs, sx, sz);
@@ -650,10 +696,14 @@ async function generateMainStructures(rx, rz) {
       }, 2);
     }
     world.setDynamicProperty(key, true);
+    lastStructureGenerationError = "none";
   } catch (error) {
-    world.setDynamicProperty(key, false);
+    structureGenerationFailures++;
+    lastStructureGenerationError = String(error).slice(0, 180);
+    try { world.setDynamicProperty(key, false); } catch {}
     console.warn("[Lattice of Greed] Structure generation paused: " + String(error));
   } finally {
+    releaseRegionTickingArea(areaId);
     generatingMainStructures.delete(key);
   }
 }
@@ -672,7 +722,6 @@ function pumpMainRegionQueue() {
       continue;
     }
     if (generatingMain.has(key)) continue;
-    if (!regionIsLoaded(mainDim(), next.rx, next.rz)) continue;
 
     activeMainRegions++;
     void generateMainRegion(next.rx, next.rz).finally(() => {
@@ -698,7 +747,6 @@ function generateLoadedMainRegions(player) {
       const z = rz + dz;
       const latticeKey = regionKey("region_lattice", x, z);
       const queueId = x + "," + z;
-      if (!regionIsLoaded(mainDim(), x, z)) continue;
       if (world.getDynamicProperty(latticeKey) === true) {
         queueMainStructures(x, z);
         continue;
@@ -1658,8 +1706,13 @@ function nearbyPortal(dim, player) {
 
 system.beforeEvents.startup.subscribe(event => {
   for (const id of [DIM.main, DIM.dream, DIM.memory]) {
-    try { event.dimensionRegistry.registerCustomDimension(id); }
-    catch (error) { console.warn("[Lattice of Greed] Dimension registration: " + id + ": " + String(error)); }
+    try {
+      event.dimensionRegistry.registerCustomDimension(id);
+    } catch (error) {
+      const message = id + ": " + String(error);
+      dimensionRegistrationErrors.push(message);
+      console.warn("[Lattice of Greed] Dimension registration: " + message);
+    }
   }
 });
 
@@ -1735,6 +1788,34 @@ world.afterEvents.scriptEventReceive.subscribe(event => {
   else if (event.id === "log:status") {
     player.sendMessage("§8Restoration: " + stat("restoration") + " | World damage: " + currentDamageScore() +
       " | Tesseract mining: " + stat("tesseract_mined") + ". This is diagnostic information, not a morality score.");
+  } else if (event.id === "log:lattice_status") {
+    const rx = floorDiv(player.location.x, REGION_SIZE);
+    const rz = floorDiv(player.location.z, REGION_SIZE);
+    const latticeValue = world.getDynamicProperty(regionKey("region_lattice", rx, rz));
+    const structureValue = world.getDynamicProperty(regionKey("region_main", rx, rz));
+    const stateName = value => value === true ? "done" : value === "building" ? "building" : value === false ? "retry" : "not generated";
+    let loaded = false;
+    let ticking = "unavailable";
+    try {
+      loaded = regionIsLoaded(mainDim(), rx, rz);
+      const manager = world.tickingAreaManager;
+      ticking = manager.chunkCount + "/" + manager.maxChunkCount;
+    } catch {}
+    player.sendMessage("§8[Lattice] Dimension=" + player.dimension.id + "; region=" + rx + "," + rz + "; loaded=" + loaded);
+    player.sendMessage("§8Lattice=" + stateName(latticeValue) + "; structures=" + stateName(structureValue) +
+      "; queue=" + mainRegionQueue.length + "; active=" + activeMainRegions);
+    player.sendMessage("§8Ticking chunks=" + ticking + "; lattice failures=" + latticeGenerationFailures +
+      "; structure failures=" + structureGenerationFailures);
+    if (lastLatticeGenerationError !== "none") player.sendMessage("§cLast lattice error: " + lastLatticeGenerationError);
+    if (lastStructureGenerationError !== "none") player.sendMessage("§cLast structure error: " + lastStructureGenerationError);
+    if (dimensionRegistrationErrors.length) player.sendMessage("§cDimension registration error: " + dimensionRegistrationErrors[dimensionRegistrationErrors.length - 1]);
+  } else if (event.id === "log:lattice_recheck") {
+    if (player.dimension.id !== DIM.main) {
+      player.sendMessage("§cLattice recheck only runs from the abyss dimension.");
+    } else {
+      generateLoadedMainRegions(player);
+      player.sendMessage("§8Nearby ungenerated regions queued. Run /function lattice_status again in a few seconds.");
+    }
   }
 });
 
