@@ -46,8 +46,16 @@ jobs:
               assert required <= names, f'Missing files: {required - names}'
               manifest = json.loads(z.read('manifest.json'))
               script = z.read('scripts/main.js').decode('utf-8')
+              root = Path('mods/lattice-of-greed/full-version')
+              assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Pack manifest is stale'
+              assert z.read('README.md') == (root / 'README.md').read_bytes(), 'Pack README is stale'
+              assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Pack script is stale'
               assert manifest['header']['uuid'] != 'cb2d6d2a-bc2a-4f5b-a1df-6f8ec8d7a103'
               assert manifest['modules'][0]['uuid'] != 'a4e8f7bb-5d5f-4e7f-83bd-6d7f0f4a2e91'
+              assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
               assert 'log:abyss' in script and 'log:dream' in script and 'log:memory' in script
-              print(f'Archive OK: {pack.stat().st_size} bytes; {len(names)} entries.')
+              assert 'HudElement.All' not in script, 'Unknown HudElement enum member remains'
+              assert 'world.beforeEvents.playerPlaceBlock.subscribe' in script, 'Dream block-placement restriction missing'
+              assert 'world.afterEvents.playerInteractWithBlock.subscribe' in script, 'Block interaction handlers missing'
+              print(f'Archive OK and matches source: {pack.stat().st_size} bytes; {len(names)} entries.')
           PY
