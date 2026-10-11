@@ -113,30 +113,50 @@ City Biome Barrels similarly reduce the chance of unusual structures appearing. 
 
 ## 9. Day, night, and the abyss
 
-The normally gray abyss may have its own day/night cycle. At night, the abyss becomes nearly pitch-black, fog thickens dramatically, and visibility drops. This makes navigating the lattice more dangerous and raises the risk of falling.
+The normally gray abyss may have its own day/night cycle. At night, the abyss becomes nearly pitch-black, fog thickens dramatically, and visibility drops. This makes navigating the lattice more dangerous and raises the risk of falling. Every night also triggers a nightmare, described in the next section.
 
 The darkness must be frightening but fair. If the fog completely hides every useful landmark, falls may feel arbitrary rather than tense. Potential navigation cues include faint lattice silhouettes, distant sounds, or rare lights. Whether sleeping is possible, difficult, costly, or unavailable remains undecided.
 
 A possible transition into the dream sequence begins before or during nightfall: fog condenses, a blindness-like effect thickens, the screen becomes black, and the interface fades away. The player then snaps into a dream/flashback version of the Overworld. The precise relationship between the night cycle and the dream transition needs to be finalized.
 
-## 10. Nightly dreams and flash nightmares
+## 10. Nightmares and daymares
 
-The player may be transported to a dreamlike snapshot of the Overworld every night. A dream lasts around one minute. The player has an empty inventory, no user interface, and cannot break or place blocks. They can only walk around and observe.
+Dreams are called **nightmares** when they occur during the ordinary night cycle, and **daymares** when they interrupt the player during the day. They show a strange, non-interactive version of the Overworld that reflects the world's condition and the player's actions.
 
-The dream world is already damaged by default: random dirt patches, cobblestone blocks, ruined or misplaced features, and other signs that the Overworld has been damaged before the player's current actions. As the minute passes, the sky transitions from day toward night. The sky, terrain, plants, and structures may gradually improve if the player has performed restorative actions; harmful extraction may leave the dream more damaged.
+### Nightmares
+
+- A nightmare triggers every night.
+- The player is transported to a dreamlike snapshot of the Overworld.
+- The player has an empty inventory and no user interface. They cannot break or place blocks; they can only walk around and observe.
+- The nightmare lasts roughly one minute, then returns the player to the abyss. The exact timing and how it aligns with the abyss's day/night cycle still need to be finalized.
+- The dream world is already damaged by default: random dirt patches, cobblestone blocks, ruined or misplaced features, and other signs that the Overworld was damaged before the player's current actions.
+- As the nightmare unfolds, the sky transitions from day toward night. The sky, terrain, plants, and structures may gradually improve if the player has performed restorative actions; harmful extraction may leave the dream more damaged.
 
 Dream details can reflect the player's choices:
 - Trees may look subtly wrong or partly submerged in the ground, echoing the special tree structure.
 - If the player has cut down trees, a few recent-looking fallen trees may appear with their leaves still attached.
-- If the player has exploited a Tesseract, the dream landscape may be unusually flat, and a Tesseract may appear as a vision with signs such as “You took this away.”
-- Mobs may still appear, but much less frequently than normal. When they do appear, they may stare at the player even from far away, creating an uncanny sense of loneliness.
+- If the player has exploited a Tesseract, the landscape may be unusually flat, and a Tesseract-like structure may appear with a sign such as “Does the terrain look a bit flat to you?”
+- Mobs may appear much less frequently than usual. When they do appear, they may stare at the player even from far away, creating an uncanny sense of loneliness.
 - Restorative actions may cause new flowers, structures, or villages to appear and the sky and landscape to return toward a more natural state.
 
-The dream is a vision, not a second resource dimension. Dream blocks and structures should be non-interactive so players cannot farm resources or use the dream as a second survival world.
+### Daymares
 
-Shorter “flash nightmares” may sometimes interrupt play: the screen fades out, the player sees a brief scene for a few seconds, then returns to the abyss. These could be tied to especially consequential actions, but frequency and triggers are undecided.
+Daymares are rarer interruptions that can occur during the day, potentially after especially heavy exploitation of a Tesseract, such as mining a stack of resources from it. A daymare abruptly transports the player into a similar dream-space.
 
-The dream should be lonely and unsettling, but not uniformly miserable. Small signs of recovery should feel rare and meaningful. Dreams must communicate consequences without becoming repetitive cutscenes or interrupting play too often.
+The player must wander and discover something meaningful: for example, a Tesseract-like structure accompanied by a message that hints at the consequences of their actions. The dream-space may appear to end abruptly at a cut-off edge where the terrain and sky simply stop. There is no visible wall or ordinary border, but the player cannot walk beyond that edge. This should feel like reality has been cut short, not like the player has reached a conventional world boundary.
+
+Possible signs include:
+- A Tesseract-like structure with the message “Does the terrain look a bit flat to you?”
+- A structure or sign that suggests the player has taken something away from the world.
+- Other brief, contextual clues written in the mysterious author's consistent voice.
+
+The daymare's exact ending rule is not fully settled. The current idea is that discovering a clue may end it, though a short time limit of around one minute has also been suggested. The final rule should keep daymares eerie and purposeful without making them frustrating to explore.
+
+### Shared rules and design cautions
+
+Nightmares and daymares are visions, not second resource dimensions. Dream blocks and structures are non-interactive, so players cannot farm resources or use a dream as a second survival world. Their purpose is to reveal consequences, hint at the story, and sometimes show that restoration is working.
+
+The dream should be lonely and unsettling, but not uniformly miserable. Small signs of recovery should feel rare and meaningful. Daymares should be rare enough to remain surprising, and nightmares should not become repetitive cutscenes that interrupt play too aggressively.
 
 ## 11. The Temi village
 
@@ -188,7 +208,8 @@ The ending should not simply label the player good or bad. A mixed landscape can
 - What is the maximum city height, and how does it relate to Minecraft's build-height limits?
 - Are books guaranteed in every city building, or simply common?
 - Do Biome Barrel effects trigger when opened or only when resources are taken?
-- How exactly are the night cycle, abyss darkness, dream transition, and dream's day-to-night minute connected?
+- How exactly are the night cycle, abyss darkness, and nightmare transition connected?
+- Do daymares end as soon as the player finds a clue, after around one minute, or whichever happens first?
 - Can the player sleep, and if so, what does sleeping cost or change?
 - How does the game track extraction and restoration without a visible morality meter?
 - How often can flash nightmares occur without becoming annoying?
