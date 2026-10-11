@@ -59,7 +59,7 @@ jobs:
             'world.getDynamicProperty',
             'world.setDynamicProperty',
             'NEARBY_REGION_RADIUS',
-            'minecraft:wooden_pickaxe',
+            'wooden_pickaxe',
             'minecraft:chest',
             'minecraft:crafting_table',
             'minecraft:furnace',
