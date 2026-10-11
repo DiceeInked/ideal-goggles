@@ -91,7 +91,7 @@ jobs:
               assert 'world.beforeEvents.playerPlaceBlock.subscribe' in script, 'Dream block-placement restriction missing'
               assert 'world.afterEvents.playerInteractWithBlock.subscribe' in script, 'Block interaction handlers missing'
               assert 'dy = -3; dy <= -1' in script, '3x3x3 platform generation missing'
-              assert 'const offsets = [' in script and '[-1, -1]' in script, 'Diagonal lattice generation missing'
+              assert 'for (let dx = -1; dx <= 1; dx++)' in script and 'for (let dz = -1; dz <= 1; dz++)' in script, 'Nearby diagonal lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_REGIONS = 2' in script and 'pumpMainRegionQueue' in script, 'Queued lattice generation missing'
               assert 'addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock")' in script, 'Tree island center must be bedrock'
               assert 'minecraft:grass_block' in script, 'Grass top layer missing'
