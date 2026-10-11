@@ -1,0 +1,53 @@
+name: Validate Lattice of Greed pack
+
+on:
+  push:
+    paths:
+      - "mods/lattice-of-greed/full-version/**"
+      - ".github/workflows/validate-lattice-pack.yml"
+  pull_request:
+    paths:
+      - "mods/lattice-of-greed/full-version/**"
+      - ".github/workflows/validate-lattice-pack.yml"
+
+jobs:
+  static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check JavaScript syntax
+        run: node --input-type=module --check < mods/lattice-of-greed/full-version/scripts/main.js
+      - name: Validate manifest and UUIDs
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('mods/lattice-of-greed/full-version/manifest.json', 'utf8'));
+          if (manifest.format_version !== 2) throw new Error('Unexpected manifest format');
+          if (!manifest.header.uuid || !manifest.modules?.[0]?.uuid) throw new Error('Missing UUID');
+          if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
+          if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
+          console.log('Manifest JSON and UUIDs are valid.');
+          NODE
+      - name: Verify importable mcpack archive
+        run: |
+          python3 - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          pack = Path('mods/lattice-of-greed/full-version/Lattice-of-Greed-Full-1.0.0.mcpack')
+          assert pack.is_file(), 'Missing .mcpack'
+          with zipfile.ZipFile(pack) as z:
+              names = set(z.namelist())
+              required = {'manifest.json', 'README.md', 'scripts/main.js'}
+              assert required <= names, f'Missing files: {required - names}'
+              manifest = json.loads(z.read('manifest.json'))
+              script = z.read('scripts/main.js').decode('utf-8')
+              assert manifest['header']['uuid'] != 'cb2d6d2a-bc2a-4f5b-a1df-6f8ec8d7a103'
+              assert manifest['modules'][0]['uuid'] != 'a4e8f7bb-5d5f-4e7f-83bd-6d7f0f4a2e91'
+              assert 'log:abyss' in script and 'log:dream' in script and 'log:memory' in script
+              print(f'Archive OK: {pack.stat().st_size} bytes; {len(names)} entries.')
+          PY
