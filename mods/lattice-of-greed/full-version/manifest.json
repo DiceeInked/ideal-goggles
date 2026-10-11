@@ -3,11 +3,11 @@
   "header": {
     "name": "Lattice of Greed: Full Version",
     "description": "A surreal scarcity survival world with a bedrock lattice, city towers, a Tesseract, dreams, restoration, and a world that remembers.",
-    "uuid": "b7f3c2a8-6d41-4e95-8a20-1c7d9e5f3b64",
+    "uuid": "c84a1f37-9d62-4b08-a5e3-7f1c2d6b904e",
     "version": [
       1,
       0,
-      2
+      3
     ],
     "min_engine_version": [
       1,
@@ -19,11 +19,11 @@
     {
       "type": "script",
       "language": "javascript",
-      "uuid": "e2a9d4c1-7f63-4b08-9d52-6a1e8c3f5b70",
+      "uuid": "f19b6d42-3a87-4e51-9c20-6d8f2a4b715c",
       "version": [
         1,
         0,
-        2
+        3
       ],
       "entry": "scripts/main.js"
     }
