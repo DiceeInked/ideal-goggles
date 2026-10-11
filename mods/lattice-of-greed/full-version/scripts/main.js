@@ -57,6 +57,13 @@ const queuedMainRegions = new Set();
 const mainRegionQueue = [];
 let activeMainRegions = 0;
 const MAX_ACTIVE_MAIN_REGIONS = 2;
+const generatingMainStructures = new Set();
+const queuedMainStructures = new Set();
+const mainStructureQueue = [];
+let activeMainStructures = 0;
+const MAX_ACTIVE_MAIN_STRUCTURES = 1;
+let focusMainRegionX = 0;
+let focusMainRegionZ = 0;
 const generatingDream = new Set();
 const newlyPlantedSaplings = new Map();
 const watcherEntities = new Map();
@@ -538,11 +545,66 @@ function enqueueBarrelsForRegion(tasks, barrels, sx, sz) {
 }
 
 async function generateMainRegion(rx, rz) {
-  const key = regionKey("region_main", rx, rz);
-  if (world.getDynamicProperty(key) === true || generatingMain.has(key)) return;
+  const latticeKey = regionKey("region_lattice", rx, rz);
+  if (world.getDynamicProperty(latticeKey) === true || generatingMain.has(latticeKey)) {
+    queueMainStructures(rx, rz);
+    return;
+  }
   const dim = mainDim();
   if (!regionIsLoaded(dim, rx, rz)) return;
-  generatingMain.add(key);
+  generatingMain.add(latticeKey);
+  world.setDynamicProperty(latticeKey, "building");
+  try {
+    // This queue handles only the lattice. Do not let large city/tower tasks
+    // occupy a lattice worker after the walkable grid is already complete.
+    const latticeTasks = [];
+    enqueueLattice(latticeTasks, rx * REGION_SIZE, rz * REGION_SIZE);
+    await applyTasks(dim, latticeTasks, rx, rz, 300);
+    world.setDynamicProperty(latticeKey, true);
+    queueMainStructures(rx, rz);
+  } catch (error) {
+    world.setDynamicProperty(latticeKey, false);
+    console.warn("[Lattice of Greed] Lattice generation paused: " + String(error));
+  } finally {
+    generatingMain.delete(latticeKey);
+  }
+}
+
+function queueMainStructures(rx, rz) {
+  const key = regionKey("region_main", rx, rz);
+  const id = rx + "," + rz;
+  if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key) ||
+      queuedMainStructures.has(id) || !regionIsLoaded(mainDim(), rx, rz)) return;
+  queuedMainStructures.add(id);
+  mainStructureQueue.push({ rx, rz });
+  pumpMainStructureQueue();
+}
+
+function pumpMainStructureQueue() {
+  mainStructureQueue.sort((a, b) =>
+    (Math.abs(a.rx - focusMainRegionX) + Math.abs(a.rz - focusMainRegionZ)) -
+    (Math.abs(b.rx - focusMainRegionX) + Math.abs(b.rz - focusMainRegionZ))
+  );
+  while (activeMainStructures < MAX_ACTIVE_MAIN_STRUCTURES && mainStructureQueue.length > 0) {
+    const next = mainStructureQueue.shift();
+    queuedMainStructures.delete(next.rx + "," + next.rz);
+    const key = regionKey("region_main", next.rx, next.rz);
+    if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) continue;
+    if (!regionIsLoaded(mainDim(), next.rx, next.rz)) continue;
+    activeMainStructures++;
+    void generateMainStructures(next.rx, next.rz).finally(() => {
+      activeMainStructures = Math.max(0, activeMainStructures - 1);
+      pumpMainStructureQueue();
+    });
+  }
+}
+
+async function generateMainStructures(rx, rz) {
+  const key = regionKey("region_main", rx, rz);
+  if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) return;
+  const dim = mainDim();
+  if (!regionIsLoaded(dim, rx, rz)) return;
+  generatingMainStructures.add(key);
   world.setDynamicProperty(key, "building");
   const sx = rx * REGION_SIZE;
   const sz = rz * REGION_SIZE;
@@ -551,12 +613,6 @@ async function generateMainRegion(rx, rz) {
   const signs = [];
   const barrels = [];
   try {
-    // Lay down the lattice first. Tall city structures can require many more
-    // block edits, so they must not delay the grid that the player is walking on.
-    const latticeTasks = [];
-    enqueueLattice(latticeTasks, sx, sz);
-    await applyTasks(dim, latticeTasks, rx, rz, 300);
-
     enqueueMainTree(tasks, sx, sz);
     enqueueExtraPlatforms(tasks, sx, sz);
     enqueueTowerSlices(tasks, chests, signs, sx, sz);
@@ -589,23 +645,29 @@ async function generateMainRegion(rx, rz) {
         fillContainer(dim, barrel.x, barrel.y, barrel.z, contents, barrel.salt, false);
       }, 2);
     }
-    // After many Tesseract exploits, distant dreamscapes flatten. The main
-    // lattice itself stays structurally regular so it remains traversable.
     world.setDynamicProperty(key, true);
   } catch (error) {
     world.setDynamicProperty(key, false);
-    console.warn("[Lattice of Greed] Region generation paused: " + String(error));
+    console.warn("[Lattice of Greed] Structure generation paused: " + String(error));
   } finally {
-    generatingMain.delete(key);
+    generatingMainStructures.delete(key);
   }
 }
 
 function pumpMainRegionQueue() {
+  mainRegionQueue.sort((a, b) =>
+    (Math.abs(a.rx - focusMainRegionX) + Math.abs(a.rz - focusMainRegionZ)) -
+    (Math.abs(b.rx - focusMainRegionX) + Math.abs(b.rz - focusMainRegionZ))
+  );
   while (activeMainRegions < MAX_ACTIVE_MAIN_REGIONS && mainRegionQueue.length > 0) {
     const next = mainRegionQueue.shift();
     queuedMainRegions.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_main", next.rx, next.rz);
-    if (world.getDynamicProperty(key) === true || generatingMain.has(key)) continue;
+    const key = regionKey("region_lattice", next.rx, next.rz);
+    if (world.getDynamicProperty(key) === true) {
+      queueMainStructures(next.rx, next.rz);
+      continue;
+    }
+    if (generatingMain.has(key)) continue;
     if (!regionIsLoaded(mainDim(), next.rx, next.rz)) continue;
 
     activeMainRegions++;
@@ -620,26 +682,30 @@ function generateLoadedMainRegions(player) {
   if (player.dimension.id !== DIM.main) return;
   const rx = floorDiv(player.location.x, REGION_SIZE);
   const rz = floorDiv(player.location.z, REGION_SIZE);
-  // Recheck every nearby region as the player moves. Queueing prevents nine
-  // heavy builds from competing at once, while prioritizing the player's
-  // current region and immediate neighbors keeps the walkable lattice ahead.
+  focusMainRegionX = rx;
+  focusMainRegionZ = rz;
+
+  // Recheck all nearby chunks as the player moves. The lattice has its own
+  // short queue, separate from the slow structure queue, so tower generation
+  // can never monopolize the workers that extend the walkable grid.
   for (let dx = -1; dx <= 1; dx++) {
     for (let dz = -1; dz <= 1; dz++) {
       const x = rx + dx;
       const z = rz + dz;
-      const key = regionKey("region_main", x, z);
+      const latticeKey = regionKey("region_lattice", x, z);
       const queueId = x + "," + z;
-      if (world.getDynamicProperty(key) === true || generatingMain.has(key) ||
-          queuedMainRegions.has(queueId) || !regionIsLoaded(mainDim(), x, z)) continue;
+      if (!regionIsLoaded(mainDim(), x, z)) continue;
+      if (world.getDynamicProperty(latticeKey) === true) {
+        queueMainStructures(x, z);
+        continue;
+      }
+      if (generatingMain.has(latticeKey) || queuedMainRegions.has(queueId)) continue;
       queuedMainRegions.add(queueId);
       mainRegionQueue.push({ rx: x, rz: z });
     }
   }
-  mainRegionQueue.sort((a, b) =>
-    (Math.abs(a.rx - rx) + Math.abs(a.rz - rz)) -
-    (Math.abs(b.rx - rx) + Math.abs(b.rz - rz))
-  );
   pumpMainRegionQueue();
+  pumpMainStructureQueue();
 }
 
 function enqueueDreamRegion(tasks, sx, sz, damage, restoration, tesseractDamage, treesCut) {
