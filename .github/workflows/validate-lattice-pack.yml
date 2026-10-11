@@ -97,6 +97,8 @@ jobs:
               assert 'regionKey("region_lattice"' in script, 'Separate lattice completion tracking missing'
               assert 'addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock")' in script, 'Tree island center must be bedrock'
               assert 'minecraft:grass_block' in script, 'Grass top layer missing'
+              assert 'hash(cx, cz, 13) < 0.5' in script, '50/50 stone-or-ore roll missing'
+              assert 'PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 14) * PLATFORM_BLOCKS.length)]' in script, 'Equal ore selection missing'
               pool = script[script.index('const PLATFORM_BLOCKS'):script.index('function enqueueExtraPlatforms')]
               for forbidden in ['deepslate_', 'nether_gold_ore', 'nether_quartz_ore', 'minecraft:stone"', 'minecraft:oak_log"', 'minecraft:glass"']:
                   assert forbidden not in pool, f'Non-stone-ore platform type found: {forbidden}'
