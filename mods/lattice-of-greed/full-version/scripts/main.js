@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.2
+ * Lattice of Greed - full-system build, version 1.0.3
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -313,7 +313,11 @@ function enqueueExtraPlatforms(tasks, sx, sz) {
       else if (d <= 64) chance = 0.02;
       chance = Math.max(0.001, chance);
       if (hash(cx, cz, 12) > chance) continue;
-      const pick = PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 13) * PLATFORM_BLOCKS.length)];
+      // Every resource island gets a 50/50 roll: ordinary stone or an ore.
+      // If it rolls ore, each of the eight stone ores has equal probability.
+      const pick = hash(cx, cz, 13) < 0.5
+        ? "minecraft:stone"
+        : PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 14) * PLATFORM_BLOCKS.length)];
       // Each resource cell is a full 3x3x3 dirt island. The top is grass,
       // and the randomized resource sits in the center of the middle layer.
       for (let dy = -3; dy <= -1; dy++) {
