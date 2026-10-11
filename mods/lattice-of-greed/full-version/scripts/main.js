@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.5
+ * Lattice of Greed - full-system build, version 1.0.6
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -35,6 +35,9 @@ const MEMORY_RETURN_TICKS = 420;
 const MAIN_SPAWN = { x: 4.5, y: 2, z: 4.5 };
 const TREE = { x: 2, z: 2 };
 const TESS = { x: -64, z: 64 };
+const TESS_CENTER_Y = 13;
+const TESS_OUTER_RADIUS = 12;
+const TESS_INNER_RADIUS = 6;
 const DREAM_CENTER = { x: 0, y: 64, z: 0 };
 const DREAM_EDGE = 27;
 const TOWER_LIST = [
@@ -66,6 +69,8 @@ let focusMainRegionX = 0;
 let focusMainRegionZ = 0;
 let latticeGenerationFailures = 0;
 let structureGenerationFailures = 0;
+let automaticGenerationChecks = 0;
+let lastAutomaticGenerationError = "none";
 let lastLatticeGenerationError = "none";
 let lastStructureGenerationError = "none";
 const dimensionRegistrationErrors = [];
@@ -379,7 +384,14 @@ function enqueueExtraPlatforms(tasks, sx, sz) {
 
 function towerBounds(tower) {
   const half = Math.floor(tower.size / 2);
-  return { minX: tower.x - half, maxX: tower.x + half - 1, minZ: tower.z - half, maxZ: tower.z + half - 1 };
+  // size is the distance between the outer lattice walls, not the number
+  // of block coordinates. The inclusive max coordinate stays on the grid.
+  return {
+    minX: tower.x - half,
+    maxX: tower.x + half,
+    minZ: tower.z - half,
+    maxZ: tower.z + half
+  };
 }
 
 function pointInTower(x, z, tower) {
@@ -387,78 +399,284 @@ function pointInTower(x, z, tower) {
   return x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ;
 }
 
-function enqueueTowerSlices(tasks, chestList, signList, sx, sz) {
+const LEGACY_TOWER_BLOCKS = new Set([
+  "minecraft:stone_bricks",
+  "minecraft:cracked_stone_bricks",
+  "minecraft:water",
+  "minecraft:chest",
+  "minecraft:standing_sign"
+]);
+
+function clearLegacyTowerBlock(dim, tasks, x, y, z) {
+  const block = blockAt(dim, x, y, z);
+  if (block && LEGACY_TOWER_BLOCKS.has(block.typeId)) {
+    addTask(tasks, x, y, z, "minecraft:air");
+  }
+}
+
+function enqueueLegacyTowerCleanup(dim, tasks, tower, b, sx, sz) {
   const ex = sx + REGION_SIZE - 1;
   const ez = sz + REGION_SIZE - 1;
+  const minX = Math.max(sx, b.minX);
+  const maxX = Math.min(ex, b.maxX);
+  const minZ = Math.max(sz, b.minZ);
+  const maxZ = Math.min(ez, b.maxZ);
+
+  // Earlier builds put their outer wall on size-1 instead of on the next
+  // lattice coordinate. Remove those old walls before drawing the new grid.
+  const legacyMaxX = b.minX + tower.size - 1;
+  const legacyMaxZ = b.minZ + tower.size - 1;
+  const legacyXWalls = [...new Set([b.minX, legacyMaxX])];
+  const legacyZWalls = [...new Set([b.minZ, legacyMaxZ])];
+  for (const x of legacyXWalls) {
+    if (x < sx || x > ex) continue;
+    for (let z = Math.max(sz, b.minZ); z <= Math.min(ez, legacyMaxZ); z++) {
+      if (z < b.minZ || z > legacyMaxZ) continue;
+      for (let y = 1; y <= tower.height; y++) clearLegacyTowerBlock(dim, tasks, x, y, z);
+    }
+  }
+  for (const z of legacyZWalls) {
+    if (z < sz || z > ez) continue;
+    for (let x = Math.max(sx, b.minX); x <= Math.min(ex, legacyMaxX); x++) {
+      if (x < b.minX || x > legacyMaxX) continue;
+      for (let y = 1; y <= tower.height; y++) clearLegacyTowerBlock(dim, tasks, x, y, z);
+    }
+  }
+
+  // Remove the old giant 3x3 water shaft and its raised central ledge.
+  for (let x = tower.x - 1; x <= tower.x + 1; x++) {
+    if (x < sx || x > ex) continue;
+    for (let z = tower.z - 1; z <= tower.z + 1; z++) {
+      if (z < sz || z > ez) continue;
+      for (let y = 1; y <= tower.height; y++) {
+        const block = blockAt(dim, x, y, z);
+        if (block?.typeId === "minecraft:water") addTask(tasks, x, y, z, "minecraft:air");
+      }
+      if (tower.height === 312) {
+        clearLegacyTowerBlock(dim, tasks, x, tower.height + 1, z);
+      }
+    }
+  }
+
+  // Remove old deterministic chest/sign positions so this layout can replace
+  // them with chests placed safely inside the new room cells.
+  for (let floorY = 12; floorY < tower.height; floorY += 12) {
+    const p = 0.025 + 0.30 * (floorY / tower.height);
+    if (hash(tower.x + floorY, tower.z, 34) >= p && floorY !== 12) continue;
+    const chestX = b.minX + 3;
+    const chestZ = b.minZ + 3 + Math.floor(hash(tower.x, floorY, 35) * Math.max(1, tower.size - 6));
+    if (chestX >= sx && chestX <= ex && chestZ >= sz && chestZ <= ez) {
+      clearLegacyTowerBlock(dim, tasks, chestX, floorY + 1, chestZ);
+    }
+    if (floorY === 12) {
+      const signX = chestX + 1;
+      if (signX >= sx && signX <= ex && chestZ >= sz && chestZ <= ez) {
+        clearLegacyTowerBlock(dim, tasks, signX, floorY + 1, chestZ);
+      }
+    }
+  }
+}
+
+function isTowerExteriorOpening(tower, face, panelIndex, floorIndex) {
+  const panelCount = tower.size / GRID_STEP;
+  const openingCount = hash(tower.x + floorIndex * 3, tower.z, 410) < 0.35 ? 2 : 1;
+  for (let slot = 0; slot < openingCount; slot++) {
+    const chosenFace = Math.floor(hash(tower.x + floorIndex + slot * 11, tower.z + floorIndex, 411) * 4);
+    const chosenPanel = Math.floor(hash(tower.x + floorIndex * 5 + slot, tower.z + 17, 412) * panelCount);
+    if (chosenFace === face && chosenPanel === panelIndex) return true;
+  }
+  return false;
+}
+
+function enqueueTowerWaterClimbs(tasks, tower, b, sx, sz) {
+  const corners = [
+    { x: b.minX + 1, z: b.minZ + 1, openX: 1, openZ: 0 },
+    { x: b.maxX - 1, z: b.minZ + 1, openX: 0, openZ: 1 },
+    { x: b.maxX - 1, z: b.maxZ - 1, openX: -1, openZ: 0 },
+    { x: b.minX + 1, z: b.maxZ - 1, openX: 0, openZ: -1 }
+  ];
+  const ex = sx + REGION_SIZE - 1;
+  const ez = sz + REGION_SIZE - 1;
+
+  // Each storey gets a one-block water climb in a different corner room.
+  // It is only four blocks tall and opens through the next floor at that
+  // corner, instead of filling a giant central shaft through the whole tower.
+  for (let floorY = 0; floorY < tower.height; floorY += GRID_STEP) {
+    const corner = corners[(floorY / GRID_STEP) % corners.length];
+    const x = corner.x;
+    const z = corner.z;
+    if (x < sx || x > ex || z < sz || z > ez) continue;
+
+    for (let y = floorY + 1; y <= floorY + GRID_STEP; y++) {
+      addTask(tasks, x, y, z, "minecraft:water");
+    }
+
+    // A small three-sided stone niche keeps most of the water in its corner.
+    // A two-block opening faces into the room so the player can enter it.
+    for (let localY = 1; localY <= 3; localY++) {
+      const y = floorY + localY;
+      for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        if (dx === corner.openX && dz === corner.openZ && localY <= 2) continue;
+        const wx = x + dx;
+        const wz = z + dz;
+        // A neighboring chunk owns its own blocks. The two outside corner
+        // walls are also created by the matching lattice-aligned wall pass.
+        if (wx < sx || wx > ex || wz < sz || wz > ez) continue;
+        addTask(tasks, wx, y, wz, "minecraft:stone");
+      }
+    }
+  }
+}
+
+function enqueueTowerSlices(dim, tasks, chestList, signList, sx, sz) {
+  const ex = sx + REGION_SIZE - 1;
+  const ez = sz + REGION_SIZE - 1;
+
   for (const tower of TOWER_LIST) {
     const b = towerBounds(tower);
     if (b.maxX < sx || b.minX > ex || b.maxZ < sz || b.minZ > ez) continue;
+
     const minX = Math.max(sx, b.minX);
     const maxX = Math.min(ex, b.maxX);
     const minZ = Math.max(sz, b.minZ);
     const maxZ = Math.min(ez, b.maxZ);
-    const elevatorX = tower.x;
-    const elevatorZ = tower.z;
-    const half = 1;
 
-    // Tall ruined buildings: widely spaced floors keep generation manageable.
-    for (let x = minX; x <= maxX; x++) {
-      for (let z = minZ; z <= maxZ; z++) {
-        const edgeX = x === b.minX || x === b.maxX;
-        const edgeZ = z === b.minZ || z === b.maxZ;
-        const inElevator = Math.abs(x - elevatorX) <= half && Math.abs(z - elevatorZ) <= half;
+    enqueueLegacyTowerCleanup(dim, tasks, tower, b, sx, sz);
 
-        for (let floorY = 0; floorY <= tower.height; floorY += 12) {
-          if (!inElevator) addTask(tasks, x, floorY, z, "minecraft:stone_bricks");
-        }
-
-        if (edgeX || edgeZ) {
-          for (let y = 1; y <= tower.height; y++) {
-            const level = Math.floor((y - 1) / 12);
-            const localY = (y - 1) % 12;
-            const westDoor = x === b.minX && z === b.minZ + 2 + ((level * 5) % Math.max(2, tower.size - 4));
-            const eastDoor = x === b.maxX && z === b.minZ + 2 + ((level * 7 + 3) % Math.max(2, tower.size - 4));
-            const northDoor = z === b.minZ && x === b.minX + 2 + ((level * 3 + 1) % Math.max(2, tower.size - 4));
-            const southDoor = z === b.maxZ && x === b.minX + 2 + ((level * 11 + 2) % Math.max(2, tower.size - 4));
-            const doorLevel = localY >= 1 && localY <= 3;
-            const door = doorLevel && (
-              westDoor ||
-              (level % 2 === 0 && eastDoor) ||
-              (level % 3 === 0 && northDoor) ||
-              (level % 4 === 0 && southDoor)
-            );
-            const window = localY === 5 || localY === 6;
-            if (!door && !(window && (x + z + level) % 2 === 0)) {
-              addTask(tasks, x, y, z, tower.id === "spire" ? "minecraft:cracked_stone_bricks" : "minecraft:stone_bricks");
-            }
-          }
-        }
-
-        // Open water elevator shafts: floors deliberately omit the central 3x3.
-        if (inElevator) {
-          for (let y = 1; y < tower.height; y++) addTask(tasks, x, y, z, "minecraft:water");
-        }
-
-        // A narrow stone ledge sits one block above the highest floor.
-        if (tower.height === 312 && x >= tower.x - 1 && x <= tower.x + 1 && z >= tower.z - 1 && z <= tower.z + 1) {
-          addTask(tasks, x, tower.height + 1, z, "minecraft:stone_bricks");
+    // Horizontal floors follow the original lattice spacing exactly.
+    // Bedrock remains on every lattice rail; regular stone fills each 3x3 cell.
+    for (let floorY = 0; floorY <= tower.height; floorY += GRID_STEP) {
+      for (let x = minX; x <= maxX; x++) {
+        for (let z = minZ; z <= maxZ; z++) {
+          addTask(tasks, x, floorY, z,
+            isGridLine(x) || isGridLine(z) ? "minecraft:bedrock" : "minecraft:stone");
         }
       }
     }
 
-    // A room can contain one chest. Chances increase nearer the tower top.
-    for (let floorY = 12; floorY <= tower.height; floorY += 12) {
+    // Extend the lattice's vertical bedrock posts upward at every grid crossing.
+    for (let x = Math.ceil(b.minX / GRID_STEP) * GRID_STEP; x <= b.maxX; x += GRID_STEP) {
+      if (x < minX || x > maxX) continue;
+      for (let z = Math.ceil(b.minZ / GRID_STEP) * GRID_STEP; z <= b.maxZ; z += GRID_STEP) {
+        if (z < minZ || z > maxZ) continue;
+        for (let y = 1; y < tower.height; y++) {
+          addTask(tasks, x, y, z, "minecraft:bedrock");
+        }
+      }
+    }
+
+    // Fill each lattice wall cell with regular stone. Each 4x4 lattice cell
+    // becomes a room with a 3x3 open interior and 3 blocks of headroom.
+    for (let floorY = 0; floorY < tower.height; floorY += GRID_STEP) {
+      const floorIndex = floorY / GRID_STEP;
+
+      for (let x = Math.ceil(b.minX / GRID_STEP) * GRID_STEP; x <= b.maxX; x += GRID_STEP) {
+        if (x < minX || x > maxX) continue;
+        const exterior = x === b.minX || x === b.maxX;
+        const face = x === b.minX ? 0 : 1;
+        for (let z = minZ; z <= maxZ; z++) {
+          if (isGridLine(z)) continue;
+          const cellZ = Math.floor((z - b.minZ) / GRID_STEP);
+          const zOffset = ((z - b.minZ) % GRID_STEP + GRID_STEP) % GRID_STEP;
+          const outerHole = exterior && isTowerExteriorOpening(tower, face, cellZ, floorIndex);
+          for (let localY = 1; localY < GRID_STEP; localY++) {
+            const y = floorY + localY;
+            const doorway = !exterior && localY <= 2 && (zOffset === 1 || zOffset === 2);
+            addTask(tasks, x, y, z, outerHole || doorway ? "minecraft:air" : "minecraft:stone");
+          }
+        }
+      }
+
+      for (let z = Math.ceil(b.minZ / GRID_STEP) * GRID_STEP; z <= b.maxZ; z += GRID_STEP) {
+        if (z < minZ || z > maxZ) continue;
+        const exterior = z === b.minZ || z === b.maxZ;
+        const face = z === b.minZ ? 2 : 3;
+        for (let x = minX; x <= maxX; x++) {
+          if (isGridLine(x)) continue;
+          const cellX = Math.floor((x - b.minX) / GRID_STEP);
+          const xOffset = ((x - b.minX) % GRID_STEP + GRID_STEP) % GRID_STEP;
+          const outerHole = exterior && isTowerExteriorOpening(tower, face, cellX, floorIndex);
+          for (let localY = 1; localY < GRID_STEP; localY++) {
+            const y = floorY + localY;
+            const doorway = !exterior && localY <= 2 && (xOffset === 1 || xOffset === 2);
+            addTask(tasks, x, y, z, outerHole || doorway ? "minecraft:air" : "minecraft:stone");
+          }
+        }
+      }
+    }
+
+    enqueueTowerWaterClimbs(tasks, tower, b, sx, sz);
+
+    // Chests are placed inside room cells, away from lattice intersections.
+    for (let floorY = 12; floorY < tower.height; floorY += 12) {
       const p = 0.025 + 0.30 * (floorY / tower.height);
-      if (hash(tower.x + floorY, tower.z, 34) < p || floorY === 12) {
-        const chestX = b.minX + 3;
-        const chestZ = b.minZ + 3 + (Math.floor(hash(tower.x, floorY, 35) * Math.max(1, tower.size - 6)));
-        if (chestX >= sx && chestX < sx + REGION_SIZE && chestZ >= sz && chestZ < sz + REGION_SIZE) {
-          addTask(tasks, chestX, floorY + 1, chestZ, "minecraft:chest");
-          chestList.push({ x: chestX, y: floorY + 1, z: chestZ, topness: floorY / tower.height, quote: floorY === 12 });
-          if (floorY === 12) signList.push({
-            x: chestX + 1, y: floorY + 1, z: chestZ,
-            text: "Who are you doing this for?"
-          });
+      if (hash(tower.x + floorY, tower.z, 34) >= p && floorY !== 12) continue;
+      const roomCount = tower.size / GRID_STEP;
+      const roomX = Math.floor(hash(tower.x, floorY, 35) * roomCount);
+      const roomZ = Math.floor(hash(tower.z, floorY, 36) * roomCount);
+      const chestX = b.minX + roomX * GRID_STEP + 2;
+      const chestZ = b.minZ + roomZ * GRID_STEP + 2;
+      if (chestX >= sx && chestX <= ex && chestZ >= sz && chestZ <= ez) {
+        addTask(tasks, chestX, floorY + 1, chestZ, "minecraft:chest");
+        chestList.push({ x: chestX, y: floorY + 1, z: chestZ, topness: floorY / tower.height, quote: floorY === 12 });
+        if (floorY === 12) signList.push({
+          x: chestX + 1, y: floorY + 1, z: chestZ,
+          text: "Who are you doing this for?"
+        });
+      }
+    }
+  }
+}
+
+function addTesseractPoint(tasks, x, y, z, sx, sz, typeId = "minecraft:bedrock") {
+  if (x < sx || x >= sx + REGION_SIZE || z < sz || z >= sz + REGION_SIZE) return;
+  addTask(tasks, x, y, z, typeId);
+}
+
+function enqueueTesseractCubeEdges(tasks, sx, sz, centerY, radius) {
+  const cx = TESS.x;
+  const cz = TESS.z;
+  const minX = cx - radius;
+  const maxX = cx + radius;
+  const minY = centerY - radius;
+  const maxY = centerY + radius;
+  const minZ = cz - radius;
+  const maxZ = cz + radius;
+
+  for (let x = minX; x <= maxX; x++) {
+    for (const y of [minY, maxY]) {
+      for (const z of [minZ, maxZ]) addTesseractPoint(tasks, x, y, z, sx, sz);
+    }
+  }
+  for (let y = minY; y <= maxY; y++) {
+    for (const x of [minX, maxX]) {
+      for (const z of [minZ, maxZ]) addTesseractPoint(tasks, x, y, z, sx, sz);
+    }
+  }
+  for (let z = minZ; z <= maxZ; z++) {
+    for (const y of [minY, maxY]) {
+      for (const x of [minX, maxX]) addTesseractPoint(tasks, x, y, z, sx, sz);
+    }
+  }
+}
+
+function enqueueTesseractConnectors(tasks, sx, sz) {
+  for (const signX of [-1, 1]) {
+    for (const signY of [-1, 1]) {
+      for (const signZ of [-1, 1]) {
+        let x = TESS.x + signX * TESS_OUTER_RADIUS;
+        let y = TESS_CENTER_Y + signY * TESS_OUTER_RADIUS;
+        let z = TESS.z + signZ * TESS_OUTER_RADIUS;
+        addTesseractPoint(tasks, x, y, z, sx, sz);
+        // Stair-step each connector one block at a time so it is physically
+        // continuous in Minecraft, joining every outer corner to its inner one.
+        for (let step = 0; step < TESS_OUTER_RADIUS - TESS_INNER_RADIUS; step++) {
+          x -= signX;
+          addTesseractPoint(tasks, x, y, z, sx, sz);
+          y -= signY;
+          addTesseractPoint(tasks, x, y, z, sx, sz);
+          z -= signZ;
+          addTesseractPoint(tasks, x, y, z, sx, sz);
         }
       }
     }
@@ -471,41 +689,31 @@ function enqueueTesseract(tasks, sx, sz) {
   const maxX = TESS.x + 16;
   const minZ = TESS.z - 16;
   const maxZ = TESS.z + 16;
-  if (sx > maxX || sx + REGION_SIZE - 1 < minX || sz > maxZ || sz + REGION_SIZE - 1 < minZ) return;
-  if (consumed) {
-    for (let x = Math.max(sx, minX); x <= Math.min(sx + REGION_SIZE - 1, maxX); x++) {
-      for (let z = Math.max(sz, minZ); z <= Math.min(sz + REGION_SIZE - 1, maxZ); z++) {
-        if (x === TESS.x && z === TESS.z) addTask(tasks, x, 1, z, "minecraft:obsidian");
-        else {
-          const dx = Math.abs(x - TESS.x);
-          const dz = Math.abs(z - TESS.z);
-          if ([4, 8, 12, 16].some(r => (dx === r && dz <= r) || (dz === r && dx <= r))) {
-            for (let y = 1; y <= 14; y++) addTask(tasks, x, y, z, "minecraft:air");
-          }
-        }
+  const ex = sx + REGION_SIZE - 1;
+  const ez = sz + REGION_SIZE - 1;
+  if (sx > maxX || ex < minX || sz > maxZ || ez < minZ) return;
+
+  // Clear the old nested-square structure and any partially built new frame
+  // inside this region before drawing the intended bedrock wireframe.
+  for (let x = Math.max(sx, minX); x <= Math.min(ex, maxX); x++) {
+    for (let z = Math.max(sz, minZ); z <= Math.min(ez, maxZ); z++) {
+      for (let y = 1; y <= TESS_CENTER_Y + TESS_OUTER_RADIUS; y++) {
+        addTask(tasks, x, y, z, "minecraft:air");
       }
     }
+  }
+
+  if (consumed) {
+    addTesseractPoint(tasks, TESS.x, TESS_CENTER_Y, TESS.z, sx, sz, "minecraft:obsidian");
     return;
   }
-  const rings = [16, 12, 8, 4];
-  for (let x = Math.max(sx, minX); x <= Math.min(sx + REGION_SIZE - 1, maxX); x++) {
-    for (let z = Math.max(sz, minZ); z <= Math.min(sz + REGION_SIZE - 1, maxZ); z++) {
-      const dx = Math.abs(x - TESS.x);
-      const dz = Math.abs(z - TESS.z);
-      for (let y = 1; y <= 14; y++) {
-        const horizontalRing = rings.some((r, i) => {
-          if (!((dx === r && dz <= r) || (dz === r && dx <= r))) return false;
-          return true;
-        });
-        const verticalRail = rings.some(r => (dx === r && dz === r) || (dx === r && dz === 0) || (dz === r && dx === 0));
-        const blockType = dx === 4 || dz === 4 ? "minecraft:crying_obsidian" : "minecraft:obsidian";
-        if (horizontalRing && (y === 1 || y === 14 || verticalRail || y === 7)) {
-          addTask(tasks, x, y, z, blockType);
-        }
-      }
-    }
-  }
-  addTask(tasks, TESS.x, 1, TESS.z, "minecraft:crying_obsidian");
+
+  // A recognizable 3D tesseract projection: an outer bedrock cube, a smaller
+  // inner bedrock cube, and eight continuous corner-to-corner connectors.
+  enqueueTesseractCubeEdges(tasks, sx, sz, TESS_CENTER_Y, TESS_OUTER_RADIUS);
+  enqueueTesseractCubeEdges(tasks, sx, sz, TESS_CENTER_Y, TESS_INNER_RADIUS);
+  enqueueTesseractConnectors(tasks, sx, sz);
+  addTesseractPoint(tasks, TESS.x, TESS_CENTER_Y, TESS.z, sx, sz, "minecraft:stone");
 }
 
 const BIOME_LOOT = [
@@ -592,7 +800,7 @@ function enqueueBarrelsForRegion(tasks, barrels, sx, sz) {
 }
 
 async function generateMainRegion(rx, rz) {
-  const latticeKey = regionKey("region_lattice", rx, rz);
+  const latticeKey = regionKey("region_lattice_v106", rx, rz);
   if (world.getDynamicProperty(latticeKey) === true || generatingMain.has(latticeKey)) {
     queueMainStructures(rx, rz);
     return;
@@ -625,7 +833,7 @@ async function generateMainRegion(rx, rz) {
 }
 
 function queueMainStructures(rx, rz) {
-  const key = regionKey("region_main", rx, rz);
+  const key = regionKey("region_main_v106", rx, rz);
   const id = rx + "," + rz;
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key) ||
       queuedMainStructures.has(id)) return;
@@ -642,7 +850,7 @@ function pumpMainStructureQueue() {
   while (activeMainStructures < MAX_ACTIVE_MAIN_STRUCTURES && mainStructureQueue.length > 0) {
     const next = mainStructureQueue.shift();
     queuedMainStructures.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_main", next.rx, next.rz);
+    const key = regionKey("region_main_v106", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) continue;
     activeMainStructures++;
     void generateMainStructures(next.rx, next.rz).finally(() => {
@@ -653,7 +861,7 @@ function pumpMainStructureQueue() {
 }
 
 async function generateMainStructures(rx, rz) {
-  const key = regionKey("region_main", rx, rz);
+  const key = regionKey("region_main_v106", rx, rz);
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) return;
   const dim = mainDim();
   generatingMainStructures.add(key);
@@ -669,7 +877,7 @@ async function generateMainStructures(rx, rz) {
     world.setDynamicProperty(key, "building");
     enqueueMainTree(tasks, sx, sz);
     enqueueExtraPlatforms(tasks, sx, sz);
-    enqueueTowerSlices(tasks, chests, signs, sx, sz);
+    enqueueTowerSlices(dim, tasks, chests, signs, sx, sz);
     enqueueTesseract(tasks, sx, sz);
     enqueueBarrelsForRegion(tasks, barrels, sx, sz);
     await applyTasks(dim, tasks, rx, rz, 420);
@@ -720,7 +928,7 @@ function pumpMainRegionQueue() {
   while (activeMainRegions < MAX_ACTIVE_MAIN_REGIONS && mainRegionQueue.length > 0) {
     const next = mainRegionQueue.shift();
     queuedMainRegions.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_lattice", next.rx, next.rz);
+    const key = regionKey("region_lattice_v106", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true) {
       queueMainStructures(next.rx, next.rz);
       continue;
@@ -749,7 +957,7 @@ function generateLoadedMainRegions(player) {
     for (let dz = -1; dz <= 1; dz++) {
       const x = rx + dx;
       const z = rz + dz;
-      const latticeKey = regionKey("region_lattice", x, z);
+      const latticeKey = regionKey("region_lattice_v106", x, z);
       const queueId = x + "," + z;
       if (world.getDynamicProperty(latticeKey) === true) {
         queueMainStructures(x, z);
@@ -1245,7 +1453,7 @@ async function enterTesseract(player) {
   // Place the replacement block immediately, and clear the structure in loaded
   // chunks. Other sections are cleared lazily when their chunks load again.
   const dim = mainDim();
-  safeSet(dim, TESS.x, 1, TESS.z, "minecraft:obsidian");
+  safeSet(dim, TESS.x, TESS_CENTER_Y, TESS.z, "minecraft:obsidian");
   for (let rx = -5; rx <= -3; rx++) for (let rz = 3; rz <= 5; rz++) {
     if (regionIsLoaded(dim, rx, rz)) clearTesseractChunk(dim, rx, rz);
   }
@@ -1261,17 +1469,23 @@ async function enterTesseract(player) {
 function clearTesseractChunk(dim, rx, rz) {
   const sx = rx * REGION_SIZE;
   const sz = rz * REGION_SIZE;
-  for (let x = sx; x < sx + REGION_SIZE; x++) {
-    for (let z = sz; z < sz + REGION_SIZE; z++) {
-      const dx = Math.abs(x - TESS.x);
-      const dz = Math.abs(z - TESS.z);
-      const ring = [4, 8, 12, 16].some(r => (dx === r && dz <= r) || (dz === r && dx <= r));
-      if (!ring) continue;
-      for (let y = 1; y <= 14; y++) {
-        if (x === TESS.x && z === TESS.z && y === 1) safeSet(dim, x, y, z, "minecraft:obsidian");
-        else safeSet(dim, x, y, z, "minecraft:air");
+  const ex = sx + REGION_SIZE - 1;
+  const ez = sz + REGION_SIZE - 1;
+  const minX = TESS.x - 16;
+  const maxX = TESS.x + 16;
+  const minZ = TESS.z - 16;
+  const maxZ = TESS.z + 16;
+  if (sx > maxX || ex < minX || sz > maxZ || ez < minZ) return;
+
+  for (let x = Math.max(sx, minX); x <= Math.min(ex, maxX); x++) {
+    for (let z = Math.max(sz, minZ); z <= Math.min(ez, maxZ); z++) {
+      for (let y = 1; y <= TESS_CENTER_Y + TESS_OUTER_RADIUS; y++) {
+        safeSet(dim, x, y, z, "minecraft:air");
       }
     }
+  }
+  if (TESS.x >= sx && TESS.x <= ex && TESS.z >= sz && TESS.z <= ez) {
+    safeSet(dim, TESS.x, TESS_CENTER_Y, TESS.z, "minecraft:obsidian");
   }
 }
 
@@ -1805,8 +2019,8 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   } else if (event.id === "log:lattice_status") {
     const rx = floorDiv(player.location.x, REGION_SIZE);
     const rz = floorDiv(player.location.z, REGION_SIZE);
-    const latticeValue = world.getDynamicProperty(regionKey("region_lattice", rx, rz));
-    const structureValue = world.getDynamicProperty(regionKey("region_main", rx, rz));
+    const latticeValue = world.getDynamicProperty(regionKey("region_lattice_v106", rx, rz));
+    const structureValue = world.getDynamicProperty(regionKey("region_main_v106", rx, rz));
     const stateName = value => value === true ? "done" : value === "building" ? "building" : value === false ? "retry" : "not generated";
     let loaded = false;
     let ticking = "unavailable";
@@ -1818,8 +2032,9 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
     player.sendMessage("§8[Lattice] Dimension=" + player.dimension.id + "; region=" + rx + "," + rz + "; loaded=" + loaded);
     player.sendMessage("§8Lattice=" + stateName(latticeValue) + "; structures=" + stateName(structureValue) +
       "; queue=" + mainRegionQueue.length + "; active=" + activeMainRegions);
-    player.sendMessage("§8Ticking chunks=" + ticking + "; lattice failures=" + latticeGenerationFailures +
-      "; structure failures=" + structureGenerationFailures);
+    player.sendMessage("§8Ticking chunks=" + ticking + "; auto checks=" + automaticGenerationChecks +
+      "; lattice failures=" + latticeGenerationFailures + "; structure failures=" + structureGenerationFailures);
+    if (lastAutomaticGenerationError !== "none") player.sendMessage("§cLast automatic error: " + lastAutomaticGenerationError);
     if (lastLatticeGenerationError !== "none") player.sendMessage("§cLast lattice error: " + lastLatticeGenerationError);
     if (lastStructureGenerationError !== "none") player.sendMessage("§cLast structure error: " + lastStructureGenerationError);
     if (dimensionRegistrationErrors.length) player.sendMessage("§cDimension registration error: " + dimensionRegistrationErrors[dimensionRegistrationErrors.length - 1]);
@@ -1848,7 +2063,7 @@ world.afterEvents.playerBreakBlock.subscribe(event => {
       stat("tesseract_consumed") === 0 &&
       b.location.x === TESS.x &&
       b.location.z === TESS.z &&
-      b.location.y === 2 &&
+      b.location.y === TESS_CENTER_Y + 1 &&
       id !== "minecraft:air" &&
       id !== "minecraft:bedrock"
     ) {
@@ -1888,11 +2103,11 @@ world.beforeEvents.playerBreakBlock.subscribe(event => {
   }
   // Keep the one-use portal intact until the player deliberately enters it.
   if (player.dimension.id === DIM.main && stat("tesseract_consumed") === 0 &&
-      block.location.x === TESS.x && block.location.y === 1 && block.location.z === TESS.z) {
+      block.location.x === TESS.x && block.location.y === TESS_CENTER_Y && block.location.z === TESS.z) {
     event.cancel = true;
     return;
   }
-  if (isInsideBuilding(player)) event.cancel = true;
+  // Tower walls are intentionally breakable while the room layout is being tested.
 });
 
 world.beforeEvents.playerPlaceBlock.subscribe(event => {
@@ -1912,8 +2127,8 @@ world.afterEvents.playerInteractWithBlock.subscribe(event => {
   if (!player || !block || player.dimension.id !== DIM.main) return;
   if (stat("tesseract_consumed") > 0) return;
   const loc = block.location;
-  if (loc.x === TESS.x && loc.y === 1 && loc.z === TESS.z &&
-      block.typeId === "minecraft:crying_obsidian") {
+  if (loc.x === TESS.x && loc.y === TESS_CENTER_Y && loc.z === TESS.z &&
+      block.typeId === "minecraft:stone") {
     enterTesseract(player);
   }
 });
@@ -1947,8 +2162,6 @@ system.runInterval(() => {
           try { player.removeEffect("darkness"); } catch {}
         }
       }
-      const rx = floorDiv(player.location.x, REGION_SIZE);
-      const rz = floorDiv(player.location.z, REGION_SIZE);
       // Clear removed Tesseract pieces at a limited rate, avoiding a large
       // synchronous edit burst on every game tick.
       if (stat("tesseract_consumed") > 0 &&
@@ -1961,11 +2174,6 @@ system.runInterval(() => {
         }
       }
 
-      const checkedAt = lastRegionCheck.get(player.id) ?? -10000;
-      if (system.currentTick - checkedAt >= 20) {
-        lastRegionCheck.set(player.id, system.currentTick);
-        generateLoadedMainRegions(player);
-      }
       updateTowerTopTraps(player);
       if (!sessions.has(player.id) && !memoryTrips.has(player.id) && nearbyPortal(mainDim(), player)) finishGame(player);
     } else if (player.dimension.id === DIM.dream) {
@@ -2028,8 +2236,38 @@ system.runInterval(() => {
   }
 }, 1);
 
+// Automatic lattice generation has its own loop. It must not depend on the
+// time-of-day, dream, or effects logic above, any of which may fail separately.
+system.runInterval(() => {
+  for (const player of world.getAllPlayers()) {
+    if (player.dimension.id !== DIM.main) continue;
+    const checkedAt = lastRegionCheck.get(player.id) ?? -10000;
+    if (system.currentTick - checkedAt < 20) continue;
+    lastRegionCheck.set(player.id, system.currentTick);
+    automaticGenerationChecks++;
+    try {
+      generateLoadedMainRegions(player);
+      lastAutomaticGenerationError = "none";
+    } catch (error) {
+      lastAutomaticGenerationError = String(error).slice(0, 180);
+      console.warn("[Lattice of Greed] Automatic region check failed: " + lastAutomaticGenerationError);
+    }
+  }
+}, 10);
+
 world.afterEvents.playerDimensionChange.subscribe(event => {
   const player = event.player;
+  if (player.dimension.id === DIM.main) {
+    lastRegionCheck.delete(player.id);
+    system.runTimeout(() => {
+      try {
+        if (player.dimension.id === DIM.main) generateLoadedMainRegions(player);
+      } catch (error) {
+        lastAutomaticGenerationError = String(error).slice(0, 180);
+        console.warn("[Lattice of Greed] Dimension-entry region check failed: " + lastAutomaticGenerationError);
+      }
+    }, 2);
+  }
   if (player.dimension.id === DIM.dream && !sessions.has(player.id)) {
     system.runTimeout(() => {
       if (player.dimension.id === DIM.dream && !sessions.has(player.id)) restoreSerializedBackup(player);
