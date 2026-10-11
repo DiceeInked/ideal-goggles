@@ -8,7 +8,7 @@
 2. Import `Lattice-of-Greed-Full-1.0.0.mcpack`.
 3. Create a **new world**. Do not test this in a world you care about.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
-5. Enable **Beta APIs** under Experiments, and turn on cheats for testing.
+5. Enable **Beta APIs** under Experiments. Cheats are optional and only needed for the developer `/scriptevent` test commands; enabling them may disable achievements.
 6. Create the world. The add-on moves players into its own custom void dimension; it does not replace normal Overworld terrain while the survival world is running.
 
 The manifest uses newly generated UUIDs and a new version number. The custom dimensions use the `log:` namespace, not the old prototype's `lattice:dream` dimension ID.
