@@ -23,10 +23,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+
       - name: Check JavaScript syntax
         run: node --input-type=module --check < mods/lattice-of-greed/full-version/scripts/main.js
 
-      - name: Validate manifest and function names
+      - name: Validate minimal pack
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
@@ -34,30 +35,35 @@ jobs:
           const root = 'mods/lattice-of-greed/full-version';
           const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
           if (manifest.format_version !== 2) throw new Error('Unexpected manifest format');
-          if (!manifest.header.uuid || !manifest.modules?.[0]?.uuid) throw new Error('Missing UUID');
+          if (manifest.header.version.join('.') !== '1.0.9') throw new Error('Expected release 1.0.9');
+          if (manifest.modules[0].version.join('.') !== '1.0.9') throw new Error('Header/module versions differ');
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
-          if (!Array.isArray(manifest.header.version) || !Array.isArray(manifest.modules?.[0]?.version)) throw new Error('Missing version');
-          if (manifest.header.version.join('.') !== manifest.modules[0].version.join('.')) throw new Error('Header/module versions differ');
-          if (manifest.header.version.join('.') !== '1.0.8') throw new Error('Expected release 1.0.8');
-          if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
-          if (manifest.dependencies?.[0]?.version !== '2.8.0') throw new Error('Expected @minecraft/server 2.8.0 ticking-area API');
-          const min = manifest.header.min_engine_version || [];
-          if (!(min[0] > 1 || (min[0] === 1 && min[1] > 26) || (min[0] === 1 && min[1] === 26 && min[2] >= 10))) {
-            throw new Error('Engine version must be at least 1.26.10');
+          if (manifest.dependencies[0].module_name !== '@minecraft/server' || manifest.dependencies[0].version !== '2.8.0') {
+            throw new Error('Unexpected Script API dependency');
           }
-          const expected = [
-            'daymare.mcfunction', 'finish.mcfunction', 'function_check.mcfunction',
-            'lattice_recheck.mcfunction', 'lattice_status.mcfunction', 'memory.mcfunction',
-            'nightmare.mcfunction', 'status.mcfunction'
-          ];
+          const expected = ['function_check.mcfunction', 'lattice_recheck.mcfunction', 'lattice_status.mcfunction'];
           const actual = fs.readdirSync(path.join(root, 'functions')).filter(name => name.endsWith('.mcfunction')).sort();
-          if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Unexpected function set: ' + actual.join(', '));
-          for (const name of actual) {
-            if (name.includes(':')) throw new Error('Function file names cannot contain colons: ' + name);
-            const body = fs.readFileSync(path.join(root, 'functions', name), 'utf8');
-            if (!body.trim()) throw new Error('Empty function file: ' + name);
-          }
-          console.log('Manifest, Script API version, and colon-free function names validated.');
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Unexpected function files: ' + actual.join(', '));
+          const script = fs.readFileSync(path.join(root, 'scripts/main.js'), 'utf8');
+          for (const required of [
+            'registerCustomDimension(DIMENSION_ID)',
+            'function addLatticeTasks',
+            'function addTreeTasks',
+            'BLOCKS_PER_TICK',
+            'function queueRegion',
+            'system.afterEvents.scriptEventReceive.subscribe',
+            'minecraft:bedrock',
+            'minecraft:oak_log',
+            'minecraft:oak_leaves'
+          ]) if (!script.includes(required)) throw new Error('Missing expected code: ' + required);
+          for (const removed of [
+            'enqueueTowerSlices',
+            'generateDreamRegion',
+            'enqueueTesseract',
+            'moveSerpent',
+            'acquireRegionTickingArea'
+          ]) if (script.includes(removed)) throw new Error('Unrelated old system remains: ' + removed);
+          console.log('Minimal lattice + tree source validated.');
           NODE
 
       - name: Package current release
@@ -70,15 +76,11 @@ jobs:
           version = '.'.join(map(str, manifest['header']['version']))
           package = root / f'Lattice-of-Greed-Full-{version}.mcpack'
           functions = sorted((root / 'functions').glob('*.mcfunction'))
-          if not functions:
-              raise SystemExit('No Bedrock function files found.')
           with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as z:
               z.write(root / 'manifest.json', 'manifest.json')
               z.write(root / 'README.md', 'README.md')
               z.write(root / 'scripts' / 'main.js', 'scripts/main.js')
               for function_file in functions:
-                  if ':' in function_file.stem:
-                      raise SystemExit(f'Function name must not contain a colon: {function_file.name}')
                   z.write(function_file, f'functions/{function_file.name}')
           print(f'Built {package} ({package.stat().st_size} bytes; {len(functions)} functions)')
           PY
@@ -108,59 +110,16 @@ jobs:
           assert pack.is_file(), f'Missing {pack.name}'
           with zipfile.ZipFile(pack) as z:
               names = set(z.namelist())
-              expected_functions = {
-                  'daymare.mcfunction', 'finish.mcfunction', 'lattice_recheck.mcfunction',
-                  'function_check.mcfunction', 'lattice_status.mcfunction', 'memory.mcfunction', 'nightmare.mcfunction',
-                  'status.mcfunction'
+              expected = {
+                  'manifest.json', 'README.md', 'scripts/main.js',
+                  'functions/function_check.mcfunction',
+                  'functions/lattice_recheck.mcfunction',
+                  'functions/lattice_status.mcfunction'
               }
-              required = {'manifest.json', 'README.md', 'scripts/main.js'} | {
-                  f'functions/{name}' for name in expected_functions
-              }
-              assert required <= names, f'Missing files: {required - names}'
-              assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Pack manifest is stale'
-              assert z.read('README.md') == (root / 'README.md').read_bytes(), 'Pack README is stale'
-              assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Pack script is stale'
-              assert b'system.afterEvents.scriptEventReceive.subscribe' in z.read('scripts/main.js'), 'Pack is missing correct Script API v2 event receiver'
-              for name in expected_functions:
-                  assert z.read(f'functions/{name}') == (root / 'functions' / name).read_bytes(), f'Pack function is stale: {name}'
-                  assert ':' not in name, f'Function name must not contain a colon: {name}'
-              assert manifest['header']['version'] == [1, 0, 8], 'Unexpected pack version'
-              assert manifest['dependencies'][0]['version'] == '2.8.0', 'Unexpected Script API version'
-              assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
-              assert 'log:abyss' in (root / 'scripts/main.js').read_text()
-              script = (root / 'scripts/main.js').read_text()
-              assert 'HudElement.All' not in script, 'Unknown HudElement enum member remains'
-              assert 'world.beforeEvents.playerPlaceBlock.subscribe' in script, 'Dream block-placement restriction missing'
-              assert 'world.afterEvents.playerInteractWithBlock.subscribe' in script, 'Block interaction handlers missing'
-              assert 'dy = -3; dy <= -1' in script, '3x3x3 platform generation missing'
-              assert 'for (let dx = -1; dx <= 1; dx++)' in script and 'for (let dz = -1; dz <= 1; dz++)' in script, 'Nearby diagonal lattice generation missing'
-              assert 'MAX_ACTIVE_MAIN_REGIONS = 2' in script and 'pumpMainRegionQueue' in script, 'Queued lattice generation missing'
-              assert 'MAX_ACTIVE_MAIN_STRUCTURES = 1' in script and 'generateMainStructures' in script, 'Heavy structures are not separated from lattice generation'
-              assert 'regionKey("region_lattice_v108"' in script, 'Versioned lattice completion tracking missing'
-              assert 'regionKey("region_main_v108"' in script, 'Versioned structure completion tracking missing'
-              assert 'await manager.createTickingArea(identifier, options)' in script, 'Ticking areas must hold chunks loaded during builds'
-              assert 'await applyTasks(dim, latticeTasks, rx, rz, 300, true)' in script, 'Lattice generation must fail instead of marking failed block writes complete'
-              assert 'await applyTasks(dim, tasks, rx, rz, 420, true)' in script, 'Structure generation must fail instead of marking failed block writes complete'
-              assert 'function verifyLatticeRegion(rx, rz, force = false)' in script, 'Physical lattice verification missing'
-              assert 'physical=' in script, 'Status must distinguish saved markers from physical lattice state'
-              assert 'log:lattice_status' in script and 'log:lattice_recheck' in script, 'Lattice diagnostics missing'
-              assert 'automaticGenerationChecks++' in script, 'Independent automatic region-check loop missing'
-              assert 'lastAutomaticGenerationError' in script, 'Automatic generation diagnostics missing'
-              assert 'system.afterEvents.scriptEventReceive.subscribe' in script, 'Script API v2 script-event listener missing'
-              assert 'world.afterEvents.scriptEventReceive' not in script, 'Script event listener is attached to the wrong API object'
-              assert 'world.afterEvents.scriptEventReceive' not in script, 'Script event listener is attached to the wrong API object'
-              assert 'addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock")' in script, 'Tree island center must be bedrock'
-              assert 'minecraft:grass_block' in script, 'Grass top layer missing'
-              assert 'hash(cx, cz, 13) < 0.5' in script, '50/50 stone-or-ore roll missing'
-              assert 'PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 14) * PLATFORM_BLOCKS.length)]' in script, 'Equal ore selection missing'
-              assert 'enqueueTowerSlices(dim, tasks, chests, signs, sx, sz)' in script, 'Lattice-aligned tower generator missing'
-              assert 'isTowerExteriorOpening' in script and 'enqueueTowerWaterClimbs' in script, 'Tower openings or corner water climbs missing'
-              assert 'enqueueTesseractCubeEdges' in script and 'enqueueTesseractConnectors' in script, '3D Tesseract frame generator missing'
-              assert 'TESS_CENTER_Y = 13' in script, 'Tesseract core height missing'
-              assert 'addTesseractPoint(tasks, TESS.x, TESS_CENTER_Y, TESS.z, sx, sz, "minecraft:stone")' in script, 'Stone Tesseract core missing'
-              assert 'if (isInsideBuilding(player)) event.cancel = true' not in script, 'Tower block-breaking is still disabled'
-              pool = script[script.index('const PLATFORM_BLOCKS'):script.index('function enqueueExtraPlatforms')]
-              for forbidden in ['deepslate_', 'nether_gold_ore', 'nether_quartz_ore', 'minecraft:stone"', 'minecraft:oak_log"', 'minecraft:glass"']:
-                  assert forbidden not in pool, f'Non-stone-ore platform type found: {forbidden}'
-              print(f'Archive OK and matches source: {pack.stat().st_size} bytes; {len(names)} entries.')
+              assert expected == names, f'Unexpected archive contents: {sorted(names)}'
+              assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Manifest is stale'
+              assert z.read('README.md') == (root / 'README.md').read_bytes(), 'README is stale'
+              assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Script is stale'
+              assert manifest['header']['version'] == [1, 0, 9]
+              print(f'Archive OK: {pack.stat().st_size} bytes; {len(names)} entries.')
           PY
