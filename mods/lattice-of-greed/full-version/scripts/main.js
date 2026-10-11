@@ -1,7 +1,7 @@
 import { world, system } from "@minecraft/server";
 
 /*
- * Lattice of Greed - minimal build, version 1.0.9.
+ * Lattice of Greed - minimal build, version 1.1.0.
  * This script does exactly two world-generation jobs:
  * 1. A bedrock lattice from Y=-32 through Y=0, with a four-block grid.
  * 2. One oak tree on its small island at the origin.
@@ -16,12 +16,17 @@ const GRID_MIN = -32;
 const GRID_MAX = 0;
 const GRID_STEP = 4;
 const REGION_SIZE = 16;
+// Bedrock Script API does not expose the client's exact render-distance setting.
+// Four chunks in each direction is a conservative, configurable approximation.
+const NEARBY_REGION_RADIUS = 4;
+const BLOCK_RETRY_COOLDOWN = 100;
 const TREE_X = 2;
 const TREE_Z = 2;
 const BLOCKS_PER_TICK = 240;
 
 const generatedRegions = new Set();
 const jobs = new Map();
+const retryAfterTick = new Map();
 const registrationErrors = [];
 let lastError = "none";
 let totalRegionsBuilt = 0;
@@ -137,7 +142,11 @@ function buildTasks(rx, rz) {
 function queueRegion(rx, rz, force = false) {
   const key = regionKey(rx, rz);
   if (!force && (generatedRegions.has(key) || jobs.has(key))) return;
-  if (force) generatedRegions.delete(key);
+  if (!force && (retryAfterTick.get(key) || 0) > system.currentTick) return;
+  if (force) {
+    generatedRegions.delete(key);
+    retryAfterTick.delete(key);
+  }
   jobs.set(key, {
     rx,
     rz,
@@ -145,6 +154,32 @@ function queueRegion(rx, rz, force = false) {
     index: 0,
     startedAt: system.currentTick
   });
+}
+
+function queueNearbyRegions(player) {
+  if (player.dimension.id !== DIMENSION_ID) return;
+  const center = regionForPlayer(player);
+  // Queue center first, then expanding square rings so the closest regions
+  // are always prioritized before the edge of the configured render radius.
+  for (let ring = 0; ring <= NEARBY_REGION_RADIUS; ring++) {
+    for (let dx = -ring; dx <= ring; dx++) {
+      for (let dz = -ring; dz <= ring; dz++) {
+        if (Math.max(Math.abs(dx), Math.abs(dz)) !== ring) continue;
+        queueRegion(center.rx + dx, center.rz + dz);
+      }
+    }
+  }
+}
+
+function distanceToNearestPlayer(rx, rz) {
+  let nearest = Infinity;
+  for (const player of world.getAllPlayers()) {
+    if (player.dimension.id !== DIMENSION_ID) continue;
+    const pos = regionForPlayer(player);
+    const distance = Math.max(Math.abs(pos.rx - rx), Math.abs(pos.rz - rz));
+    if (distance < nearest) nearest = distance;
+  }
+  return nearest;
 }
 
 function setTask(dim, task) {
@@ -161,48 +196,54 @@ function setTask(dim, task) {
 function processJobs() {
   if (jobs.size === 0) return;
   const dim = mainDimension();
+  let selectedKey = null;
+  let selectedJob = null;
+  let selectedDistance = Infinity;
 
+  // Work on the nearest queued region that should be inside a player's
+  // configured render-radius approximation. Chunks outside it remain queued
+  // until a player moves closer.
   for (const [key, job] of jobs) {
-    // Only edit a region while a player is standing in it. This avoids
-    // guessing whether a custom-dimension chunk is loaded through an API
-    // probe that can disagree with the actual player's loaded area.
-    const occupied = world.getAllPlayers().some(player => {
-      if (player.dimension.id !== DIMENSION_ID) return false;
-      const pos = regionForPlayer(player);
-      return pos.rx === job.rx && pos.rz === job.rz;
-    });
-    if (!occupied) continue;
-    let writes = 0;
-    try {
-      while (job.index < job.tasks.length && writes < BLOCKS_PER_TICK) {
-        setTask(dim, job.tasks[job.index]);
-        job.index++;
-        writes++;
-      }
-      if (job.index >= job.tasks.length) {
-        jobs.delete(key);
-        generatedRegions.add(key);
-        totalRegionsBuilt++;
-        lastError = "none";
-        console.warn("[Lattice of Greed] Built lattice region " + key +
-          " with " + job.tasks.length + " verified block placements.");
-      }
-    } catch (error) {
-      lastError = "Region " + key + ", task " + job.index + "/" + job.tasks.length +
-        ": " + String(error).slice(0, 220);
-      console.warn("[Lattice of Greed] Generation paused: " + lastError);
-      // Keep the failed task at the front and retry while the chunk is loaded.
-      break;
+    const distance = distanceToNearestPlayer(job.rx, job.rz);
+    if (distance > NEARBY_REGION_RADIUS) continue;
+    if (distance < selectedDistance) {
+      selectedDistance = distance;
+      selectedKey = key;
+      selectedJob = job;
     }
-    // One region per tick prevents several nearby players from causing a burst.
-    break;
+  }
+  if (!selectedJob) return;
+
+  let writes = 0;
+  try {
+    while (selectedJob.index < selectedJob.tasks.length && writes < BLOCKS_PER_TICK) {
+      setTask(dim, selectedJob.tasks[selectedJob.index]);
+      selectedJob.index++;
+      writes++;
+    }
+    if (selectedJob.index >= selectedJob.tasks.length) {
+      jobs.delete(selectedKey);
+      retryAfterTick.delete(selectedKey);
+      generatedRegions.add(selectedKey);
+      totalRegionsBuilt++;
+      lastError = "none";
+      console.warn("[Lattice of Greed] Built lattice region " + selectedKey +
+        " with " + selectedJob.tasks.length + " verified block placements.");
+    }
+  } catch (error) {
+    lastError = "Region " + selectedKey + ", task " + selectedJob.index + "/" +
+      selectedJob.tasks.length + ": " + String(error).slice(0, 220);
+    console.warn("[Lattice of Greed] Generation paused: " + lastError);
+    // A chunk at the edge of the radius may not actually be loaded on this
+    // device. Drop this attempt and let the nearby scanner retry after a pause.
+    jobs.delete(selectedKey);
+    retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
   }
 }
 
 function ensurePlayerRegion(player) {
   if (player.dimension.id !== DIMENSION_ID) return;
-  const { rx, rz } = regionForPlayer(player);
-  queueRegion(rx, rz);
+  queueNearbyRegions(player);
 }
 
 function getRelevantPlayer(event) {
@@ -223,7 +264,8 @@ function status(player) {
     (generatedRegions.has(key) ? "built this session" :
       job ? "building " + job.index + "/" + job.tasks.length : "waiting to build"));
   player.sendMessage("§8Regions built=" + totalRegionsBuilt +
-    "; automatic checks=" + totalAutomaticChecks + "; dimension=" + DIMENSION_ID);
+    "; queued=" + jobs.size + "; scan radius=" + NEARBY_REGION_RADIUS +
+    " chunks; automatic checks=" + totalAutomaticChecks);
   if (lastError !== "none") player.sendMessage("§cLast generation error: " + lastError);
   if (registrationErrors.length) {
     player.sendMessage("§cDimension registration error: " +
@@ -274,15 +316,16 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   }
   const { rx, rz } = regionForPlayer(player);
   queueRegion(rx, rz, true);
-  player.sendMessage("§8[Lattice] Rebuilding current region " + regionKey(rx, rz) +
-    ". Stay in this area for a few seconds, then run /function lattice_status.");
+  queueNearbyRegions(player);
+  player.sendMessage("§8[Lattice] Rebuilding current region and queueing nearby regions within " +
+    NEARBY_REGION_RADIUS + " chunks. Stay nearby while they generate.");
 });
 
 system.runInterval(() => {
   if (system.currentTick % 10 === 0) {
     lastCheckTick = system.currentTick;
     for (const player of world.getAllPlayers()) {
-      ensurePlayerRegion(player);
+      queueNearbyRegions(player);
       if (player.dimension.id === DIMENSION_ID) totalAutomaticChecks++;
     }
   }
