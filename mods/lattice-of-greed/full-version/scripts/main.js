@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.7
+ * Lattice of Greed - full-system build, version 1.0.8
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -81,6 +81,8 @@ const specialBarrelDrops = new Map();
 const topTrapVisits = new Set();
 const tesseractRestoreDelay = new Map();
 const lastRegionCheck = new Map();
+const lastLatticeVerification = new Map();
+let lastLatticeVerificationError = "none";
 const lastDreamRegionCheck = new Map();
 let lastTesseractClearTick = -10000;
 let lastNightDay = -1;
@@ -276,11 +278,15 @@ async function applyTasks(dim, tasks, chunkX, chunkZ, batchSize = 420, strictPla
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
     if (!regionIsLoaded(dim, chunkX, chunkZ)) throw new Error("Target chunk unloaded during generation");
-    if (!safeSet(dim, task[0], task[1], task[2], task[3])) {
+    let placed = safeSet(dim, task[0], task[1], task[2], task[3]);
+    let actualType = placed ? blockAt(dim, task[0], task[1], task[2])?.typeId : undefined;
+    if (strictPlacement && actualType !== task[3]) placed = false;
+    if (!placed) {
       failed++;
       if (strictPlacement) {
-        throw new Error("Failed to place " + task[3] + " at " +
-          task[0] + "," + task[1] + "," + task[2]);
+        throw new Error("Failed to verify " + task[3] + " at " +
+          task[0] + "," + task[1] + "," + task[2] +
+          " (found " + String(actualType || "unavailable") + ")");
       }
     }
     if (i > 0 && i % batchSize === 0) await waitTicks(1);
@@ -310,6 +316,46 @@ function enqueueLattice(tasks, sx, sz) {
       for (let y = GRID_MIN; y <= GRID_MAX; y++) addTask(tasks, x, y, z, "minecraft:bedrock");
     }
   }
+}
+
+
+// A saved completion flag is not proof that the bedrock is still present.
+// Inspect every expected lattice position in the player's current region and
+// invalidate the flag if any block is missing or has the wrong type.
+function verifyLatticeRegion(rx, rz, force = false) {
+  const key = regionKey("region_lattice_v108", rx, rz);
+  if (world.getDynamicProperty(key) !== true || generatingMain.has(key)) {
+    return { checked: false, missing: null };
+  }
+  const now = system.currentTick;
+  const previous = lastLatticeVerification.get(key);
+  if (!force && previous !== undefined && now - previous < 100) {
+    return { checked: false, missing: null };
+  }
+  const dim = mainDim();
+  if (!regionIsLoaded(dim, rx, rz)) return { checked: false, missing: null };
+  lastLatticeVerification.set(key, now);
+  const tasks = [];
+  enqueueLattice(tasks, rx * REGION_SIZE, rz * REGION_SIZE);
+  const seen = new Set();
+  for (const task of tasks) {
+    const id = task[0] + "," + task[1] + "," + task[2];
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const block = blockAt(dim, task[0], task[1], task[2]);
+    if (!block || block.typeId !== "minecraft:bedrock") {
+      const found = block?.typeId || "unavailable";
+      const message = "Missing bedrock at " + task[0] + "," + task[1] + "," + task[2] +
+        " (found " + found + ")";
+      try { world.setDynamicProperty(key, false); } catch {}
+      lastLatticeVerification.delete(key);
+      lastLatticeVerificationError = message;
+      console.warn("[Lattice of Greed] Physical lattice check failed: " + message);
+      return { checked: true, missing: { x: task[0], y: task[1], z: task[2], found } };
+    }
+  }
+  lastLatticeVerificationError = "none";
+  return { checked: true, missing: null };
 }
 
 function enqueueMainTree(tasks, sx, sz) {
@@ -806,7 +852,7 @@ function enqueueBarrelsForRegion(tasks, barrels, sx, sz) {
 }
 
 async function generateMainRegion(rx, rz) {
-  const latticeKey = regionKey("region_lattice_v107", rx, rz);
+  const latticeKey = regionKey("region_lattice_v108", rx, rz);
   if (world.getDynamicProperty(latticeKey) === true || generatingMain.has(latticeKey)) {
     queueMainStructures(rx, rz);
     return;
@@ -821,10 +867,12 @@ async function generateMainRegion(rx, rz) {
     enqueueLattice(latticeTasks, rx * REGION_SIZE, rz * REGION_SIZE);
     await applyTasks(dim, latticeTasks, rx, rz, 300, true);
     world.setDynamicProperty(latticeKey, true);
+    lastLatticeVerification.delete(latticeKey);
     lastLatticeGenerationError = "none";
   } catch (error) {
     latticeGenerationFailures++;
     lastLatticeGenerationError = String(error).slice(0, 180);
+    lastAutomaticGenerationError = lastLatticeGenerationError;
     try { world.setDynamicProperty(latticeKey, false); } catch {}
     console.warn("[Lattice of Greed] Lattice generation paused: " + String(error));
   } finally {
@@ -839,7 +887,7 @@ async function generateMainRegion(rx, rz) {
 }
 
 function queueMainStructures(rx, rz) {
-  const key = regionKey("region_main_v106", rx, rz);
+  const key = regionKey("region_main_v108", rx, rz);
   const id = rx + "," + rz;
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key) ||
       queuedMainStructures.has(id)) return;
@@ -856,7 +904,7 @@ function pumpMainStructureQueue() {
   while (activeMainStructures < MAX_ACTIVE_MAIN_STRUCTURES && mainStructureQueue.length > 0) {
     const next = mainStructureQueue.shift();
     queuedMainStructures.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_main_v106", next.rx, next.rz);
+    const key = regionKey("region_main_v108", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) continue;
     activeMainStructures++;
     void generateMainStructures(next.rx, next.rz).finally(() => {
@@ -867,7 +915,7 @@ function pumpMainStructureQueue() {
 }
 
 async function generateMainStructures(rx, rz) {
-  const key = regionKey("region_main_v106", rx, rz);
+  const key = regionKey("region_main_v108", rx, rz);
   if (world.getDynamicProperty(key) === true || generatingMainStructures.has(key)) return;
   const dim = mainDim();
   generatingMainStructures.add(key);
@@ -886,7 +934,7 @@ async function generateMainStructures(rx, rz) {
     enqueueTowerSlices(dim, tasks, chests, signs, sx, sz);
     enqueueTesseract(tasks, sx, sz);
     enqueueBarrelsForRegion(tasks, barrels, sx, sz);
-    await applyTasks(dim, tasks, rx, rz, 420);
+    await applyTasks(dim, tasks, rx, rz, 420, true);
     for (const chest of chests) {
       system.runTimeout(() => {
         const done = fillContainer(dim, chest.x, chest.y, chest.z, [], chest.y, true);
@@ -918,6 +966,7 @@ async function generateMainStructures(rx, rz) {
   } catch (error) {
     structureGenerationFailures++;
     lastStructureGenerationError = String(error).slice(0, 180);
+    lastAutomaticGenerationError = lastStructureGenerationError;
     try { world.setDynamicProperty(key, false); } catch {}
     console.warn("[Lattice of Greed] Structure generation paused: " + String(error));
   } finally {
@@ -934,7 +983,7 @@ function pumpMainRegionQueue() {
   while (activeMainRegions < MAX_ACTIVE_MAIN_REGIONS && mainRegionQueue.length > 0) {
     const next = mainRegionQueue.shift();
     queuedMainRegions.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_lattice_v107", next.rx, next.rz);
+    const key = regionKey("region_lattice_v108", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true) {
       queueMainStructures(next.rx, next.rz);
       continue;
@@ -956,6 +1005,9 @@ function generateLoadedMainRegions(player) {
   focusMainRegionX = rx;
   focusMainRegionZ = rz;
 
+  // Verify physical blocks before trusting a saved completion marker.
+  verifyLatticeRegion(rx, rz);
+
   // Recheck all nearby chunks as the player moves. The lattice has its own
   // short queue, separate from the slow structure queue, so tower generation
   // can never monopolize the workers that extend the walkable grid.
@@ -963,7 +1015,7 @@ function generateLoadedMainRegions(player) {
     for (let dz = -1; dz <= 1; dz++) {
       const x = rx + dx;
       const z = rz + dz;
-      const latticeKey = regionKey("region_lattice_v107", x, z);
+      const latticeKey = regionKey("region_lattice_v108", x, z);
       const queueId = x + "," + z;
       if (world.getDynamicProperty(latticeKey) === true) {
         queueMainStructures(x, z);
@@ -2025,9 +2077,14 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   } else if (event.id === "log:lattice_status") {
     const rx = floorDiv(player.location.x, REGION_SIZE);
     const rz = floorDiv(player.location.z, REGION_SIZE);
-    const latticeValue = world.getDynamicProperty(regionKey("region_lattice_v107", rx, rz));
-    const structureValue = world.getDynamicProperty(regionKey("region_main_v106", rx, rz));
-    const stateName = value => value === true ? "done" : value === "building" ? "building" : value === false ? "retry" : "not generated";
+    const physicalCheck = verifyLatticeRegion(rx, rz, true);
+    if (physicalCheck.missing) generateLoadedMainRegions(player);
+    const latticeValue = world.getDynamicProperty(regionKey("region_lattice_v108", rx, rz));
+    const structureValue = world.getDynamicProperty(regionKey("region_main_v108", rx, rz));
+    const stateName = value => value === true ? "done" : value === "building" ? "building" : value === false ? "retry queued" : "not generated";
+    const physicalState = physicalCheck.missing
+      ? "MISSING at " + physicalCheck.missing.x + "," + physicalCheck.missing.y + "," + physicalCheck.missing.z + " (repair requested)"
+      : physicalCheck.checked ? "verified present" : "not checked this time";
     let loaded = false;
     let ticking = "unavailable";
     try {
@@ -2036,11 +2093,13 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
       ticking = manager.chunkCount + "/" + manager.maxChunkCount;
     } catch {}
     player.sendMessage("§8[Lattice] Dimension=" + player.dimension.id + "; region=" + rx + "," + rz + "; loaded=" + loaded);
-    player.sendMessage("§8Lattice=" + stateName(latticeValue) + "; structures=" + stateName(structureValue) +
+    player.sendMessage("§8Lattice marker=" + stateName(latticeValue) + "; physical=" + physicalState);
+    player.sendMessage("§8Structures marker=" + stateName(structureValue) +
       "; queue=" + mainRegionQueue.length + "; active=" + activeMainRegions);
     player.sendMessage("§8Ticking chunks=" + ticking + "; auto checks=" + automaticGenerationChecks +
       "; lattice failures=" + latticeGenerationFailures + "; structure failures=" + structureGenerationFailures);
     if (lastAutomaticGenerationError !== "none") player.sendMessage("§cLast automatic error: " + lastAutomaticGenerationError);
+    if (lastLatticeVerificationError !== "none") player.sendMessage("§cLast physical lattice mismatch: " + lastLatticeVerificationError);
     if (lastLatticeGenerationError !== "none") player.sendMessage("§cLast lattice error: " + lastLatticeGenerationError);
     if (lastStructureGenerationError !== "none") player.sendMessage("§cLast structure error: " + lastStructureGenerationError);
     if (dimensionRegistrationErrors.length) player.sendMessage("§cDimension registration error: " + dimensionRegistrationErrors[dimensionRegistrationErrors.length - 1]);
@@ -2253,7 +2312,6 @@ system.runInterval(() => {
     automaticGenerationChecks++;
     try {
       generateLoadedMainRegions(player);
-      lastAutomaticGenerationError = "none";
     } catch (error) {
       lastAutomaticGenerationError = String(error).slice(0, 180);
       console.warn("[Lattice of Greed] Automatic region check failed: " + lastAutomaticGenerationError);
