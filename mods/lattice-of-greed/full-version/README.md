@@ -1,11 +1,11 @@
-# Lattice of Greed: Full Version 1.0.4
+# Lattice of Greed: Full Version 1.0.5
 
-**An experimental behavior pack.** The previous build relied on checking whether chunks were loaded, then gave up if Bedrock unloaded one midway through block placement. Version 1.0.4 adds temporary Script API ticking areas to keep each lattice or structure region loaded for the entire build. Automated checks still cannot prove in-game behavior, so use a brand-new test world.
+**An experimental behavior pack.** Version 1.0.4 improved chunk loading, but a review found a separate initialization bug: the script-event listener was attached to the wrong API object. That could stop the script before the repeating lattice-generation loop was registered. Version 1.0.5 fixes the listener to use `system.afterEvents.scriptEventReceive`, adds native function feedback, and keeps the temporary ticking-area fix. Static checks still cannot prove in-game behavior, so test in a brand-new world.
 
 ## Install
 
 1. Delete the old **Lattice of Greed: Prototype** behavior pack from Minecraft's storage / pack list if it is still imported.
-2. Import `Lattice-of-Greed-Full-1.0.4.mcpack`.
+2. Import `Lattice-of-Greed-Full-1.0.5.mcpack`.
 3. Create a **new world**. Do not test this in a world you care about.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
 5. Enable **Beta APIs** under Experiments. Cheats are needed to run the test functions listed below; enabling them may disable achievements.
@@ -29,8 +29,9 @@ The manifest uses newly generated UUIDs and targets `@minecraft/server` 2.8.0, w
 
 ## Testing functions
 
-With cheats enabled, enter these commands in chat. **The function names contain no colons.**
+With cheats enabled, enter these commands in chat. **The function names contain no colons.** Start with `/function function_check`; it uses only a native Bedrock `tellraw` command and does not depend on JavaScript. The other functions print their own confirmation before sending a script event.
 
+- `/function function_check` confirms the Bedrock function folder itself is being loaded.
 - `/function lattice_status` shows the current region, chunk-loaded state, lattice/structure queue counts, ticking-area usage, generation failures, and the latest recorded error.
 - `/function lattice_recheck` queues nearby ungenerated regions again. It does not deliberately reset regions already marked complete.
 - `/function status` prints restoration, damage, and Tesseract counters.
