@@ -4,7 +4,7 @@
     "name": "Lattice of Greed: Lattice + Tree",
     "description": "A minimal void-survival add-on that generates only the bedrock lattice and one oak tree island.",
     "uuid": "90b7a1c6-5e42-4d18-a3f9-72c5e1b8046d",
-    "version": [1, 0, 9],
+    "version": [1, 1, 0],
     "min_engine_version": [1, 26, 10]
   },
   "modules": [
@@ -12,7 +12,7 @@
       "type": "script",
       "language": "javascript",
       "uuid": "5d28e9a1-7c46-4b03-bd65-1a8e7c4f2093",
-      "version": [1, 0, 9],
+      "version": [1, 1, 0],
       "entry": "scripts/main.js"
     }
   ],
