@@ -38,7 +38,7 @@ jobs:
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
           if (!Array.isArray(manifest.header.version) || !Array.isArray(manifest.modules?.[0]?.version)) throw new Error('Missing version');
           if (manifest.header.version.join('.') !== manifest.modules[0].version.join('.')) throw new Error('Header/module versions differ');
-          if (manifest.header.version.join('.') !== '1.0.5') throw new Error('Expected release 1.0.5');
+          if (manifest.header.version.join('.') !== '1.0.6) throw new Error('Expected release 1.0.6');
           if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
           if (manifest.dependencies?.[0]?.version !== '2.8.0') throw new Error('Expected @minecraft/server 2.8.0 ticking-area API');
           const min = manifest.header.min_engine_version || [];
@@ -124,7 +124,7 @@ jobs:
               for name in expected_functions:
                   assert z.read(f'functions/{name}') == (root / 'functions' / name).read_bytes(), f'Pack function is stale: {name}'
                   assert ':' not in name, f'Function name must not contain a colon: {name}'
-              assert manifest['header']['version'] == [1, 0, 5], 'Unexpected pack version'
+              assert manifest['header']['version'] == [1, 0, 6], 'Unexpected pack version'
               assert manifest['dependencies'][0]['version'] == '2.8.0', 'Unexpected Script API version'
               assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
               assert 'log:abyss' in (root / 'scripts/main.js').read_text()
@@ -136,15 +136,25 @@ jobs:
               assert 'for (let dx = -1; dx <= 1; dx++)' in script and 'for (let dz = -1; dz <= 1; dz++)' in script, 'Nearby diagonal lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_REGIONS = 2' in script and 'pumpMainRegionQueue' in script, 'Queued lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_STRUCTURES = 1' in script and 'generateMainStructures' in script, 'Heavy structures are not separated from lattice generation'
-              assert 'regionKey("region_lattice"' in script, 'Separate lattice completion tracking missing'
+              assert 'regionKey("region_lattice_v106"' in script, 'Versioned lattice completion tracking missing'
+              assert 'regionKey("region_main_v106"' in script, 'Versioned structure completion tracking missing'
               assert 'await manager.createTickingArea(identifier, options)' in script, 'Ticking areas must hold chunks loaded during builds'
               assert 'log:lattice_status' in script and 'log:lattice_recheck' in script, 'Lattice diagnostics missing'
+              assert 'automaticGenerationChecks++' in script, 'Independent automatic region-check loop missing'
+              assert 'lastAutomaticGenerationError' in script, 'Automatic generation diagnostics missing'
               assert 'system.afterEvents.scriptEventReceive.subscribe' in script, 'Script API v2 script-event listener missing'
+              assert 'world.afterEvents.scriptEventReceive' not in script, 'Script event listener is attached to the wrong API object'
               assert 'world.afterEvents.scriptEventReceive' not in script, 'Script event listener is attached to the wrong API object'
               assert 'addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock")' in script, 'Tree island center must be bedrock'
               assert 'minecraft:grass_block' in script, 'Grass top layer missing'
               assert 'hash(cx, cz, 13) < 0.5' in script, '50/50 stone-or-ore roll missing'
               assert 'PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 14) * PLATFORM_BLOCKS.length)]' in script, 'Equal ore selection missing'
+              assert 'enqueueTowerSlices(dim, tasks, chests, signs, sx, sz)' in script, 'Lattice-aligned tower generator missing'
+              assert 'isTowerExteriorOpening' in script and 'enqueueTowerWaterClimbs' in script, 'Tower openings or corner water climbs missing'
+              assert 'enqueueTesseractCubeEdges' in script and 'enqueueTesseractConnectors' in script, '3D Tesseract frame generator missing'
+              assert 'TESS_CENTER_Y = 13' in script, 'Tesseract core height missing'
+              assert 'addTesseractPoint(tasks, TESS.x, TESS_CENTER_Y, TESS.z, sx, sz, "minecraft:stone")' in script, 'Stone Tesseract core missing'
+              assert 'if (isInsideBuilding(player)) event.cancel = true' not in script, 'Tower block-breaking is still disabled'
               pool = script[script.index('const PLATFORM_BLOCKS'):script.index('function enqueueExtraPlatforms')]
               for forbidden in ['deepslate_', 'nether_gold_ore', 'nether_quartz_ore', 'minecraft:stone"', 'minecraft:oak_log"', 'minecraft:glass"']:
                   assert forbidden not in pool, f'Non-stone-ore platform type found: {forbidden}'
