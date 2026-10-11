@@ -200,7 +200,7 @@ const STRUCTURE_ROOMS = [
   structureRoom("ocean_monument", "Ocean Monument", "prismarine_bricks", "dark_prismarine", "sea_lantern", "ocean_monument"),
   structureRoom("ocean_ruins", "Ocean Ruins", "mossy_stone_bricks", "stone_bricks", "mossy_cobblestone", "ocean_ruins"),
   structureRoom("shipwreck", "Shipwreck Hold", "oak_planks", "stripped_oak_log", "barrel", "shipwreck"),
-  structureRoom("buried_treasure", "Buried Treasure", "sandstone", "sand", "gold_block", "treasure"),
+  structureRoom("buried_treasure", "Buried Treasure", "sandstone", "sandstone", "gold_block", "treasure"),
   structureRoom("ruined_portal", "Ruined Portal", "obsidian", "crying_obsidian", "gold_block", "ruined_portal"),
   structureRoom("igloo", "Igloo Basement", "snow_block", "packed_ice", "furnace", "igloo"),
   structureRoom("witch_hut", "Witch Hut", "spruce_planks", "mud", "cauldron", "witch_hut"),
