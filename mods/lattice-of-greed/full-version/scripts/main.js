@@ -1667,7 +1667,14 @@ world.afterEvents.playerBreakBlock.subscribe(event => {
 
 world.beforeEvents.playerBreakBlock.subscribe(event => {
   const player = event.player;
+  const block = event.block;
   if (sessions.has(player.id)) {
+    event.cancel = true;
+    return;
+  }
+  // Keep the one-use portal intact until the player deliberately enters it.
+  if (player.dimension.id === DIM.main && stat("tesseract_consumed") === 0 &&
+      block.location.x === TESS.x && block.location.y === 1 && block.location.z === TESS.z) {
     event.cancel = true;
     return;
   }
