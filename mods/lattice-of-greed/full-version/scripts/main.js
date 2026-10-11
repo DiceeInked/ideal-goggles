@@ -1,7 +1,7 @@
 import { world, system, ItemStack } from "@minecraft/server";
 
 /*
- * Lattice of Greed - biome-island build, version 1.4.0.
+ * Lattice of Greed - biome-island build, version 1.5.0.
  * Generated terrain is written once and never reconstructed after its region is
  * saved, so player mining and builds survive chunk re-entry and script restarts.
  * Biome clusters now occupy only one region in each 3x3 region tile, leaving more
@@ -10,6 +10,11 @@ import { world, system, ItemStack } from "@minecraft/server";
  */
 
 const DIMENSION_ID = "log:abyss";
+const NETHER_DIMENSION_ID = "log:nether_void";
+const END_DIMENSION_ID = "log:end_void";
+const AUX_REGION_SIZE = 16;
+const AUX_BLOCKS_PER_TICK = 160;
+const OVERWORLD_END_PORTAL = { x: 256, y: 80, z: 256 };
 const GRID_MIN = -32;
 const GRID_MAX = 0;
 const GRID_STEP = 4;
@@ -26,6 +31,11 @@ const generatedRegions = new Set();
 const jobs = new Map();
 const retryAfterTick = new Map();
 const registrationErrors = [];
+const auxJobs = new Map();
+const auxGeneratedRegions = new Set();
+const auxPortalReady = new Set();
+const portalCooldowns = new Map();
+let endPortalBuilt = false;
 let lastError = "none";
 let totalRegionsBuilt = 0;
 let totalAutomaticChecks = 0;
@@ -1346,6 +1356,278 @@ function processJobs() {
 }
 
 function ensurePlayerRegion(player) {
+// Auxiliary void dimensions for the vanilla Nether and End routes. Bedrock's
+// custom-dimension API supplies a void generator; these functions create the
+// visible terrain manually and persist each completed region independently.
+function auxRegionKey(dimensionId, rx, rz) {
+  return "log:aux_region_" + dimensionId.replace(":", "_") + "_" + rx + "_" + rz;
+}
+
+function auxRegionBuilt(dimensionId, rx, rz) {
+  try { return world.getDynamicProperty(auxRegionKey(dimensionId, rx, rz)) === true; }
+  catch { return false; }
+}
+
+function auxSeeded(x, z, salt) {
+  return seededValue(x, z, salt);
+}
+
+function buildAuxTasks(dimensionId, rx, rz) {
+  const tasks = new Map();
+  const sx = rx * AUX_REGION_SIZE;
+  const sz = rz * AUX_REGION_SIZE;
+  const isNether = dimensionId === NETHER_DIMENSION_ID;
+  const line = value => ((value % GRID_STEP) + GRID_STEP) % GRID_STEP === 0;
+
+  for (let y = GRID_MIN; y <= GRID_MAX; y += GRID_STEP) {
+    for (let x = sx; x < sx + AUX_REGION_SIZE; x++) {
+      for (let z = sz; z < sz + AUX_REGION_SIZE; z++) {
+        if (isNether) {
+          if (line(x) || line(z)) addTask(tasks, x, y, z, "minecraft:netherrack");
+        } else if (line(x) && line(z)) {
+          // The End keeps only the lattice's intersection dots, never its beams.
+          addTask(tasks, x, y, z, "minecraft:end_stone");
+        }
+      }
+    }
+  }
+
+  const cx = sx + 8;
+  const cz = sz + 8;
+  if (isNether) {
+    const biomeRoll = auxSeeded(rx, rz, 4101) % 4;
+    const top = ["minecraft:netherrack", "minecraft:crimson_nylium",
+      "minecraft:warped_nylium", "minecraft:soul_soil"][biomeRoll];
+    const base = ["minecraft:netherrack", "minecraft:basalt",
+      "minecraft:blackstone", "minecraft:nether_bricks"][biomeRoll];
+    if (auxSeeded(rx, rz, 4102) % 100 < 42) {
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        addTask(tasks, cx + dx, -3, cz + dz, base);
+        addTask(tasks, cx + dx, -2, cz + dz, base);
+        addTask(tasks, cx + dx, -1, cz + dz, top);
+      }
+      if (biomeRoll === 1) addTask(tasks, cx, 0, cz, "minecraft:crimson_fungus");
+      if (biomeRoll === 2) addTask(tasks, cx, 0, cz, "minecraft:warped_fungus");
+      if (biomeRoll === 3) {
+        addTask(tasks, cx, 0, cz, "minecraft:glowstone");
+        addTask(tasks, cx + 1, 0, cz, "minecraft:glowstone");
+      }
+    }
+    // Rare fortress/bastion-like silhouettes, distinct from the Overworld rooms.
+    if (auxSeeded(rx, rz, 4103) % 100 < 7) {
+      for (let x = -3; x <= 3; x++) {
+        addTask(tasks, cx + x, -1, cz - 3, "minecraft:nether_bricks");
+        addTask(tasks, cx + x, -1, cz + 3, "minecraft:nether_bricks");
+      }
+      for (let z = -3; z <= 3; z++) {
+        addTask(tasks, cx - 3, -1, cz + z, "minecraft:nether_bricks");
+        addTask(tasks, cx + 3, -1, cz + z, "minecraft:nether_bricks");
+      }
+      for (let y = 0; y <= 3; y++) {
+        addTask(tasks, cx - 3, y, cz - 3, "minecraft:nether_bricks");
+        addTask(tasks, cx + 3, y, cz - 3, "minecraft:nether_bricks");
+        addTask(tasks, cx - 3, y, cz + 3, "minecraft:nether_bricks");
+        addTask(tasks, cx + 3, y, cz + 3, "minecraft:nether_bricks");
+      }
+      addTask(tasks, cx, 0, cz, "minecraft:chest");
+    }
+  } else {
+    // End islands are sparse, while the lattice itself is only isolated dots.
+    if (auxSeeded(rx, rz, 5101) % 100 < 28) {
+      const islandBase = auxSeeded(rx, rz, 5102) % 3 === 0
+        ? "minecraft:purpur_block" : "minecraft:end_stone";
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        addTask(tasks, cx + dx, -3, cz + dz, "minecraft:end_stone");
+        addTask(tasks, cx + dx, -2, cz + dz, islandBase);
+        if ((dx + dz + 6) % 3 === 0) addTask(tasks, cx + dx, -1, cz + dz, "minecraft:chorus_plant");
+      }
+    }
+    // A rare End-city-inspired tower, built from End stone and purpur.
+    if (auxSeeded(rx, rz, 5103) % 100 < 4) {
+      for (let y = -1; y <= 7; y++) {
+        addTask(tasks, cx - 1, y, cz - 1, "minecraft:purpur_pillar");
+        addTask(tasks, cx + 1, y, cz - 1, "minecraft:purpur_pillar");
+        addTask(tasks, cx - 1, y, cz + 1, "minecraft:purpur_pillar");
+        addTask(tasks, cx + 1, y, cz + 1, "minecraft:purpur_pillar");
+      }
+      for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+        addTask(tasks, cx + x, 3, cz + z, "minecraft:purpur_block");
+      }
+      addTask(tasks, cx, 4, cz, "minecraft:ender_chest");
+    }
+  }
+  return [...tasks.values()];
+}
+
+function queueAuxRegion(dimensionId, rx, rz) {
+  const key = dimensionId + "|" + regionKey(rx, rz);
+  if (auxGeneratedRegions.has(key) || auxJobs.has(key) ||
+      auxRegionBuilt(dimensionId, rx, rz)) return;
+  auxJobs.set(key, {
+    key, dimensionId, rx, rz,
+    tasks: buildAuxTasks(dimensionId, rx, rz), index: 0
+  });
+}
+
+function queueAuxNearby(player) {
+  const id = player.dimension.id;
+  if (id !== NETHER_DIMENSION_ID && id !== END_DIMENSION_ID) return;
+  const center = regionForPlayer(player);
+  for (let ring = 0; ring <= 2; ring++) {
+    for (let dx = -ring; dx <= ring; dx++) for (let dz = -ring; dz <= ring; dz++) {
+      if (Math.max(Math.abs(dx), Math.abs(dz)) === ring) {
+        queueAuxRegion(id, center.rx + dx, center.rz + dz);
+      }
+    }
+  }
+}
+
+function processAuxJobs() {
+  let budget = AUX_BLOCKS_PER_TICK;
+  for (const [key, job] of auxJobs) {
+    const nearby = world.getAllPlayers().some(player => {
+      if (player.dimension.id !== job.dimensionId) return false;
+      const pos = regionForPlayer(player);
+      return Math.max(Math.abs(pos.rx - job.rx), Math.abs(pos.rz - job.rz)) <= 2;
+    });
+    if (!nearby) continue;
+    const dim = world.getDimension(job.dimensionId);
+    try {
+      while (job.index < job.tasks.length && budget > 0) {
+        const task = job.tasks[job.index];
+        const block = dim.getBlock({ x: task.x, y: task.y, z: task.z });
+        if (block && block.typeId !== task.typeId) block.setType(task.typeId);
+        job.index++;
+        budget--;
+      }
+      if (job.index >= job.tasks.length) {
+        world.setDynamicProperty(auxRegionKey(job.dimensionId, job.rx, job.rz), true);
+        auxGeneratedRegions.add(key);
+        auxJobs.delete(key);
+      }
+    } catch (error) {
+      lastError = "Auxiliary " + job.dimensionId + " region " + key + ": " +
+        String(error).slice(0, 180);
+      console.warn("[Lattice of Greed] " + lastError);
+      break;
+    }
+    if (budget <= 0) break;
+  }
+}
+
+function setBlockSafe(dim, x, y, z, typeId) {
+  try {
+    const block = dim.getBlock({ x, y, z });
+    if (block && block.typeId !== typeId) block.setType(typeId);
+  } catch (error) {
+    lastError = "Portal placement failed: " + String(error).slice(0, 180);
+  }
+}
+
+function buildReturnGate(dimensionId) {
+  if (auxPortalReady.has(dimensionId)) return;
+  const dim = world.getDimension(dimensionId);
+  const isAbyss = dimensionId === DIMENSION_ID;
+  const cx = isAbyss ? 10 : 0;
+  const cz = isAbyss ? 10 : 0;
+  const floorY = isAbyss ? -1 : 63;
+  const frameY = floorY + 1;
+  const floor = isAbyss ? "minecraft:obsidian" :
+    dimensionId === NETHER_DIMENSION_ID ? "minecraft:nether_bricks" : "minecraft:purpur_block";
+  const frame = isAbyss ? "minecraft:obsidian" :
+    dimensionId === NETHER_DIMENSION_ID ? "minecraft:obsidian" : "minecraft:end_stone_bricks";
+  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
+    setBlockSafe(dim, cx + dx, floorY, cz + dz, floor);
+  }
+  for (let y = frameY; y <= frameY + 2; y++) {
+    setBlockSafe(dim, cx - 1, y, cz, frame);
+    setBlockSafe(dim, cx + 1, y, cz, frame);
+  }
+  for (let dx = -1; dx <= 1; dx++) {
+    setBlockSafe(dim, cx + dx, frameY + 3, cz, frame);
+  }
+  auxPortalReady.add(dimensionId);
+}
+
+function buildOverworldEndPortalIfNear(player) {
+  if (endPortalBuilt || player.dimension.id !== "minecraft:overworld") return;
+  const p = player.location;
+  if (Math.abs(p.x - OVERWORLD_END_PORTAL.x) > 64 ||
+      Math.abs(p.z - OVERWORLD_END_PORTAL.z) > 64) return;
+  const dim = world.getDimension("minecraft:overworld");
+  const { x, y, z } = OVERWORLD_END_PORTAL;
+  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
+    setBlockSafe(dim, x + dx, y - 1, z + dz, "minecraft:stone_bricks");
+  }
+  // Twelve frames surround the portal aperture. Entry is handled by script so
+  // this works even though custom destinations are not vanilla portal targets.
+  for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+    if (Math.abs(dx) === 2 || Math.abs(dz) === 2) {
+      setBlockSafe(dim, x + dx, y, z + dz, "minecraft:end_portal_frame");
+    }
+  }
+  endPortalBuilt = true;
+}
+
+function nearGate(player, cx, y, cz) {
+  const p = player.location;
+  return Math.abs(p.x - cx) < 1.35 && Math.abs(p.z - cz) < 1.35 &&
+    p.y >= y - 1 && p.y <= y + 5;
+}
+
+function routeToDimension(player, dimensionId, destination, message) {
+  const cooldownKey = player.id + "|" + dimensionId;
+  if ((portalCooldowns.get(cooldownKey) || 0) > system.currentTick) return;
+  portalCooldowns.set(cooldownKey, system.currentTick + 80);
+  try {
+    player.teleport(destination, { dimension: world.getDimension(dimensionId) });
+    if (message) player.sendMessage("§5[Lattice] " + message);
+  } catch (error) {
+    lastError = "Portal travel failed: " + String(error).slice(0, 180);
+    player.sendMessage("§c[Lattice] " + lastError);
+  }
+}
+
+function checkScriptPortals() {
+  for (const player of world.getAllPlayers()) {
+    const id = player.dimension.id;
+    if (id === DIMENSION_ID) {
+      buildReturnGate(DIMENSION_ID);
+      if (nearGate(player, 10, 0, 10)) {
+        routeToDimension(player, "minecraft:overworld",
+          { x: 0.5, y: 100, z: 0.5 }, "Returned to the Overworld.");
+      }
+    } else if (id === NETHER_DIMENSION_ID || id === END_DIMENSION_ID) {
+      buildReturnGate(id);
+      queueAuxNearby(player);
+      if (nearGate(player, 0, 64, 0)) {
+        routeToDimension(player, "minecraft:overworld",
+          { x: 0.5, y: 100, z: 0.5 }, "Returned to the Overworld.");
+      }
+    } else if (id === "minecraft:overworld") {
+      buildOverworldEndPortalIfNear(player);
+      const p = player.location;
+      const end = OVERWORLD_END_PORTAL;
+      if (endPortalBuilt && nearGate(player, end.x, end.y, end.z)) {
+        routeToDimension( player, END_DIMENSION_ID,
+          { x: 4.5, y: 64, z: 4.5 }, "Entered the void End.");
+      }
+    }
+  }
+}
+
+function routeVanillaDimension(player) {
+  const id = player.dimension.id;
+  if (id === "minecraft:nether") {
+    routeToDimension(player, NETHER_DIMENSION_ID,
+      { x: 4.5, y: 64, z: 4.5 }, "The Nether's terrain has been replaced by the void lattice.");
+  } else if (id === "minecraft:the_end") {
+    routeToDimension(player, END_DIMENSION_ID,
+      { x: 4.5, y: 64, z: 4.5 }, "The End's terrain has been replaced by the void lattice.");
+  }
+}
+
+
   if (player.dimension.id !== DIMENSION_ID) return;
   queueNearbyRegions(player);
 }
@@ -1380,11 +1662,14 @@ function status(player) {
 }
 
 system.beforeEvents.startup.subscribe(event => {
-  try {
-    event.dimensionRegistry.registerCustomDimension(DIMENSION_ID);
-  } catch (error) {
-    registrationErrors.push(String(error).slice(0, 220));
-    console.warn("[Lattice of Greed] Dimension registration failed: " + String(error));
+  for (const dimensionId of [DIMENSION_ID, NETHER_DIMENSION_ID, END_DIMENSION_ID]) {
+    try {
+      event.dimensionRegistry.registerCustomDimension(dimensionId);
+    } catch (error) {
+      registrationErrors.push(dimensionId + ": " + String(error).slice(0, 220));
+      console.warn("[Lattice of Greed] Dimension registration failed for " +
+        dimensionId + ": " + String(error));
+    }
   }
 });
 
@@ -1392,7 +1677,7 @@ world.afterEvents.playerSpawn.subscribe(event => {
   system.runTimeout(() => {
     const player = event.player;
     if (!player) return;
-    if (player.dimension.id !== DIMENSION_ID) {
+    if (player.dimension.id === "minecraft:overworld") {
       try {
         player.teleport({ x: 1.5, y: 0, z: 2.5 }, { dimension: mainDimension() });
       } catch (error) {
@@ -1400,8 +1685,13 @@ world.afterEvents.playerSpawn.subscribe(event => {
         player.sendMessage("§c[Lattice] " + lastError);
         return;
       }
+    } else {
+      routeVanillaDimension(player);
     }
-    system.runTimeout(() => ensurePlayerRegion(player), 1);
+    system.runTimeout(() => {
+      ensurePlayerRegion(player);
+      queueAuxNearby(player);
+    }, 2);
   }, 1);
 });
 
@@ -1436,10 +1726,24 @@ system.runInterval(() => {
     }
   }
   processJobs();
+  processAuxJobs();
+  if (system.currentTick % 5 === 0) checkScriptPortals();
 }, 1);
 
 world.afterEvents.playerDimensionChange.subscribe(event => {
-  if (event.player.dimension.id === DIMENSION_ID) {
-    system.runTimeout(() => ensurePlayerRegion(event.player), 2);
-  }
+  system.runTimeout(() => {
+    routeVanillaDimension(event.player);
+    if (event.player.dimension.id === DIMENSION_ID) ensurePlayerRegion(event.player);
+    else queueAuxNearby(event.player);
+  }, 2);
+});
+
+// Eyes of Ender retain their vanilla behavior; this add-on also points explorers
+// toward its rare scripted End portal because vanilla Eyes only seek strongholds.
+world.afterEvents.itemUse.subscribe(event => {
+  if (event.itemStack?.typeId !== "minecraft:ender_eye") return;
+  const player = event.source;
+  if (player?.typeId !== "minecraft:player" || player.dimension.id !== "minecraft:overworld") return;
+  player.sendMessage("§5[Lattice] The Eye resonates toward the ancient End gate at X=" +
+    OVERWORLD_END_PORTAL.x + ", Z=" + OVERWORLD_END_PORTAL.z + ".");
 });
