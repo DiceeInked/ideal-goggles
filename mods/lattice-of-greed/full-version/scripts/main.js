@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.0
+ * Lattice of Greed - full-system build, version 1.0.1
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -300,9 +300,16 @@ function enqueueExtraPlatforms(tasks, sx, sz) {
       chance = Math.max(0.001, chance);
       if (hash(cx, cz, 12) > chance) continue;
       const pick = PLATFORM_BLOCKS[Math.floor(hash(cx, cz, 13) * PLATFORM_BLOCKS.length)];
-      for (let dx = -1; dx <= 1; dx++) {
-        for (let dz = -1; dz <= 1; dz++) {
-          addTask(tasks, cx + dx, -1, cz + dz, dx === 0 && dz === 0 ? pick : "minecraft:dirt");
+      // Each resource cell is a full 3x3x3 dirt island. The top is grass,
+      // and the randomized resource sits in the center of the middle layer.
+      for (let dy = -3; dy <= -1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dz = -1; dz <= 1; dz++) {
+            let typeId = "minecraft:dirt";
+            if (dy === -1) typeId = "minecraft:grass_block";
+            else if (dy === -2 && dx === 0 && dz === 0) typeId = pick;
+            addTask(tasks, cx + dx, dy, cz + dz, typeId);
+          }
         }
       }
     }
@@ -537,13 +544,18 @@ async function generateMainRegion(rx, rz) {
   const signs = [];
   const barrels = [];
   try {
-    enqueueLattice(tasks, sx, sz);
+    // Lay down the lattice first. Tall city structures can require many more
+    // block edits, so they must not delay the grid that the player is walking on.
+    const latticeTasks = [];
+    enqueueLattice(latticeTasks, sx, sz);
+    await applyTasks(dim, latticeTasks, rx, rz, 300);
+
     enqueueMainTree(tasks, sx, sz);
     enqueueExtraPlatforms(tasks, sx, sz);
     enqueueTowerSlices(tasks, chests, signs, sx, sz);
     enqueueTesseract(tasks, sx, sz);
     enqueueBarrelsForRegion(tasks, barrels, sx, sz);
-    await applyTasks(dim, tasks, rx, rz);
+    await applyTasks(dim, tasks, rx, rz, 420);
     for (const chest of chests) {
       system.runTimeout(() => {
         const done = fillContainer(dim, chest.x, chest.y, chest.z, [], chest.y, true);
@@ -585,11 +597,19 @@ async function generateLoadedMainRegions(player) {
   if (player.dimension.id !== DIM.main) return;
   const rx = floorDiv(player.location.x, REGION_SIZE);
   const rz = floorDiv(player.location.z, REGION_SIZE);
-  const offsets = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
-  for (const offset of offsets) {
-    const x = rx + offset[0];
-    const z = rz + offset[1];
-    if (regionIsLoaded(mainDim(), x, z)) await generateMainRegion(x, z);
+  // Include diagonals so movement in any direction keeps the lattice ahead
+  // of the player. Regions start independently; each lays its lattice first.
+  const offsets = [
+    [0, 0],
+    [1, 0], [-1, 0], [0, 1], [0, -1],
+    [1, 1], [1, -1], [-1, 1], [-1, -1]
+  ];
+  for (const [dx, dz] of offsets) {
+    const x = rx + dx;
+    const z = rz + dz;
+    if (regionIsLoaded(mainDim(), x, z)) {
+      void generateMainRegion(x, z);
+    }
   }
 }
 

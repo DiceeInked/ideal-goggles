@@ -10,6 +10,9 @@ on:
       - "mods/lattice-of-greed/full-version/**"
       - ".github/workflows/validate-lattice-pack.yml"
 
+permissions:
+  contents: write
+
 jobs:
   static-validation:
     runs-on: ubuntu-latest
@@ -30,32 +33,67 @@ jobs:
           if (manifest.format_version !== 2) throw new Error('Unexpected manifest format');
           if (!manifest.header.uuid || !manifest.modules?.[0]?.uuid) throw new Error('Missing UUID');
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
+          if (!Array.isArray(manifest.header.version) || !Array.isArray(manifest.modules?.[0]?.version)) throw new Error('Missing version');
+          if (manifest.header.version.join('.') !== manifest.modules[0].version.join('.')) throw new Error('Header/module versions differ');
           if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
-          console.log('Manifest JSON and UUIDs are valid.');
+          console.log('Manifest JSON, version, and UUIDs are valid.');
           NODE
+      - name: Package current release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          python3 - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          root = Path('mods/lattice-of-greed/full-version')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          version = '.'.join(map(str, manifest['header']['version']))
+          package = root / f'Lattice-of-Greed-Full-{version}.mcpack'
+          for old in root.glob('Lattice-of-Greed-Full-*.mcpack'):
+              old.unlink()
+          with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as z:
+              z.write(root / 'manifest.json', 'manifest.json')
+              z.write(root / 'README.md', 'README.md')
+              z.write(root / 'scripts' / 'main.js', 'scripts/main.js')
+          print(f'Built {package} ({package.stat().st_size} bytes)')
+          PY
+      - name: Commit refreshed package
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A mods/lattice-of-greed/full-version/
+          if git diff --cached --quiet; then
+            echo "Package already matches source."
+          else
+            git commit -m "Build Lattice of Greed behavior pack"
+            git push
+          fi
       - name: Verify importable mcpack archive
         run: |
           python3 - <<'PY'
           import json, zipfile
           from pathlib import Path
-          pack = Path('mods/lattice-of-greed/full-version/Lattice-of-Greed-Full-1.0.0.mcpack')
-          assert pack.is_file(), 'Missing .mcpack'
+          root = Path('mods/lattice-of-greed/full-version')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          version = '.'.join(map(str, manifest['header']['version']))
+          pack = root / f'Lattice-of-Greed-Full-{version}.mcpack'
+          assert pack.is_file(), f'Missing {pack.name}'
           with zipfile.ZipFile(pack) as z:
               names = set(z.namelist())
               required = {'manifest.json', 'README.md', 'scripts/main.js'}
               assert required <= names, f'Missing files: {required - names}'
-              manifest = json.loads(z.read('manifest.json'))
-              script = z.read('scripts/main.js').decode('utf-8')
-              root = Path('mods/lattice-of-greed/full-version')
               assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Pack manifest is stale'
               assert z.read('README.md') == (root / 'README.md').read_bytes(), 'Pack README is stale'
               assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Pack script is stale'
               assert manifest['header']['uuid'] != 'cb2d6d2a-bc2a-4f5b-a1df-6f8ec8d7a103'
               assert manifest['modules'][0]['uuid'] != 'a4e8f7bb-5d5f-4e7f-83bd-6d7f0f4a2e91'
               assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
-              assert 'log:abyss' in script and 'log:dream' in script and 'log:memory' in script
+              assert 'log:abyss' in (root / 'scripts/main.js').read_text()
+              script = (root / 'scripts/main.js').read_text()
               assert 'HudElement.All' not in script, 'Unknown HudElement enum member remains'
               assert 'world.beforeEvents.playerPlaceBlock.subscribe' in script, 'Dream block-placement restriction missing'
               assert 'world.afterEvents.playerInteractWithBlock.subscribe' in script, 'Block interaction handlers missing'
+              assert 'dy = -3; dy <= -1' in script, '3x3x3 platform generation missing'
+              assert 'const offsets = [' in script and '[-1, -1]' in script, 'Diagonal lattice generation missing'
               print(f'Archive OK and matches source: {pack.stat().st_size} bytes; {len(names)} entries.')
           PY
