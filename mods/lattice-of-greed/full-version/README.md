@@ -1,17 +1,17 @@
-# Lattice of Greed: Full Version 1.0.7
+# Lattice of Greed: Full Version 1.0.8
 
-**An experimental behavior pack.** Version 1.0.5 fixed the Script API event listener. Version 1.0.6 moved automatic generation into its own repeating loop, separate from the time-of-day and dream logic. Version 1.0.7 fixes a silent terrain-completion failure: if even one lattice block cannot be placed, that region is no longer marked complete. The error records the block type and coordinates, and the region remains eligible for automatic retry. The lattice completion marker is versioned to `v107` so nearby regions previously marked complete under `v106` are rebuilt. The city and Tesseract designs are otherwise unchanged from 1.0.6. Static checks still cannot prove in-game behavior, so test carefully.
+**An experimental behavior pack.** Version 1.0.8 addresses false completion reports directly. Automatic checks now inspect the actual bedrock in the player's current region instead of trusting a saved marker alone. If a block is missing, the marker is invalidated and that region is queued for repair. Both lattice and structure placement now verify that each requested block actually exists before a region can be marked complete. The status command reports physical verification separately from saved markers. The completion keys are versioned to `v108` so nearby terrain and structures previously marked complete are rebuilt. Static checks cannot prove all in-game behavior, so test carefully.
 
 ## Install
 
-1. Remove or deactivate older **Lattice of Greed: Full Version** releases and the old **Lattice of Greed: Prototype** from Minecraft's storage and world settings. Activate only version 1.0.7.
-2. Import `Lattice-of-Greed-Full-1.0.7.mcpack`.
+1. Remove or deactivate older **Lattice of Greed: Full Version** releases and the old **Lattice of Greed: Prototype** from Minecraft's storage and world settings. Activate only version 1.0.8.
+2. Import `Lattice-of-Greed-Full-1.0.8.mcpack`.
 3. For the cleanest test, create a **new world**. Versioned region markers also let you revisit an existing test world, but old structures are rebuilt gradually as you approach their chunks.
 4. In world settings, activate **Lattice of Greed: Full Version** under Behavior Packs.
 5. Enable **Beta APIs** under Experiments. Cheats are needed to run the test functions listed below; enabling them may disable achievements.
 6. Create the world. The add-on moves players into its own custom void dimension; it does not replace normal Overworld terrain while the survival world is running.
 
-The manifest uses newly generated UUIDs and targets `@minecraft/server` 2.8.0, which includes the ticking-area API used by this build. Use a Bedrock version that supports that module and enable Beta APIs. The custom dimensions use the `log:` namespace, not the old prototype's `lattice:dream` dimension ID. The lattice completion marker is versioned in 1.0.7, so nearby lattice areas are rebuilt and rechecked with strict placement handling.
+The manifest uses newly generated UUIDs and targets `@minecraft/server` 2.8.0, which includes the ticking-area API used by this build. Use a Bedrock version that supports that module and enable Beta APIs. The custom dimensions use the `log:` namespace, not the old prototype's `lattice:dream` dimension ID. The lattice and structure completion markers are versioned in 1.0.8. Physical lattice verification now invalidates stale completion markers, and block writes must be verified before a region is considered complete.
 
 ## What this build attempts to implement
 
@@ -32,7 +32,7 @@ The manifest uses newly generated UUIDs and targets `@minecraft/server` 2.8.0, w
 With cheats enabled, enter these commands in chat. **The function names contain no colons.** Start with `/function function_check`; it uses only a native Bedrock `tellraw` command and does not depend on JavaScript. The other functions print their own confirmation before sending a script event.
 
 - `/function function_check` confirms the Bedrock function folder itself is being loaded.
-- `/function lattice_status` shows the current region, chunk-loaded state, lattice/structure queue counts, ticking-area usage, generation failures, and the latest recorded error.
+- `/function lattice_status` physically checks the current region's lattice, shows its saved marker separately from verified block presence, and reports queue counts, ticking-area usage, generation failures, and the latest recorded error.
 - `/function lattice_recheck` queues nearby regions again. It is also a manual fallback if automatic generation is interrupted.
 - `/function status` prints restoration, damage, and Tesseract counters.
 - `/function daymare` starts an open-ended daymare.
