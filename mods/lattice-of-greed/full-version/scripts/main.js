@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.4
+ * Lattice of Greed - full-system build, version 1.0.5
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -1782,9 +1782,19 @@ world.afterEvents.playerSpawn.subscribe(event => {
   }, 1);
 });
 
-world.afterEvents.scriptEventReceive.subscribe(event => {
-  const player = event.sourceEntity;
-  if (!player || player.typeId !== "minecraft:player") return;
+// Script events belong to system.afterEvents in the Script API v2.
+system.afterEvents.scriptEventReceive.subscribe(event => {
+  // A function-file invocation can sometimes arrive without a sourceEntity.
+  // Prefer the actual source player, then fall back to an online player so
+  // single-player diagnostic/test functions do not silently do nothing.
+  const source = event.sourceEntity;
+  const player = source?.typeId === "minecraft:player"
+    ? source
+    : world.getAllPlayers().find(p => p.dimension.id === DIM.main) || world.getAllPlayers()[0];
+  if (!player) {
+    world.sendMessage("[Lattice of Greed] Received script event " + event.id + " but no player is online.");
+    return;
+  }
   if (event.id === "log:daymare") startDream(player, "daymare");
   else if (event.id === "log:nightmare") startDream(player, "nightmare");
   else if (event.id === "log:memory" && player.dimension.id === DIM.main) enterTesseract(player);
