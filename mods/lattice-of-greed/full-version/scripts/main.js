@@ -1164,21 +1164,17 @@ function fillLegacyContainerLocations(dim, rx, rz, currentRoom = null) {
 
 function queueRegion(rx, rz, force = false) {
   const key = regionKey(rx, rz);
-  if (!force && (generatedRegions.has(key) || jobs.has(key))) return;
-  if (!force && (retryAfterTick.get(key) || 0) > system.currentTick) return;
-  if (force) {
-    generatedRegions.delete(key);
-    retryAfterTick.delete(key);
-    jobs.delete(key);
-  }
 
+  // Never let a manual recheck override a saved region. The old force=true path
+  // deleted the in-memory guard and rebuilt every block, restoring mined blocks.
+  // Rechecks may only schedule a one-time loot migration for already-saved regions.
   if (hasPersistentRegion(rx, rz)) {
-    // Critical persistence fix: a previously generated region gets NO terrain
-    // tasks on a restart or re-entry. Only missing loot migration is allowed.
+    if (jobs.has(key)) return;
     if (hasPersistentLoot(rx, rz)) {
       generatedRegions.add(key);
       return;
     }
+    if ((retryAfterTick.get(key) || 0) > system.currentTick) return;
     const descriptor = describeRegion(rx, rz);
     jobs.set(key, {
       rx, rz, tasks: [], index: 0, startedAt: system.currentTick,
@@ -1188,6 +1184,10 @@ function queueRegion(rx, rz, force = false) {
     });
     return;
   }
+
+  // A queued or completed in-memory job is not restarted by a recheck either.
+  if (generatedRegions.has(key) || jobs.has(key)) return;
+  if ((retryAfterTick.get(key) || 0) > system.currentTick) return;
 
   const built = buildTasks(rx, rz);
   jobs.set(key, {
@@ -1204,7 +1204,6 @@ function queueRegion(rx, rz, force = false) {
     finalizingAttempts: 0
   });
 }
-
 function queueNearbyRegions(player) {
   if (player.dimension.id !== DIMENSION_ID) return;
   const center = regionForPlayer(player);
@@ -1422,7 +1421,7 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
     return;
   }
   const { rx, rz } = regionForPlayer(player);
-  queueRegion(rx, rz, true);
+  queueRegion(rx, rz);
   queueNearbyRegions(player);
   player.sendMessage("§8[Lattice] Checking nearby regions within " + NEARBY_REGION_RADIUS +
     " chunks. Saved terrain is never rebuilt; only missing container loot may be filled.");
