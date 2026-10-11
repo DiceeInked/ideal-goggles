@@ -550,6 +550,13 @@ async function generateMainRegion(rx, rz) {
         if (done) {
           try { world.setDynamicProperty(chestFilledProperty(chest.x, chest.y, chest.z), true); } catch {}
           if (chest.quote) {
+            try {
+              const inventory = blockAt(dim, chest.x, chest.y, chest.z)?.getComponent("minecraft:inventory")?.container;
+              const note = new ItemStack("minecraft:book", 1);
+              note.nameTag = "A note from the author";
+              note.setLore(["Who are you doing this for?"]);
+              inventory?.setItem(0, note);
+            } catch {}
             setSign(dim, chest.x + 1, chest.y, chest.z, "Who are you doing this for?");
           }
         }
@@ -713,6 +720,45 @@ async function generateDreamAroundPlayer(player) {
   }
 }
 
+function spawnDreamWatchers(player, session) {
+  session.watchers = [];
+  // Most dreams contain no watcher. Its rarity helps preserve the uncanny effect.
+  const roll = hash(player.location.x + session.startedAt, player.location.z, 91);
+  if (roll > 0.24) return;
+
+  const angle = hash(player.location.x, player.location.z + session.startedAt, 92) * Math.PI * 2;
+  const radius = 18 + Math.floor(hash(session.startedAt, player.location.z, 93) * 5);
+  const x = Math.round(Math.cos(angle) * radius);
+  const z = Math.round(Math.sin(angle) * radius);
+  const y = dreamHeight(x, z) + 1;
+  try {
+    const type = hash(x, z, 94) < 0.5 ? "minecraft:sheep" : "minecraft:cow";
+    const watcher = dreamDim().spawnEntity(type, { x: x + 0.5, y, z: z + 0.5 });
+    watcher.addTag("log:dream_watcher");
+    try { watcher.addEffect("slowness", NIGHTMARE_TICKS, { amplifier: 8, showParticles: false }); } catch {}
+    try { watcher.addEffect("resistance", NIGHTMARE_TICKS, { amplifier: 4, showParticles: false }); } catch {}
+    watcher.lookAt({ x: player.location.x, y: player.location.y + 1, z: player.location.z });
+    session.watchers.push({ id: watcher.id, x: x + 0.5, y, z: z + 0.5 });
+  } catch {
+    // A watcher is optional; unsupported entity behavior must not block a dream.
+  }
+}
+
+function updateDreamWatchers(player, session) {
+  if (!session.watchers?.length || system.currentTick % 20 !== 0) return;
+  for (const watcherData of session.watchers) {
+    try {
+      const watcher = world.getEntity(watcherData.id);
+      if (!watcher || watcher.dimension.id !== DIM.dream) continue;
+      watcher.teleport(
+        { x: watcherData.x, y: watcherData.y, z: watcherData.z },
+        { dimension: dreamDim() }
+      );
+      watcher.lookAt({ x: player.location.x, y: player.location.y + 1, z: player.location.z });
+    } catch {}
+  }
+}
+
 function saveInventory(player) {
   const container = player.getComponent("minecraft:inventory")?.container;
   const inventory = [];
@@ -868,7 +914,8 @@ async function startDream(player, type) {
     inventory: saveInventory(player),
     startedAt: system.currentTick,
     lastSafePos: { x: -16, y: 68, z: -12 },
-    cluesSeen: new Set()
+    cluesSeen: new Set(),
+    watchers: []
   };
   try {
     sessions.set(player.id, saved);
@@ -881,6 +928,7 @@ async function startDream(player, type) {
     try { player.addEffect("slow_falling", 160, { showParticles: false }); } catch {}
     await waitTicks(12);
     await generateDreamAroundPlayer(player);
+    spawnDreamWatchers(player, saved);
     player.teleport({
       x: -16.5,
       y: dreamHeight(-16, -12) + 1.1,
@@ -910,6 +958,9 @@ async function startDream(player, type) {
 function endDream(player, reason = "returned") {
   const saved = sessions.get(player.id);
   if (!saved) return;
+  for (const watcherData of saved.watchers || []) {
+    try { world.getEntity(watcherData.id)?.remove(); } catch {}
+  }
   sessions.delete(player.id);
   try {
     player.teleport(saved.location, {
@@ -1673,6 +1724,7 @@ system.runInterval(() => {
       }
       const session = sessions.get(player.id);
       if (!session) continue;
+      updateDreamWatchers(player, session);
       const px = player.location.x;
       const pz = player.location.z;
       if (Math.abs(px) > DREAM_EDGE || Math.abs(pz) > DREAM_EDGE) {
