@@ -25,19 +25,41 @@ jobs:
           node-version: "22"
       - name: Check JavaScript syntax
         run: node --input-type=module --check < mods/lattice-of-greed/full-version/scripts/main.js
-      - name: Validate manifest and UUIDs
+
+      - name: Validate manifest and function names
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-          const manifest = JSON.parse(fs.readFileSync('mods/lattice-of-greed/full-version/manifest.json', 'utf8'));
+          const path = require('node:path');
+          const root = 'mods/lattice-of-greed/full-version';
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
           if (manifest.format_version !== 2) throw new Error('Unexpected manifest format');
           if (!manifest.header.uuid || !manifest.modules?.[0]?.uuid) throw new Error('Missing UUID');
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
           if (!Array.isArray(manifest.header.version) || !Array.isArray(manifest.modules?.[0]?.version)) throw new Error('Missing version');
           if (manifest.header.version.join('.') !== manifest.modules[0].version.join('.')) throw new Error('Header/module versions differ');
+          if (manifest.header.version.join('.') !== '1.0.4') throw new Error('Expected release 1.0.4');
           if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
-          console.log('Manifest JSON, version, and UUIDs are valid.');
+          if (manifest.dependencies?.[0]?.version !== '2.8.0') throw new Error('Expected @minecraft/server 2.8.0 ticking-area API');
+          const min = manifest.header.min_engine_version || [];
+          if (!(min[0] > 1 || (min[0] === 1 && min[1] > 26) || (min[0] === 1 && min[1] === 26 && min[2] >= 10))) {
+            throw new Error('Engine version must be at least 1.26.10');
+          }
+          const expected = [
+            'daymare.mcfunction', 'finish.mcfunction', 'lattice_recheck.mcfunction',
+            'lattice_status.mcfunction', 'memory.mcfunction', 'nightmare.mcfunction',
+            'status.mcfunction'
+          ];
+          const actual = fs.readdirSync(path.join(root, 'functions')).filter(name => name.endsWith('.mcfunction')).sort();
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Unexpected function set: ' + actual.join(', '));
+          for (const name of actual) {
+            if (name.includes(':')) throw new Error('Function file names cannot contain colons: ' + name);
+            const body = fs.readFileSync(path.join(root, 'functions', name), 'utf8');
+            if (!body.trim()) throw new Error('Empty function file: ' + name);
+          }
+          console.log('Manifest, Script API version, and colon-free function names validated.');
           NODE
+
       - name: Package current release
         run: |
           python3 - <<'PY'
@@ -47,12 +69,20 @@ jobs:
           manifest = json.loads((root / 'manifest.json').read_text())
           version = '.'.join(map(str, manifest['header']['version']))
           package = root / f'Lattice-of-Greed-Full-{version}.mcpack'
+          functions = sorted((root / 'functions').glob('*.mcfunction'))
+          if not functions:
+              raise SystemExit('No Bedrock function files found.')
           with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as z:
               z.write(root / 'manifest.json', 'manifest.json')
               z.write(root / 'README.md', 'README.md')
               z.write(root / 'scripts' / 'main.js', 'scripts/main.js')
-          print(f'Built {package} ({package.stat().st_size} bytes)')
+              for function_file in functions:
+                  if ':' in function_file.stem:
+                      raise SystemExit(f'Function name must not contain a colon: {function_file.name}')
+                  z.write(function_file, f'functions/{function_file.name}')
+          print(f'Built {package} ({package.stat().st_size} bytes; {len(functions)} functions)')
           PY
+
       - name: Commit refreshed package
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -65,6 +95,7 @@ jobs:
             git commit -m "Build Lattice of Greed behavior pack"
             git push
           fi
+
       - name: Verify importable mcpack archive
         run: |
           python3 - <<'PY'
@@ -77,13 +108,23 @@ jobs:
           assert pack.is_file(), f'Missing {pack.name}'
           with zipfile.ZipFile(pack) as z:
               names = set(z.namelist())
-              required = {'manifest.json', 'README.md', 'scripts/main.js'}
+              expected_functions = {
+                  'daymare.mcfunction', 'finish.mcfunction', 'lattice_recheck.mcfunction',
+                  'lattice_status.mcfunction', 'memory.mcfunction', 'nightmare.mcfunction',
+                  'status.mcfunction'
+              }
+              required = {'manifest.json', 'README.md', 'scripts/main.js'} | {
+                  f'functions/{name}' for name in expected_functions
+              }
               assert required <= names, f'Missing files: {required - names}'
               assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Pack manifest is stale'
               assert z.read('README.md') == (root / 'README.md').read_bytes(), 'Pack README is stale'
               assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Pack script is stale'
-              assert manifest['header']['uuid'] != 'cb2d6d2a-bc2a-4f5b-a1df-6f8ec8d7a103'
-              assert manifest['modules'][0]['uuid'] != 'a4e8f7bb-5d5f-4e7f-83bd-6d7f0f4a2e91'
+              for name in expected_functions:
+                  assert z.read(f'functions/{name}') == (root / 'functions' / name).read_bytes(), f'Pack function is stale: {name}'
+                  assert ':' not in name, f'Function name must not contain a colon: {name}'
+              assert manifest['header']['version'] == [1, 0, 4], 'Unexpected pack version'
+              assert manifest['dependencies'][0]['version'] == '2.8.0', 'Unexpected Script API version'
               assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
               assert 'log:abyss' in (root / 'scripts/main.js').read_text()
               script = (root / 'scripts/main.js').read_text()
@@ -95,6 +136,8 @@ jobs:
               assert 'MAX_ACTIVE_MAIN_REGIONS = 2' in script and 'pumpMainRegionQueue' in script, 'Queued lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_STRUCTURES = 1' in script and 'generateMainStructures' in script, 'Heavy structures are not separated from lattice generation'
               assert 'regionKey("region_lattice"' in script, 'Separate lattice completion tracking missing'
+              assert 'await manager.createTickingArea(identifier, options)' in script, 'Ticking areas must hold chunks loaded during builds'
+              assert 'log:lattice_status' in script and 'log:lattice_recheck' in script, 'Lattice diagnostics missing'
               assert 'addTask(tasks, TREE.x, -2, TREE.z, "minecraft:bedrock")' in script, 'Tree island center must be bedrock'
               assert 'minecraft:grass_block' in script, 'Grass top layer missing'
               assert 'hash(cx, cz, 13) < 0.5' in script, '50/50 stone-or-ore roll missing'
