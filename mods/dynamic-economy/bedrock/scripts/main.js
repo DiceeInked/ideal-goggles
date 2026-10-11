@@ -102,13 +102,12 @@ function removeItems(container, typeId, quantity) {
   return remaining === 0;
 }
 function canFit(container, typeId, quantity) {
-  const type = world.getDimension("overworld"); // API warm-up only; no world mutation
-  void type;
+  const sample = new ItemStack(typeId, 1);
   let remaining = quantity;
   for (let i = 0; i < container.size; i++) {
     const stack = container.getItem(i);
     if (!stack) {
-      remaining -= 64;
+      remaining -= sample.maxAmount;
     } else if (stack.typeId === typeId) {
       remaining -= Math.max(0, stack.maxAmount - stack.amount);
     }
@@ -119,11 +118,16 @@ function canFit(container, typeId, quantity) {
 function addItems(container, typeId, quantity) {
   let remaining = quantity;
   while (remaining > 0) {
-    const amount = Math.min(64, remaining);
+    const sample = new ItemStack(typeId, 1);
+    const amount = Math.min(sample.maxAmount, remaining);
     const leftover = container.addItem(new ItemStack(typeId, amount));
-    if (leftover) throw new Error("Your inventory could not accept all items.");
+    if (leftover) {
+      const inserted = amount - leftover.amount;
+      return quantity - remaining + inserted;
+    }
     remaining -= amount;
   }
+  return quantity;
 }
 function totalBuyCost(startScore, quantity) {
   let total = 0;
@@ -161,14 +165,18 @@ function buy(player, rawItemId, rawQuantity) {
   if (balance < cost) throw new Error(`You need ${money(cost)}; your balance is ${money(balance)}.`);
   if (!canFit(inventory, typeId, quantity)) throw new Error("Make enough room in your inventory first.");
 
-  // Add first, then charge. If adding fails, no balance or market state changes.
-  addItems(inventory, typeId, quantity);
+  // Add first, then charge. Roll back only the quantity actually inserted.
+  let inserted = 0;
   try {
+    inserted = addItems(inventory, typeId, quantity);
+    if (inserted !== quantity) throw new Error("Your inventory could not accept all items.");
     setBalance(player, balance - cost);
     market[typeId] = score + quantity * CONFIG.scoreChangePerItem;
     setMarket(market);
   } catch (error) {
-    removeItems(inventory, typeId, quantity);
+    if (inserted > 0) {
+      try { removeItems(inventory, typeId, inserted); } catch {}
+    }
     try { setBalance(player, balance); } catch {}
     throw error;
   }
