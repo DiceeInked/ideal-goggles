@@ -1,14 +1,17 @@
 import { world, system } from "@minecraft/server";
 
 /*
- * Lattice of Greed - minimal build, version 1.1.0.
- * This script does exactly two world-generation jobs:
- * 1. A bedrock lattice from Y=-32 through Y=0, with a four-block grid.
- * 2. One oak tree on its small island at the origin.
+ * Lattice of Greed - spreading survival islands, version 1.2.0.
  *
- * Generation is intentionally independent of saved completion markers and
- * ticking-area reservations. The current player chunk is built in small,
- * retryable batches, and a new script session rebuilds the chunk it enters.
+ * The world contains:
+ * 1. A bedrock lattice from Y=-32 through Y=0, with a four-block grid.
+ * 2. The original oak-tree starter island at the origin.
+ * 3. Small dirt-and-plant islands whose density fades with distance from the tree.
+ * 4. Repeated lush-cave, dripstone-cave, and amethyst-cave island systems.
+ *
+ * Cave systems use one main resource island surrounded by twelve smaller islands.
+ * Structure-completion markers are saved as world dynamic properties so mining an
+ * island does not cause its resources to respawn after a restart or re-entry.
  */
 
 const DIMENSION_ID = "log:abyss";
@@ -17,12 +20,47 @@ const GRID_MAX = 0;
 const GRID_STEP = 4;
 const REGION_SIZE = 16;
 // Bedrock Script API does not expose the client's exact render-distance setting.
-// Four chunks in each direction is a conservative, configurable approximation.
 const NEARBY_REGION_RADIUS = 4;
 const BLOCK_RETRY_COOLDOWN = 100;
 const TREE_X = 2;
 const TREE_Z = 2;
 const BLOCKS_PER_TICK = 240;
+
+const CAVE_CLUSTER_CELLS = 6;
+const CAVE_ANCHOR_OFFSET = 3;
+const CAVE_ISLAND_OFFSETS = [
+  { dx: 0, dz: 0 },
+  { dx: -1, dz: 0 },
+  { dx: 1, dz: 0 },
+  { dx: 0, dz: -1 },
+  { dx: 0, dz: 1 },
+  { dx: -2, dz: 0 },
+  { dx: 2, dz: 0 },
+  { dx: 0, dz: -2 },
+  { dx: 0, dz: 2 },
+  { dx: -1, dz: -1 },
+  { dx: -1, dz: 1 },
+  { dx: 1, dz: -1 },
+  { dx: 1, dz: 1 }
+];
+const CAVE_TYPES = ["lush", "dripstone", "amethyst"];
+const TREE_ISLAND_PLANTS = [
+  "minecraft:short_grass",
+  "minecraft:short_grass",
+  "minecraft:fern",
+  "minecraft:dandelion",
+  "minecraft:poppy",
+  "minecraft:azure_bluet",
+  "minecraft:oxeye_daisy",
+  "minecraft:cornflower",
+  "minecraft:allium",
+  "minecraft:red_tulip",
+  "minecraft:pink_tulip",
+  "minecraft:white_tulip",
+  "minecraft:orange_tulip",
+  "minecraft:oak_sapling",
+  "minecraft:sweet_berry_bush"
+];
 
 const generatedRegions = new Set();
 const jobs = new Map();
@@ -31,7 +69,6 @@ const registrationErrors = [];
 let lastError = "none";
 let totalRegionsBuilt = 0;
 let totalAutomaticChecks = 0;
-let lastCheckTick = -1;
 
 function mainDimension() {
   return world.getDimension(DIMENSION_ID);
@@ -43,6 +80,15 @@ function floorDiv(value, divisor) {
 
 function regionKey(rx, rz) {
   return rx + "," + rz;
+}
+
+function structureMarkerId(rx, rz) {
+  // Keep each completed region persistent without storing an ever-growing JSON list.
+  return "log:structures_" + rx + "_" + rz;
+}
+
+function hasPersistentStructureMarker(rx, rz) {
+  return world.getDynamicProperty(structureMarkerId(rx, rz)) === true;
 }
 
 function regionForPlayer(player) {
@@ -90,12 +136,23 @@ function addLatticeTasks(tasks, sx, sz) {
   }
 }
 
-function addTreeTasks(tasks, sx, sz) {
-  // The tree and its island are only placed in the region containing (0, 0).
-  if (sx !== 0 || sz !== 0) return;
+function seededValue(x, z, salt = 0) {
+  let value = Math.imul(x | 0, 374761393) +
+    Math.imul(z | 0, 668265263) + Math.imul(salt | 0, 1442695041);
+  value = Math.imul(value ^ (value >>> 13), 1274126177);
+  return (value ^ (value >>> 16)) >>> 0;
+}
 
-  for (let x = TREE_X - 1; x <= TREE_X + 1; x++) {
-    for (let z = TREE_Z - 1; z <= TREE_Z + 1; z++) {
+function cellStart(cell) {
+  return cell * GRID_STEP + 1;
+}
+
+function addTreeTasks(tasks) {
+  // The main oak tree sits on a 3x3 dirt island in lattice cell (0, 0).
+  const sx = TREE_X - 1;
+  const sz = TREE_Z - 1;
+  for (let x = sx; x <= sx + 2; x++) {
+    for (let z = sz; z <= sz + 2; z++) {
       addTask(tasks, x, -3, z, "minecraft:dirt");
       addTask(tasks, x, -2, z, "minecraft:dirt");
       addTask(tasks, x, -1, z, "minecraft:grass_block");
@@ -129,15 +186,211 @@ function addTreeTasks(tasks, sx, sz) {
   }
 }
 
-function buildTasks(rx, rz) {
+function vegetationIslandChance(cellX, cellZ) {
+  // Plant islands are common near the starting tree, then taper off into the void.
+  const distance = Math.max(Math.abs(cellX), Math.abs(cellZ));
+  if (distance <= 3) return 45;
+  if (distance <= 8) return 30;
+  if (distance <= 20) return 16;
+  return 5;
+}
+
+function addVegetationIslandTasks(tasks, cellX, cellZ) {
+  const sx = cellStart(cellX);
+  const sz = cellStart(cellZ);
+
+  // These islands are entirely soil, with no special or random center block.
+  for (let dx = 0; dx < 3; dx++) {
+    for (let dz = 0; dz < 3; dz++) {
+      addTask(tasks, sx + dx, -3, sz + dz, "minecraft:dirt");
+      addTask(tasks, sx + dx, -2, sz + dz, "minecraft:dirt");
+      addTask(tasks, sx + dx, -1, sz + dz, "minecraft:grass_block");
+    }
+  }
+
+  const positions = [
+    [1, 1], [0, 1], [2, 1], [1, 0], [1, 2],
+    [0, 0], [0, 2], [2, 0], [2, 2]
+  ];
+  // Deterministically shuffle plant positions and place one to three plants.
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = seededValue(cellX, cellZ, 20 + i) % (i + 1);
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  const plantCount = 1 + (seededValue(cellX, cellZ, 17) % 3);
+  for (let i = 0; i < plantCount; i++) {
+    const [dx, dz] = positions[i];
+    const plant = TREE_ISLAND_PLANTS[
+      seededValue(cellX, cellZ, 50 + i) % TREE_ISLAND_PLANTS.length
+    ];
+    addTask(tasks, sx + dx, 0, sz + dz, plant);
+  }
+}
+
+function caveSystemForCell(cellX, cellZ) {
+  const macroX = floorDiv(cellX, CAVE_CLUSTER_CELLS);
+  const macroZ = floorDiv(cellZ, CAVE_CLUSTER_CELLS);
+  const anchorX = macroX * CAVE_CLUSTER_CELLS + CAVE_ANCHOR_OFFSET;
+  const anchorZ = macroZ * CAVE_CLUSTER_CELLS + CAVE_ANCHOR_OFFSET;
+  const dx = cellX - anchorX;
+  const dz = cellZ - anchorZ;
+  const offset = CAVE_ISLAND_OFFSETS.find(item => item.dx === dx && item.dz === dz);
+  if (!offset) return null;
+
+  const caveType = CAVE_TYPES[seededValue(macroX, macroZ, 301) % CAVE_TYPES.length];
+  return {
+    caveType,
+    isMain: dx === 0 && dz === 0,
+    offsetX: dx,
+    offsetZ: dz,
+    macroX,
+    macroZ
+  };
+}
+
+function caveLayerBlocks(caveType, dx, dz, layer) {
+  if (caveType === "lush") {
+    if (layer === -3) return "minecraft:stone";
+    if (layer === -2) {
+      return (Math.abs(dx) + Math.abs(dz)) % 2 === 0
+        ? "minecraft:rooted_dirt" : "minecraft:clay";
+    }
+    if (dx === 0 && dz === 0) return "minecraft:grass_block";
+    return (seededValue(dx, dz, 311) % 3 === 0)
+      ? "minecraft:moss_block" : "minecraft:grass_block";
+  }
+
+  if (caveType === "dripstone") {
+    if (layer === -3) return "minecraft:stone";
+    if (layer === -2) {
+      return (Math.abs(dx) + Math.abs(dz)) % 2 === 0
+        ? "minecraft:dripstone_block" : "minecraft:tuff";
+    }
+    return (Math.abs(dx) + Math.abs(dz)) % 2 === 0
+      ? "minecraft:dripstone_block" : "minecraft:stone";
+  }
+
+  // Amethyst islands resemble the layered stone, calcite, and basalt around geodes.
+  if (layer === -3) return "minecraft:stone";
+  if (layer === -2) {
+    return (Math.abs(dx) + Math.abs(dz)) % 2 === 0
+      ? "minecraft:smooth_basalt" : "minecraft:calcite";
+  }
+  return (dx === 0 && dz === 0)
+    ? "minecraft:amethyst_block" : "minecraft:calcite";
+}
+
+function addCaveIslandTasks(tasks, cellX, cellZ, systemInfo) {
+  const sx = cellStart(cellX);
+  const sz = cellStart(cellZ);
+  const caveType = systemInfo.caveType;
+  for (let dx = 0; dx < 3; dx++) {
+    for (let dz = 0; dz < 3; dz++) {
+      addTask(tasks, sx + dx, -3, sz + dz,
+        caveLayerBlocks(caveType, dx - 1, dz - 1, -3));
+      addTask(tasks, sx + dx, -2, sz + dz,
+        caveLayerBlocks(caveType, dx - 1, dz - 1, -2));
+      addTask(tasks, sx + dx, -1, sz + dz,
+        caveLayerBlocks(caveType, dx - 1, dz - 1, -1));
+    }
+  }
+
+  const centerX = sx + 1;
+  const centerZ = sz + 1;
+  if (systemInfo.isMain) {
+    // Main islands offer several key resources. Satellites intentionally offer less.
+    if (caveType === "lush") {
+      addTask(tasks, centerX, -2, centerZ, "minecraft:iron_ore");
+      addTask(tasks, centerX - 1, -2, centerZ, "minecraft:coal_ore");
+      addTask(tasks, centerX + 1, -2, centerZ, "minecraft:copper_ore");
+    } else if (caveType === "dripstone") {
+      addTask(tasks, centerX, -2, centerZ, "minecraft:copper_ore");
+      addTask(tasks, centerX - 1, -2, centerZ, "minecraft:coal_ore");
+      addTask(tasks, centerX + 1, -2, centerZ, "minecraft:iron_ore");
+    } else {
+      addTask(tasks, centerX, -2, centerZ, "minecraft:amethyst_block");
+      addTask(tasks, centerX - 1, -2, centerZ, "minecraft:iron_ore");
+      addTask(tasks, centerX + 1, -2, centerZ, "minecraft:copper_ore");
+    }
+  } else {
+    const resourceRoll = seededValue(cellX, cellZ, 401) % 4;
+    if (resourceRoll === 0) {
+      const ores = caveType === "dripstone"
+        ? ["minecraft:copper_ore", "minecraft:coal_ore"]
+        : caveType === "amethyst"
+          ? ["minecraft:iron_ore", "minecraft:copper_ore"]
+          : ["minecraft:coal_ore", "minecraft:iron_ore"];
+      addTask(tasks, centerX, -2, centerZ,
+        ores[seededValue(cellX, cellZ, 402) % ores.length]);
+    } else if (caveType === "lush") {
+      addTask(tasks, centerX, -2, centerZ,
+        seededValue(cellX, cellZ, 403) % 2 === 0
+          ? "minecraft:rooted_dirt" : "minecraft:clay");
+    } else if (caveType === "dripstone") {
+      addTask(tasks, centerX, -2, centerZ, "minecraft:dripstone_block");
+    } else {
+      addTask(tasks, centerX, -2, centerZ,
+        seededValue(cellX, cellZ, 404) % 2 === 0
+          ? "minecraft:amethyst_block" : "minecraft:calcite");
+    }
+  }
+
+  if (caveType === "lush") {
+    // A central grass block guarantees a suitable place for plants and food.
+    addTask(tasks, centerX, -1, centerZ, "minecraft:grass_block");
+    const plantRoll = seededValue(cellX, cellZ, 420) % 5;
+    if (plantRoll <= 1) {
+      addTask(tasks, centerX, 0, centerZ, "minecraft:sweet_berry_bush");
+    } else if (plantRoll === 2) {
+      addTask(tasks, centerX, 0, centerZ, "minecraft:azalea");
+    } else if (plantRoll === 3) {
+      addTask(tasks, centerX, 0, centerZ, "minecraft:fern");
+    } else {
+      addTask(tasks, centerX, 0, centerZ, "minecraft:short_grass");
+    }
+  } else if (caveType === "dripstone") {
+    addTask(tasks, centerX, 0, centerZ, "minecraft:pointed_dripstone");
+  }
+}
+
+function addCellIslandTasks(tasks, cellX, cellZ) {
+  if (cellX === 0 && cellZ === 0) {
+    addTreeTasks(tasks);
+    return;
+  }
+
+  const cave = caveSystemForCell(cellX, cellZ);
+  if (cave) {
+    addCaveIslandTasks(tasks, cellX, cellZ, cave);
+    return;
+  }
+
+  const chance = vegetationIslandChance(cellX, cellZ);
+  if (seededValue(cellX, cellZ, 501) % 100 < chance) {
+    addVegetationIslandTasks(tasks, cellX, cellZ);
+  }
+}
+
+function buildTasks(rx, rz, includeStructures) {
   const sx = rx * REGION_SIZE;
   const sz = rz * REGION_SIZE;
   const tasks = new Map();
   addLatticeTasks(tasks, sx, sz);
-  addTreeTasks(tasks, sx, sz);
+
+  if (includeStructures) {
+    const minCellX = floorDiv(sx, GRID_STEP);
+    const minCellZ = floorDiv(sz, GRID_STEP);
+    const maxCellX = floorDiv(sx + REGION_SIZE - 1, GRID_STEP);
+    const maxCellZ = floorDiv(sz + REGION_SIZE - 1, GRID_STEP);
+    for (let cellX = minCellX; cellX <= maxCellX; cellX++) {
+      for (let cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
+        addCellIslandTasks(tasks, cellX, cellZ);
+      }
+    }
+  }
+
   return [...tasks.values()];
 }
-
 
 function queueRegion(rx, rz, force = false) {
   const key = regionKey(rx, rz);
@@ -147,20 +400,22 @@ function queueRegion(rx, rz, force = false) {
     generatedRegions.delete(key);
     retryAfterTick.delete(key);
   }
+
+  const includeStructures = !hasPersistentStructureMarker(rx, rz);
   jobs.set(key, {
     rx,
     rz,
-    tasks: buildTasks(rx, rz),
+    tasks: buildTasks(rx, rz, includeStructures),
     index: 0,
-    startedAt: system.currentTick
+    startedAt: system.currentTick,
+    needsStructureMarker: includeStructures
   });
 }
 
 function queueNearbyRegions(player) {
   if (player.dimension.id !== DIMENSION_ID) return;
   const center = regionForPlayer(player);
-  // Queue center first, then expanding square rings so the closest regions
-  // are always prioritized before the edge of the configured render radius.
+  // Queue center first, then expanding square rings so nearby regions win.
   for (let ring = 0; ring <= NEARBY_REGION_RADIUS; ring++) {
     for (let dx = -ring; dx <= ring; dx++) {
       for (let dz = -ring; dz <= ring; dz++) {
@@ -200,9 +455,6 @@ function processJobs() {
   let selectedJob = null;
   let selectedDistance = Infinity;
 
-  // Work on the nearest queued region that should be inside a player's
-  // configured render-radius approximation. Chunks outside it remain queued
-  // until a player moves closer.
   for (const [key, job] of jobs) {
     const distance = distanceToNearestPlayer(job.rx, job.rz);
     if (distance > NEARBY_REGION_RADIUS) continue;
@@ -222,20 +474,24 @@ function processJobs() {
       writes++;
     }
     if (selectedJob.index >= selectedJob.tasks.length) {
+      if (selectedJob.needsStructureMarker) {
+        world.setDynamicProperty(
+          structureMarkerId(selectedJob.rx, selectedJob.rz),
+          true
+        );
+      }
       jobs.delete(selectedKey);
       retryAfterTick.delete(selectedKey);
       generatedRegions.add(selectedKey);
       totalRegionsBuilt++;
       lastError = "none";
-      console.warn("[Lattice of Greed] Built lattice region " + selectedKey +
+      console.warn("[Lattice of Greed] Built region " + selectedKey +
         " with " + selectedJob.tasks.length + " verified block placements.");
     }
   } catch (error) {
     lastError = "Region " + selectedKey + ", task " + selectedJob.index + "/" +
       selectedJob.tasks.length + ": " + String(error).slice(0, 220);
     console.warn("[Lattice of Greed] Generation paused: " + lastError);
-    // A chunk at the edge of the radius may not actually be loaded on this
-    // device. Drop this attempt and let the nearby scanner retry after a pause.
     jobs.delete(selectedKey);
     retryAfterTick.set(selectedKey, system.currentTick + BLOCK_RETRY_COOLDOWN);
   }
@@ -288,7 +544,8 @@ world.afterEvents.playerSpawn.subscribe(event => {
     if (!player) return;
     if (player.dimension.id !== DIMENSION_ID) {
       try {
-        player.teleport({ x: 4.5, y: 2, z: 4.5 }, { dimension: mainDimension() });
+        // Spawn on the starter island, beside the trunk instead of over the void.
+        player.teleport({ x: 1.5, y: 0, z: 2.5 }, { dimension: mainDimension() });
       } catch (error) {
         lastError = "Could not enter " + DIMENSION_ID + ": " + String(error).slice(0, 180);
         player.sendMessage("§c[Lattice] " + lastError);
@@ -317,13 +574,12 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   const { rx, rz } = regionForPlayer(player);
   queueRegion(rx, rz, true);
   queueNearbyRegions(player);
-  player.sendMessage("§8[Lattice] Rebuilding current region and queueing nearby regions within " +
-    NEARBY_REGION_RADIUS + " chunks. Stay nearby while they generate.");
+  player.sendMessage("§8[Lattice] Rebuilding the current lattice and queueing nearby regions within " +
+    NEARBY_REGION_RADIUS + " chunks. Generated islands won't be reset.");
 });
 
 system.runInterval(() => {
   if (system.currentTick % 10 === 0) {
-    lastCheckTick = system.currentTick;
     for (const player of world.getAllPlayers()) {
       queueNearbyRegions(player);
       if (player.dimension.id === DIMENSION_ID) totalAutomaticChecks++;
