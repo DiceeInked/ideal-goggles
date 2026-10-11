@@ -39,7 +39,6 @@ jobs:
           console.log('Manifest JSON, version, and UUIDs are valid.');
           NODE
       - name: Package current release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           python3 - <<'PY'
           import json, zipfile
@@ -48,8 +47,6 @@ jobs:
           manifest = json.loads((root / 'manifest.json').read_text())
           version = '.'.join(map(str, manifest['header']['version']))
           package = root / f'Lattice-of-Greed-Full-{version}.mcpack'
-          for old in root.glob('Lattice-of-Greed-Full-*.mcpack'):
-              old.unlink()
           with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as z:
               z.write(root / 'manifest.json', 'manifest.json')
               z.write(root / 'README.md', 'README.md')
