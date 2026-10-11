@@ -118,15 +118,15 @@ jobs:
             'acquireRegionTickingArea'
           ]) if (script.includes(removed)) throw new Error('Unwanted old system remains: ' + removed);
           if (!script.includes('if (line(x) || line(z))') ||
-    !script.includes('if (line(x) && line(z))')) {
-  throw new Error('Nether horizontal lattice / End intersection-dot generation is missing.');
-}
-if (!script.includes('world.afterEvents.playerDimensionChange.subscribe') ||
-    !script.includes('world.afterEvents.itemUse.subscribe')) {
-  throw new Error('Dimension routing or Eye of Ender guidance is missing.');
-}
-console.log('Validated ' + biomeCount + ' biome profiles, ' + roomCount +
-  ' structure rooms, and both auxiliary void dimensions.');
+              !script.includes('if (line(x) && line(z))')) {
+            throw new Error('Nether horizontal lattice / End intersection-dot generation is missing.');
+          }
+          if (!script.includes('world.afterEvents.playerDimensionChange.subscribe') ||
+              !script.includes('world.afterEvents.itemUse.subscribe')) {
+            throw new Error('Dimension routing or Eye of Ender guidance is missing.');
+          }
+          console.log('Validated ' + biomeCount + ' biome profiles, ' + roomCount +
+            ' structure rooms, and both auxiliary void dimensions.');
           NODE
 
       - name: Package current release
@@ -183,6 +183,6 @@ console.log('Validated ' + biomeCount + ' biome profiles, ' + roomCount +
               assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Manifest is stale'
               assert z.read('README.md') == (root / 'README.md').read_bytes(), 'README is stale'
               assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Script is stale'
-              assert manifest['header']['version'] == [1, 4, 0]
+              assert manifest['header']['version'] == [1, 5, 0]
               print(f'Archive OK: {pack.stat().st_size} bytes; {len(names)} entries.')
           PY
