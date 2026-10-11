@@ -1,6 +1,6 @@
 # Lattice of Greed
 
-**Status:** Design concept only. This document records the current concept, confirmed decisions, provisional ideas, and unresolved questions. It is not an implementation specification, and no add-on code has been written.
+**Status:** Design concept plus an early Bedrock prototype. The prototype currently focuses on the dream/daymare sequence and has not yet been tested inside Minecraft. The rest of the concept remains a design plan.
 
 ## 1. Core vision
 
@@ -150,7 +150,7 @@ Possible signs include:
 - A structure or sign that suggests the player has taken something away from the world.
 - Other brief, contextual clues written in the mysterious author's consistent voice.
 
-The daymare's exact ending rule is not fully settled. The current idea is that discovering a clue may end it, though a short time limit of around one minute has also been suggested. The final rule should keep daymares eerie and purposeful without making them frustrating to explore.
+Daymares are open-ended. Finding a clue does not force the player out; the player can keep exploring for as long as they want. A few seconds after a clue is noticed, the moment can settle, but the daymare continues. The player returns by jumping into the Tesseract-like structure, which drops into a black abyss. Nightmares remain time-limited.
 
 ### Shared rules and design cautions
 
@@ -209,7 +209,7 @@ The ending should not simply label the player good or bad. A mixed landscape can
 - Are books guaranteed in every city building, or simply common?
 - Do Biome Barrel effects trigger when opened or only when resources are taken?
 - How exactly are the night cycle, abyss darkness, and nightmare transition connected?
-- Do daymares end as soon as the player finds a clue, after around one minute, or whichever happens first?
+- Should daymare clues have additional visual or audio cues, or remain entirely environmental?
 - Can the player sleep, and if so, what does sleeping cost or change?
 - How does the game track extraction and restoration without a visible morality meter?
 - How often can flash nightmares occur without becoming annoying?
@@ -222,3 +222,8 @@ The ending should not simply label the player good or bad. A mixed landscape can
 ## 16. Current scope
 
 This document captures the concept phase. Spawn rates, algorithms, precise structure layouts, item tables, dream transition timing, and Bedrock add-on implementation details should remain open until the gameplay design is agreed upon. Do not treat provisional numbers or example messages as final specifications.
+
+
+## Prototype implementation note (2026-10-11)
+
+An initial Bedrock behavior-pack prototype now exists under `mods/lattice-of-greed/prototype/`. It implements a generated dream landscape in a separate void dimension, a Tesseract-like structure with a fall-through exit, clue signs, timed nightly nightmares, a temporary obsidian-mining trigger for daymares, and a basic extraction/restoration influence on the dream terrain. The custom-dimension and scripting APIs are experimental, so the prototype still requires in-game testing. The first version does not implement the full bedrock lattice or the other major biomes.
