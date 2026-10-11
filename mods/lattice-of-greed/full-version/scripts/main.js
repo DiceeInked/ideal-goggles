@@ -133,18 +133,6 @@ function buildTasks(rx, rz) {
   return [...tasks.values()];
 }
 
-function isRegionLoaded(dim, rx, rz) {
-  try {
-    return dim.isChunkLoaded({
-      x: rx * REGION_SIZE + 8,
-      y: 0,
-      z: rz * REGION_SIZE + 8
-    });
-  } catch {
-    // On API builds without isChunkLoaded, attempting the write is the test.
-    return true;
-  }
-}
 
 function queueRegion(rx, rz, force = false) {
   const key = regionKey(rx, rz);
@@ -175,7 +163,15 @@ function processJobs() {
   const dim = mainDimension();
 
   for (const [key, job] of jobs) {
-    if (!isRegionLoaded(dim, job.rx, job.rz)) continue;
+    // Only edit a region while a player is standing in it. This avoids
+    // guessing whether a custom-dimension chunk is loaded through an API
+    // probe that can disagree with the actual player's loaded area.
+    const occupied = world.getAllPlayers().some(player => {
+      if (player.dimension.id !== DIMENSION_ID) return false;
+      const pos = regionForPlayer(player);
+      return pos.rx === job.rx && pos.rz === job.rz;
+    });
+    if (!occupied) continue;
     let writes = 0;
     try {
       while (job.index < job.tasks.length && writes < BLOCKS_PER_TICK) {
@@ -220,8 +216,7 @@ function status(player) {
   const { rx, rz } = regionForPlayer(player);
   const key = regionKey(rx, rz);
   const job = jobs.get(key);
-  let loaded = false;
-  try { loaded = isRegionLoaded(mainDimension(), rx, rz); } catch {}
+  const loaded = player.dimension.id === DIMENSION_ID;
   player.sendMessage("§8[Lattice] Dimension=" + player.dimension.id +
     "; region=" + key + "; loaded=" + loaded);
   player.sendMessage("§8Current region=" +
