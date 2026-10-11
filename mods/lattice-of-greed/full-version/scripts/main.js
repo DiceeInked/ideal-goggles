@@ -246,7 +246,7 @@ const COMMON_LOOT = [
   "white_wool", "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
   "lime_wool", "pink_wool", "gray_wool", "light_gray_wool", "cyan_wool",
   "purple_wool", "blue_wool", "brown_wool", "green_wool", "red_wool", "black_wool",
-  "water", "lava", "nether_wart", "quartz", "glowstone_dust",
+  "nether_wart", "quartz", "glowstone_dust",
   "crimson_stem", "warped_stem", "crimson_nylium", "warped_nylium",
   "prismarine", "prismarine_bricks", "dark_prismarine", "sea_lantern",
   "amethyst_shard", "copper_block", "iron_block", "gold_block",
