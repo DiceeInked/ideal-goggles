@@ -41,6 +41,6 @@ These command events are developer test hooks, not intended as normal player pro
 
 ## Important limitations
 
-This is the first broad, integrated script build. Some large world-generation systems are deliberately represented with compact procedural structures rather than a complete custom biome registry. The exact sky/fog treatment, full biome-probability simulation, book pages in every tower, passive creatures that stare in dreams, and all edge cases still require in-game polish and testing. Minecraft's Script API and custom-dimension support can vary by Bedrock version; **the existence of this source and a valid manifest do not prove every mechanic works at runtime**.
+This is the first broad, integrated script build. Some large world-generation systems are deliberately represented with compact procedural structures rather than a complete custom biome registry. Dream watchers are ordinary passive mobs, and tower clues use a renamed book with lore rather than multi-page written-book content. Exact sky/fog treatment, full biome-probability simulation, truly separate dreams for multiple players at once, and remaining edge cases still require in-game polish and testing. Minecraft's Script API and custom-dimension support can vary by Bedrock version; **the existence of this source and a valid manifest do not prove every mechanic works at runtime**.
 
 Back up anything important. Use a fresh test world and report the first in-game error before testing on a world you care about.
