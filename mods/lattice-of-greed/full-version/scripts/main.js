@@ -60,6 +60,7 @@ const specialBarrelDrops = new Map();
 const topTrapVisits = new Set();
 const tesseractRestoreDelay = new Map();
 const lastRegionCheck = new Map();
+const lastDreamRegionCheck = new Map();
 let lastTesseractClearTick = -10000;
 let lastNightDay = -1;
 let lastNightState = false;
@@ -921,9 +922,9 @@ function endDream(player, reason = "returned") {
   restoreInventory(player, saved.inventory);
   restoreHud(player, saved.inventory);
   try { player.setGameMode(saved.inventory.gameMode); } catch {}
-  try { player.removeEffect("blindness"); player.removeEffect("slow_falling"); } catch {}
+  try { player.removeEffect("blindness"); player.removeEffect("slow_falling"); player.removeEffect("darkness"); } catch {}
   try { world.setDynamicProperty(backupKey(player), null); } catch {}
-  if (reason === "nightmare ended") {
+  if (reason === "nightmare ended" || reason === "respawned") {
     try { player.sendMessage("§8The dream fades. The world is still here."); } catch {}
   }
 }
@@ -976,7 +977,8 @@ async function buildMemoryPatch(player) {
     safeSet(dim, x, y, z, "minecraft:oak_log");
   }
   for (const point of [[-10, -8], [10, 6], [8, -10]]) {
-    const top = dim.getTopmostBlock({ x: point[0], z: point[1] });
+    let top;
+    try { top = dim.getTopmostBlock({ x: point[0], z: point[1] }); } catch {}
     if (!top) continue;
     if (hash(point[0], point[1], 55) < 0.75) {
       try { dim.spawnEntity("minecraft:cow", { x: point[0] + 0.5, y: top.location.y + 1, z: point[1] + 0.5 }); } catch {}
@@ -1377,7 +1379,8 @@ async function finishGame(player) {
   const spawn = world.getDefaultSpawnLocation();
   const sx = Math.floor(spawn.x);
   const sz = Math.floor(spawn.z);
-  const surface = overworld.getTopmostBlock({ x: sx, z: sz });
+  let surface;
+  try { surface = overworld.getTopmostBlock({ x: sx, z: sz }); } catch {}
   const sy = surface ? surface.location.y + 3 : 120;
   player.teleport({ x: sx + 0.5, y: sy, z: sz + 0.5 }, { dimension: overworld, rotation: { x: 0, y: 0 } });
   try { player.addEffect("slow_falling", 200, { showParticles: false }); } catch {}
@@ -1479,13 +1482,28 @@ world.afterEvents.playerSpawn.subscribe(event => {
     if (!player) return;
     if (stat("ending_complete") > 0 && player.dimension.id === DIM.overworld) return;
 
-    if (player.dimension.id === DIM.dream && !sessions.has(player.id)) {
-      if (!restoreSerializedBackup(player)) {
-        try { player.teleport(MAIN_SPAWN, { dimension: mainDim() }); } catch {}
-      }
+    // A death/respawn during a dream must return the saved inventory and
+    // state. A death in the temporary memory dimension must end that trip.
+    if (sessions.has(player.id)) {
+      endDream(player, "respawned");
       return;
     }
-    if (player.dimension.id === DIM.memory && !memoryTrips.has(player.id)) {
+    if (memoryTrips.has(player.id)) {
+      returnFromMemory(player, "respawned");
+      return;
+    }
+
+    // Also recover a persistent backup after a script reload or reconnect,
+    // even if Bedrock respawned the player in the main dimension already.
+    let hasBackup = false;
+    try { hasBackup = typeof world.getDynamicProperty(backupKey(player)) === "string"; } catch {}
+    if (hasBackup && restoreSerializedBackup(player)) return;
+
+    if (player.dimension.id === DIM.dream) {
+      try { player.teleport(MAIN_SPAWN, { dimension: mainDim() }); } catch {}
+      return;
+    }
+    if (player.dimension.id === DIM.memory) {
       try { player.teleport({ x: TESS.x + 3.5, y: 4, z: TESS.z + 0.5 }, { dimension: mainDim() }); } catch {}
       return;
     }
@@ -1591,6 +1609,7 @@ world.afterEvents.playerInteractWithBlock.subscribe(openBiomeBarrel);
 system.runInterval(() => {
   const onlineIds = new Set(world.getAllPlayers().map(p => p.id));
   for (const id of lastRegionCheck.keys()) if (!onlineIds.has(id)) lastRegionCheck.delete(id);
+  for (const id of lastDreamRegionCheck.keys()) if (!onlineIds.has(id)) lastDreamRegionCheck.delete(id);
   let time = 0;
   try { time = world.getTimeOfDay(); } catch { return; }
   const isNight = time >= 13000 && time < 23000;
@@ -1647,7 +1666,11 @@ system.runInterval(() => {
       updateTowerTopTraps(player);
       if (!sessions.has(player.id) && !memoryTrips.has(player.id) && nearbyPortal(mainDim(), player)) finishGame(player);
     } else if (player.dimension.id === DIM.dream) {
-      generateDreamAroundPlayer(player);
+      const dreamCheckedAt = lastDreamRegionCheck.get(player.id) ?? -10000;
+      if (system.currentTick - dreamCheckedAt >= 20) {
+        lastDreamRegionCheck.set(player.id, system.currentTick);
+        generateDreamAroundPlayer(player);
+      }
       const session = sessions.get(player.id);
       if (!session) continue;
       const px = player.location.x;
@@ -1668,6 +1691,14 @@ system.runInterval(() => {
           player.teleport({ x: sx + 0.5, y: dreamHeight(sx, sz) + 1.2, z: sz + 0.5 }, { dimension: dreamDim() });
         }
       }
+      // A nightmare grows darker as it progresses, hinting at the passage
+      // from day toward night without changing the shared world clock.
+      if (session.type === "nightmare" &&
+          system.currentTick - session.startedAt > NIGHTMARE_TICKS / 2 &&
+          system.currentTick % 40 === 0) {
+        try { player.addEffect("darkness", 55, { showParticles: false, amplifier: 0 }); } catch {}
+      }
+
       // Clues settle after a few seconds; they never force a daymare to end.
       for (const signLoc of [[6, 0], [-7, 0], [0, 10]]) {
         const key = signLoc[0] + "_" + signLoc[1];
