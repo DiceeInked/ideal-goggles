@@ -636,7 +636,10 @@ function addBiomeSurfaceDecorations(tasks, cx, cz, profile, isMain) {
   if (key === "pale_garden") {
     const [dx, dz] = pickPosition(890);
     addTask(tasks, cx + dx, 0, cz + dz, "minecraft:pale_moss_carpet");
-    if (isMain) addTask(tasks, cx, 0, cz, "minecraft:closed_eyeblossom");
+    if (isMain) {
+      const [flowerDx, flowerDz] = pickPosition(891);
+      addTask(tasks, cx + flowerDx, 0, cz + flowerDz, "minecraft:closed_eyeblossom");
+    }
   }
 }
 
