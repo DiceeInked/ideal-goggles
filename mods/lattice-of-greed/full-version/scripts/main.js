@@ -1,7 +1,7 @@
 import { world, system, ItemStack } from "@minecraft/server";
 
 /*
- * Lattice of Greed - biome-island build, version 1.3.0.
+ * Lattice of Greed - biome-island build, version 1.3.1.
  * This release returns to the lean 1.1 generator and adds:
  * - the original tiny resource islets around the starter oak tree;
  * - a rotating catalog of Overworld and cave biome island clusters;
@@ -224,7 +224,33 @@ const COMMON_LOOT = [
   "jungle_log", "jungle_sapling", "acacia_log", "acacia_sapling",
   "dark_oak_log", "dark_oak_sapling", "mangrove_log", "mangrove_propagule",
   "cherry_log", "cherry_sapling", "bamboo", "sugar_cane", "cactus",
-  "red_mushroom", "brown_mushroom", "vine", "glow_berries", "sweet_berries"
+  "red_mushroom", "brown_mushroom", "vine", "glow_berries", "sweet_berries",
+  "bucket", "water_bucket", "lava_bucket", "milk_bucket", "powder_snow_bucket",
+  "flint_and_steel", "shears", "shield", "bow", "crossbow", "fishing_rod",
+  "lead", "compass", "clock", "map", "paper", "book", "writable_book",
+  "glass_bottle", "sugar", "bone_meal", "mushroom_stew", "rabbit_stew",
+  "baked_potato", "cooked_beef", "cooked_porkchop", "cooked_chicken",
+  "cooked_mutton", "cooked_rabbit", "cooked_cod", "cooked_salmon",
+  "oak_boat", "spruce_boat", "birch_boat", "jungle_boat", "acacia_boat",
+  "dark_oak_boat", "mangrove_boat", "cherry_boat", "pale_oak_boat", "bamboo_raft",
+  "rail", "powered_rail", "detector_rail", "activator_rail", "minecart",
+  "chest_minecart", "hopper_minecart", "tnt_minecart",
+  "redstone", "redstone_torch", "repeater", "comparator", "lever",
+  "piston", "sticky_piston", "observer", "dispenser", "dropper", "hopper",
+  "anvil", "cauldron", "composter", "lectern", "loom", "smithing_table",
+  "stonecutter", "grindstone", "cartography_table", "fletching_table",
+  "barrel", "chest", "trapped_chest", "ender_chest",
+  "white_dye", "orange_dye", "magenta_dye", "light_blue_dye", "yellow_dye",
+  "lime_dye", "pink_dye", "gray_dye", "light_gray_dye", "cyan_dye",
+  "purple_dye", "blue_dye", "brown_dye", "green_dye", "red_dye", "black_dye",
+  "white_wool", "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
+  "lime_wool", "pink_wool", "gray_wool", "light_gray_wool", "cyan_wool",
+  "purple_wool", "blue_wool", "brown_wool", "green_wool", "red_wool", "black_wool",
+  "water", "lava", "nether_wart", "quartz", "glowstone_dust",
+  "crimson_stem", "warped_stem", "crimson_nylium", "warped_nylium",
+  "prismarine", "prismarine_bricks", "dark_prismarine", "sea_lantern",
+  "amethyst_shard", "copper_block", "iron_block", "gold_block",
+  "redstone_block", "lapis_block", "diamond_block", "emerald_block"
 ];
 const RARE_LOOT = [
   "diamond", "emerald", "lapis_lazuli", "redstone", "amethyst_shard",
@@ -251,7 +277,30 @@ const RARE_LOOT = [
   "heartbreak_pottery_sherd", "howl_pottery_sherd", "miner_pottery_sherd",
   "mourner_pottery_sherd", "plenty_pottery_sherd", "prize_pottery_sherd",
   "scrape_pottery_sherd", "sheaf_pottery_sherd", "shelter_pottery_sherd",
-  "skull_pottery_sherd", "snort_pottery_sherd"
+  "skull_pottery_sherd", "snort_pottery_sherd",
+  "elytra", "totem_of_undying", "trident", "mace", "netherite_ingot",
+  "netherite_scrap", "netherite_upgrade_smithing_template", "ancient_debris",
+  "blaze_powder", "ender_eye", "shulker_shell", "shulker_box", "dragon_breath",
+  "chorus_fruit", "popped_chorus_fruit", "end_stone", "purpur_block",
+  "nether_star", "beacon", "conduit", "end_crystal", "nether_wart",
+  "quartz", "nether_brick", "red_nether_bricks", "soul_sand", "soul_soil",
+  "blackstone", "gilded_blackstone", "basalt", "polished_basalt",
+  "turtle_helmet", "leather_helmet", "leather_chestplate", "leather_leggings",
+  "leather_boots", "chainmail_helmet", "chainmail_chestplate",
+  "chainmail_leggings", "chainmail_boots", "iron_helmet", "iron_chestplate",
+  "iron_leggings", "iron_boots", "golden_helmet", "golden_chestplate",
+  "golden_leggings", "golden_boots", "diamond_helmet", "diamond_chestplate",
+  "diamond_leggings", "diamond_boots", "netherite_helmet", "netherite_chestplate",
+  "netherite_leggings", "netherite_boots", "wooden_pickaxe", "stone_pickaxe",
+  "iron_pickaxe", "golden_pickaxe", "diamond_pickaxe", "netherite_pickaxe",
+  "wooden_axe", "stone_axe", "iron_axe", "diamond_axe", "netherite_axe",
+  "wooden_shovel", "stone_shovel", "iron_shovel", "diamond_shovel",
+  "wooden_hoe", "stone_hoe", "iron_hoe", "diamond_hoe",
+  "wooden_sword", "stone_sword", "iron_sword", "diamond_sword",
+  "netherite_sword", "iron_door", "oak_door", "spruce_door", "birch_door",
+  "jungle_door", "acacia_door", "dark_oak_door", "mangrove_door",
+  "cherry_door", "pale_oak_door", "iron_bars", "chain", "lantern",
+  "soul_lantern", "end_rod", "lightning_rod", "honey_block", "slime_block"
 ];
 const SINGLE_ITEM_LOOT = new Set([
   "crafting_table", "furnace", "saddle", "name_tag", "heart_of_the_sea",
@@ -260,7 +309,32 @@ const SINGLE_ITEM_LOOT = new Set([
   "goat_horn", "armadillo_scute", "rabbit_foot", "honey_bottle",
   "blaze_rod", "ghast_tear", "magma_cream", "fire_charge", "wind_charge",
   "breeze_rod", "heavy_core", "trial_key", "ominous_trial_key",
-  "music_disc_13", "music_disc_cat", "music_disc_creator"
+  "music_disc_13", "music_disc_cat", "music_disc_creator",
+  "bucket", "water_bucket", "lava_bucket", "milk_bucket", "powder_snow_bucket",
+  "flint_and_steel", "shears", "shield", "bow", "crossbow", "fishing_rod",
+  "lead", "compass", "clock", "map", "paper", "book", "writable_book",
+  "glass_bottle", "oak_boat", "spruce_boat", "birch_boat", "jungle_boat",
+  "acacia_boat", "dark_oak_boat", "mangrove_boat", "cherry_boat", "pale_oak_boat",
+  "bamboo_raft", "minecart", "chest_minecart", "hopper_minecart", "tnt_minecart",
+  "rail", "powered_rail", "detector_rail", "activator_rail",
+  "repeater", "comparator", "lever", "piston", "sticky_piston", "observer",
+  "dispenser", "dropper", "hopper", "anvil", "cauldron", "lectern", "loom",
+  "smithing_table", "stonecutter", "grindstone", "cartography_table",
+  "fletching_table", "barrel", "chest", "trapped_chest", "ender_chest",
+  "elytra", "totem_of_undying", "trident", "mace", "netherite_ingot",
+  "netherite_upgrade_smithing_template", "shulker_shell", "shulker_box",
+  "dragon_breath", "nether_star", "beacon", "conduit", "end_crystal",
+  "wooden_pickaxe", "stone_pickaxe", "iron_pickaxe", "golden_pickaxe",
+  "diamond_pickaxe", "netherite_pickaxe", "wooden_axe", "stone_axe", "iron_axe",
+  "diamond_axe", "netherite_axe", "wooden_shovel", "stone_shovel", "iron_shovel",
+  "diamond_shovel", "wooden_hoe", "stone_hoe", "iron_hoe", "diamond_hoe",
+  "wooden_sword", "stone_sword", "iron_sword", "diamond_sword", "netherite_sword",
+  "turtle_helmet", "leather_helmet", "leather_chestplate", "leather_leggings",
+  "leather_boots", "chainmail_helmet", "chainmail_chestplate", "chainmail_leggings",
+  "chainmail_boots", "iron_helmet", "iron_chestplate", "iron_leggings", "iron_boots",
+  "golden_helmet", "golden_chestplate", "golden_leggings", "golden_boots",
+  "diamond_helmet", "diamond_chestplate", "diamond_leggings", "diamond_boots",
+  "netherite_helmet", "netherite_chestplate", "netherite_leggings", "netherite_boots"
 ]);
 
 const BIOME_LOOT_POOLS = {
@@ -366,7 +440,9 @@ function chooseStructure(rx, rz) {
 }
 
 function chooseBiome(rx, rz) {
-  return BIOME_CATALOG[positiveModulo(rx + rz * 17 + 9, BIOME_CATALOG.length)];
+  // A 9x9 neighbourhood spans at least 81 consecutive indices, ensuring
+  // every one of the 56 catalogue entries occurs near every explored region.
+  return BIOME_CATALOG[positiveModulo(rx + rz * 9 + 17, BIOME_CATALOG.length)];
 }
 
 function addResourceIsletTasks(tasks, cx, cz, blockType) {
@@ -414,6 +490,156 @@ function addStarterIslets(tasks, sx, sz) {
   }
 }
 
+const BIOME_TREE_STYLES = {
+  forest: ["oak_log", "oak_leaves"],
+  flower_forest: ["oak_log", "oak_leaves"],
+  birch_forest: ["birch_log", "birch_leaves"],
+  old_growth_birch_forest: ["birch_log", "birch_leaves"],
+  dark_forest: ["dark_oak_log", "dark_oak_leaves"],
+  dappled_forest: ["oak_log", "oak_leaves"],
+  pale_garden: ["pale_oak_log", "pale_oak_leaves"],
+  taiga: ["spruce_log", "spruce_leaves"],
+  snowy_taiga: ["spruce_log", "spruce_leaves"],
+  old_growth_spruce_taiga: ["spruce_log", "spruce_leaves"],
+  old_growth_pine_taiga: ["spruce_log", "spruce_leaves"],
+  windswept_forest: ["oak_log", "oak_leaves"],
+  jungle: ["jungle_log", "jungle_leaves"],
+  sparse_jungle: ["jungle_log", "jungle_leaves"],
+  bamboo_jungle: ["jungle_log", "jungle_leaves"],
+  savanna: ["acacia_log", "acacia_leaves"],
+  savanna_plateau: ["acacia_log", "acacia_leaves"],
+  cherry_grove: ["cherry_log", "cherry_leaves"],
+  mangrove_swamp: ["mangrove_log", "mangrove_leaves"]
+};
+
+const ISLAND_FLOWERS = [
+  "dandelion", "poppy", "azure_bluet", "oxeye_daisy",
+  "cornflower", "allium", "red_tulip", "orange_tulip",
+  "white_tulip", "pink_tulip", "blue_orchid", "lily_of_the_valley"
+];
+
+function addTinyBiomeTree(tasks, cx, cz, logId, leavesId) {
+  const trunkHeight = 2 + (seededValue(cx, cz, 811) % 2);
+  for (let y = 0; y < trunkHeight; y++) {
+    addTask(tasks, cx, y, cz, blockId(logId));
+  }
+
+  // Two small leaf layers fit on the 3x3 island without touching its neighbours.
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      if (dx === 0 && dz === 0) continue;
+      if (Math.abs(dx) === 1 && Math.abs(dz) === 1 &&
+          seededValue(cx + dx, cz + dz, 812) % 4 === 0) continue;
+      addTask(tasks, cx + dx, trunkHeight - 1, cz + dz, blockId(leavesId));
+      addTask(tasks, cx + dx, trunkHeight, cz + dz, blockId(leavesId));
+    }
+  }
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      addTask(tasks, cx + dx, trunkHeight + 1, cz + dz, blockId(leavesId));
+    }
+  }
+}
+
+function addBiomeSurfaceDecorations(tasks, cx, cz, profile, isMain) {
+  const key = profile.key;
+  const roll = seededValue(cx, cz, isMain ? 830 : 831);
+  const positions = [
+    [-1, 0], [1, 0], [0, -1], [0, 1],
+    [-1, -1], [-1, 1], [1, -1], [1, 1]
+  ];
+  const pickPosition = salt => positions[seededValue(cx, cz, salt) % positions.length];
+
+  const treeStyle = BIOME_TREE_STYLES[key];
+  if (treeStyle && (isMain || roll % 100 < 68)) {
+    addTinyBiomeTree(tasks, cx, cz, treeStyle[0], treeStyle[1]);
+  }
+
+  if (profile.loot === "flowers" || profile.loot === "farm" ||
+      profile.loot === "cherry" || profile.loot === "swamp" ||
+      key === "meadow" || key === "river") {
+    const count = isMain ? 3 : 1 + (roll % 2);
+    for (let i = 0; i < count; i++) {
+      const [dx, dz] = pickPosition(840 + i);
+      const flower = ISLAND_FLOWERS[seededValue(cx + dx, cz + dz, 850 + i) % ISLAND_FLOWERS.length];
+      addTask(tasks, cx + dx, 0, cz + dz, blockId(flower));
+    }
+    if (profile.loot === "farm" && isMain) {
+      addTask(tasks, cx, 0, cz, "minecraft:hay_block");
+    }
+  }
+
+  if (key === "desert" || profile.loot === "badlands") {
+    if (isMain || roll % 100 < 45) {
+      const [dx, dz] = pickPosition(860);
+      const plant = key === "desert" ? "minecraft:cactus" : "minecraft:dead_bush";
+      addTask(tasks, cx + dx, 0, cz + dz, plant);
+      if (key === "desert" && roll % 3 === 0) {
+        addTask(tasks, cx + dx, 1, cz + dz, "minecraft:cactus");
+      }
+    }
+    if (profile.loot === "badlands" && isMain) {
+      addTask(tasks, cx, 0, cz, "minecraft:terracotta");
+      addTask(tasks, cx, 1, cz, "minecraft:red_sandstone");
+    }
+  }
+
+  if (profile.loot === "cold" && (isMain || roll % 100 < 70)) {
+    const [dx, dz] = pickPosition(870);
+    addTask(tasks, cx + dx, 0, cz + dz, "minecraft:snow_layer");
+    if (roll % 3 === 0) addTask(tasks, cx, 0, cz, "minecraft:ice");
+  }
+
+  if (profile.loot === "ocean") {
+    const material = ["minecraft:prismarine", "minecraft:prismarine_bricks",
+      "minecraft:dark_prismarine", "minecraft:sea_lantern"][roll % 4];
+    addTask(tasks, cx, 0, cz, material);
+    if (isMain) addTask(tasks, cx, 1, cz, "minecraft:sea_lantern");
+  }
+
+  if (profile.loot === "mushroom") {
+    const mushroom = roll % 2 === 0 ? "minecraft:red_mushroom" : "minecraft:brown_mushroom";
+    addTask(tasks, cx, 0, cz, mushroom);
+    if (isMain) addTask(tasks, cx + 1, 0, cz, "minecraft:red_mushroom");
+  }
+
+  if (profile.loot === "lush_caves") {
+    const plant = roll % 3 === 0 ? "minecraft:azalea" :
+      roll % 3 === 1 ? "minecraft:flowering_azalea" : "minecraft:moss_carpet";
+    addTask(tasks, cx, 0, cz, plant);
+    if (isMain) addTask(tasks, cx, 1, cz, "minecraft:glow_berries");
+  }
+
+  if (profile.loot === "dripstone_caves") {
+    addTask(tasks, cx, 0, cz, "minecraft:pointed_dripstone");
+    if (isMain) addTask(tasks, cx, 1, cz, "minecraft:dripstone_block");
+  }
+
+  if (profile.loot === "deep_dark") {
+    addTask(tasks, cx, 0, cz, "minecraft:sculk_sensor");
+    if (isMain) addTask(tasks, cx + 1, 0, cz, "minecraft:sculk_catalyst");
+  }
+
+  if (profile.loot === "swamp" && !treeStyle) {
+    const [dx, dz] = pickPosition(880);
+    addTask(tasks, cx + dx, 0, cz + dz, "minecraft:brown_mushroom");
+    if (isMain) addTask(tasks, cx, 0, cz, "minecraft:mangrove_roots");
+  }
+
+  if (profile.loot === "mountain" || profile.loot === "badlands" ||
+      profile.loot === "desert") {
+    const rock = profile.base;
+    addTask(tasks, cx, 0, cz, rock);
+    if (isMain && roll % 2 === 0) addTask(tasks, cx, 1, cz, rock);
+  }
+
+  if (key === "pale_garden") {
+    const [dx, dz] = pickPosition(890);
+    addTask(tasks, cx + dx, 0, cz + dz, "minecraft:pale_moss_carpet");
+    if (isMain) addTask(tasks, cx, 0, cz, "minecraft:closed_eyeblossom");
+  }
+}
+
 function addBiomeIslandTasks(tasks, cx, cz, profile, isMain) {
   for (let dx = -1; dx <= 1; dx++) {
     for (let dz = -1; dz <= 1; dz++) {
@@ -442,6 +668,8 @@ function addBiomeIslandTasks(tasks, cx, cz, profile, isMain) {
     ];
     addTask(tasks, cx, -2, cz, resource);
   }
+
+  addBiomeSurfaceDecorations(tasks, cx, cz, profile, isMain);
 }
 
 function addUndergroundRoomTasks(tasks, sx, sz, structure, chest) {
@@ -584,14 +812,16 @@ function fillRoomChest(dim, chestInfo) {
       if (chestInfo.starterRegion && slot < 4) continue;
       const roll = seededUnit(chestInfo.chest.x + slot, chestInfo.chest.z - slot, chestInfo.seed + 100);
       let itemId;
-      if (roll < 0.52) {
+      if (roll < 0.40) {
         itemId = pickLoot(COMMON_LOOT, chestInfo.chest.x, chestInfo.chest.z, chestInfo.seed + slot);
-      } else if (roll < 0.77) {
+      } else if (roll < 0.66) {
         itemId = pickLoot(biomePool, chestInfo.chest.x + slot, chestInfo.chest.z, chestInfo.seed + slot + 500);
-      } else if (roll < 0.97) {
+      } else if (roll < 0.87) {
         itemId = pickLoot(structurePool, chestInfo.chest.x, chestInfo.chest.z + slot, chestInfo.seed + slot + 900);
-      } else {
+      } else if (roll < 0.96) {
         itemId = pickLoot(RARE_LOOT, chestInfo.chest.x + slot, chestInfo.chest.z - slot, chestInfo.seed + slot + 1300);
+      } else {
+        itemId = pickLoot(COMMON_LOOT, chestInfo.chest.x - slot, chestInfo.chest.z + slot, chestInfo.seed + slot + 1600);
       }
       if (!itemId) continue;
       const amount = SINGLE_ITEM_LOOT.has(itemId) ? 1 :
