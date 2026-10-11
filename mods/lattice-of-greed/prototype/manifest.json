@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Lattice of Greed: Prototype",
+    "description": "An experimental Bedrock prototype for the Lattice of Greed dream/daymare system.",
+    "uuid": "cb2d6d2a-bc2a-4f5b-a1df-6f8ec8d7a103",
+    "version": [0, 1, 0],
+    "min_engine_version": [1, 21, 80]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a4e8f7bb-5d5f-4e7f-83bd-6d7f0f4a2e91",
+      "version": [0, 1, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "beta"
+    }
+  ],
+  "metadata": {
+    "authors": ["DiceeInked"],
+    "license": "All Rights Reserved"
+  }
+}
