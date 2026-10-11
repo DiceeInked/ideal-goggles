@@ -1,6 +1,6 @@
 # Lattice of Greed
 
-**Status:** Design concept plus an early Bedrock prototype. The prototype currently focuses on the dream/daymare sequence and has not yet been tested inside Minecraft. The rest of the concept remains a design plan.
+**Status:** Design concept plus an experimental, integrated Bedrock script build in `full-version/`. The source now attempts the main lattice, resource platforms, city towers, Tesseract/memory sequence, Biome Barrels, nightmares/daymares, restoration, Temi village, serpent, and ending. The build is not yet runtime-verified in Minecraft; some systems are scripted approximations and still need in-game testing and refinement.
 
 ## 1. Core vision
 
