@@ -38,7 +38,7 @@ jobs:
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
           if (!Array.isArray(manifest.header.version) || !Array.isArray(manifest.modules?.[0]?.version)) throw new Error('Missing version');
           if (manifest.header.version.join('.') !== manifest.modules[0].version.join('.')) throw new Error('Header/module versions differ');
-          if (manifest.header.version.join('.') !== '1.0.7') throw new Error('Expected release 1.0.6');
+          if (manifest.header.version.join('.') !== '1.0.8') throw new Error('Expected release 1.0.8');
           if (manifest.dependencies?.[0]?.module_name !== '@minecraft/server') throw new Error('Missing Script API dependency');
           if (manifest.dependencies?.[0]?.version !== '2.8.0') throw new Error('Expected @minecraft/server 2.8.0 ticking-area API');
           const min = manifest.header.min_engine_version || [];
@@ -124,7 +124,7 @@ jobs:
               for name in expected_functions:
                   assert z.read(f'functions/{name}') == (root / 'functions' / name).read_bytes(), f'Pack function is stale: {name}'
                   assert ':' not in name, f'Function name must not contain a colon: {name}'
-              assert manifest['header']['version'] == [1, 0, 7], 'Unexpected pack version'
+              assert manifest['header']['version'] == [1, 0, 8], 'Unexpected pack version'
               assert manifest['dependencies'][0]['version'] == '2.8.0', 'Unexpected Script API version'
               assert manifest['header']['uuid'] != manifest['modules'][0]['uuid']
               assert 'log:abyss' in (root / 'scripts/main.js').read_text()
@@ -136,8 +136,8 @@ jobs:
               assert 'for (let dx = -1; dx <= 1; dx++)' in script and 'for (let dz = -1; dz <= 1; dz++)' in script, 'Nearby diagonal lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_REGIONS = 2' in script and 'pumpMainRegionQueue' in script, 'Queued lattice generation missing'
               assert 'MAX_ACTIVE_MAIN_STRUCTURES = 1' in script and 'generateMainStructures' in script, 'Heavy structures are not separated from lattice generation'
-              assert 'regionKey("region_lattice_v107"' in script, 'Versioned lattice completion tracking missing'
-              assert 'regionKey("region_main_v106"' in script, 'Versioned structure completion tracking missing'
+              assert 'regionKey("region_lattice_v108"' in script, 'Versioned lattice completion tracking missing'
+              assert 'regionKey("region_main_v108"' in script, 'Versioned structure completion tracking missing'
               assert 'await manager.createTickingArea(identifier, options)' in script, 'Ticking areas must hold chunks loaded during builds'
               assert 'await applyTasks(dim, latticeTasks, rx, rz, 300, true)' in script, 'Lattice generation must fail instead of marking failed block writes complete'
               assert 'log:lattice_status' in script and 'log:lattice_recheck' in script, 'Lattice diagnostics missing'
