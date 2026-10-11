@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.3
+ * Lattice of Greed - full-system build, version 1.0.4
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -608,7 +608,6 @@ async function generateMainRegion(rx, rz) {
     await applyTasks(dim, latticeTasks, rx, rz, 300);
     world.setDynamicProperty(latticeKey, true);
     lastLatticeGenerationError = "none";
-    queueMainStructures(rx, rz);
   } catch (error) {
     latticeGenerationFailures++;
     lastLatticeGenerationError = String(error).slice(0, 180);
@@ -617,6 +616,11 @@ async function generateMainRegion(rx, rz) {
   } finally {
     releaseRegionTickingArea(areaId);
     generatingMain.delete(latticeKey);
+    // Start the heavier build only after the lattice area's reservation has
+    // been released. Overlapping areas count twice toward Bedrock's quota.
+    if (world.getDynamicProperty(latticeKey) === true) {
+      system.runTimeout(() => queueMainStructures(rx, rz), 1);
+    }
   }
 }
 
