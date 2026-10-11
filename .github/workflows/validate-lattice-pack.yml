@@ -166,6 +166,6 @@ jobs:
               assert z.read('manifest.json') == (root / 'manifest.json').read_bytes(), 'Manifest is stale'
               assert z.read('README.md') == (root / 'README.md').read_bytes(), 'README is stale'
               assert z.read('scripts/main.js') == (root / 'scripts/main.js').read_bytes(), 'Script is stale'
-              assert manifest['header']['version'] == [1, 3, 1]
+              assert manifest['header']['version'] == [1, 4, 0]
               print(f'Archive OK: {pack.stat().st_size} bytes; {len(names)} entries.')
           PY
