@@ -28,4 +28,5 @@ This is an early prototype focused on the dream/daymare sequence, not the full a
 - Test in a new world first. Do not apply it to a world you care about without a backup.
 - The full bedrock lattice, biome generation, city, tree biome, Biome Barrels, Temi village, serpent, and ending are not implemented yet.
 - The latest daymare design is open-ended: players can stay after finding clues and choose to leave by entering the Tesseract. Nightmares remain time-limited.
+- Normal exits restore the original item stacks. If the game closes during a dream, a persistent emergency backup attempts to restore basic items, but custom item data or enchantments may not all survive that fallback.
 - The source still needs an in-game compatibility test, especially around custom-dimension registration, sign text, and script API changes.
