@@ -46,9 +46,9 @@ jobs:
             throw new Error('Engine version must be at least 1.26.10');
           }
           const expected = [
-            'daymare.mcfunction', 'finish.mcfunction', 'lattice_recheck.mcfunction',
-            'function_check.mcfunction', 'lattice_status.mcfunction', 'memory.mcfunction', 'nightmare.mcfunction',
-            'status.mcfunction'
+            'daymare.mcfunction', 'finish.mcfunction', 'function_check.mcfunction',
+            'lattice_recheck.mcfunction', 'lattice_status.mcfunction', 'memory.mcfunction',
+            'nightmare.mcfunction', 'status.mcfunction'
           ];
           const actual = fs.readdirSync(path.join(root, 'functions')).filter(name => name.endsWith('.mcfunction')).sort();
           if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Unexpected function set: ' + actual.join(', '));
