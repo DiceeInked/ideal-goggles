@@ -10,7 +10,7 @@ import {
 } from "@minecraft/server";
 
 /*
- * Lattice of Greed - full-system build, version 1.0.6
+ * Lattice of Greed - full-system build, version 1.0.7
  * The main game takes place in an isolated custom void dimension. The normal
  * Overworld is left alone until the ending, where a small outcome vignette is
  * generated around the world's default spawn.
@@ -271,12 +271,18 @@ function addTask(tasks, x, y, z, typeId) {
   tasks.push([Math.floor(x), Math.floor(y), Math.floor(z), typeId]);
 }
 
-async function applyTasks(dim, tasks, chunkX, chunkZ, batchSize = 420) {
+async function applyTasks(dim, tasks, chunkX, chunkZ, batchSize = 420, strictPlacement = false) {
   let failed = 0;
   for (let i = 0; i < tasks.length; i++) {
     const task = tasks[i];
     if (!regionIsLoaded(dim, chunkX, chunkZ)) throw new Error("Target chunk unloaded during generation");
-    if (!safeSet(dim, task[0], task[1], task[2], task[3])) failed++;
+    if (!safeSet(dim, task[0], task[1], task[2], task[3])) {
+      failed++;
+      if (strictPlacement) {
+        throw new Error("Failed to place " + task[3] + " at " +
+          task[0] + "," + task[1] + "," + task[2]);
+      }
+    }
     if (i > 0 && i % batchSize === 0) await waitTicks(1);
   }
   return failed;
@@ -800,7 +806,7 @@ function enqueueBarrelsForRegion(tasks, barrels, sx, sz) {
 }
 
 async function generateMainRegion(rx, rz) {
-  const latticeKey = regionKey("region_lattice_v106", rx, rz);
+  const latticeKey = regionKey("region_lattice_v107", rx, rz);
   if (world.getDynamicProperty(latticeKey) === true || generatingMain.has(latticeKey)) {
     queueMainStructures(rx, rz);
     return;
@@ -813,7 +819,7 @@ async function generateMainRegion(rx, rz) {
     world.setDynamicProperty(latticeKey, "building");
     const latticeTasks = [];
     enqueueLattice(latticeTasks, rx * REGION_SIZE, rz * REGION_SIZE);
-    await applyTasks(dim, latticeTasks, rx, rz, 300);
+    await applyTasks(dim, latticeTasks, rx, rz, 300, true);
     world.setDynamicProperty(latticeKey, true);
     lastLatticeGenerationError = "none";
   } catch (error) {
@@ -928,7 +934,7 @@ function pumpMainRegionQueue() {
   while (activeMainRegions < MAX_ACTIVE_MAIN_REGIONS && mainRegionQueue.length > 0) {
     const next = mainRegionQueue.shift();
     queuedMainRegions.delete(next.rx + "," + next.rz);
-    const key = regionKey("region_lattice_v106", next.rx, next.rz);
+    const key = regionKey("region_lattice_v107", next.rx, next.rz);
     if (world.getDynamicProperty(key) === true) {
       queueMainStructures(next.rx, next.rz);
       continue;
@@ -957,7 +963,7 @@ function generateLoadedMainRegions(player) {
     for (let dz = -1; dz <= 1; dz++) {
       const x = rx + dx;
       const z = rz + dz;
-      const latticeKey = regionKey("region_lattice_v106", x, z);
+      const latticeKey = regionKey("region_lattice_v107", x, z);
       const queueId = x + "," + z;
       if (world.getDynamicProperty(latticeKey) === true) {
         queueMainStructures(x, z);
@@ -2019,7 +2025,7 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   } else if (event.id === "log:lattice_status") {
     const rx = floorDiv(player.location.x, REGION_SIZE);
     const rz = floorDiv(player.location.z, REGION_SIZE);
-    const latticeValue = world.getDynamicProperty(regionKey("region_lattice_v106", rx, rz));
+    const latticeValue = world.getDynamicProperty(regionKey("region_lattice_v107", rx, rz));
     const structureValue = world.getDynamicProperty(regionKey("region_main_v106", rx, rz));
     const stateName = value => value === true ? "done" : value === "building" ? "building" : value === false ? "retry" : "not generated";
     let loaded = false;
