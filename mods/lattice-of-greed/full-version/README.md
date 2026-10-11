@@ -16,7 +16,7 @@ The manifest uses newly generated UUIDs and a new version number. The custom dim
 ## What this build attempts to implement
 
 - **The abyss lattice:** a four-block-spaced bedrock grid from Y=-32 to Y=0, with no roof and open space between beams. The player starts without items.
-- **The single tree and resource platforms:** a main oak, its 3×3 dirt foundation and lower marker, plus rare 3×3×3 island with grass on top and a random stone ore in the middles with grass tops and a random stone ore in the center of the middle layer, with odds weighted toward the tree.
+- **The single tree and resource platforms:** a main oak on a full 3×3×3 island, with grass on top and bedrock at the exact center of the middle layer, plus a separate lower marker. Other rare 3×3×3 islands have grass tops and one random ordinary stone ore at the center of the middle layer, with odds weighted toward the tree.
 - **Ruined city towers:** several sizes of tall buildings, openings, floor levels, water elevator shafts, treasure chests, clues, restricted block-breaking inside, and a one-time top-ledge collapse.
 - **The nested Tesseract:** nested square frames, a protected central crying-obsidian portal block that the player deliberately interacts with to enter, a repeatable mining loophole on a block placed above it, a one-use entry that consumes the structure, and a temporary memory dimension.
 - **The memory collapse:** an initially calm Overworld-like patch, then gradual black-concrete infection, block removal, and a return to the lattice. Mining 64 blocks during the memory can trigger a daymare.
