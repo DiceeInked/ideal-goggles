@@ -35,8 +35,8 @@ jobs:
           const root = 'mods/lattice-of-greed/full-version';
           const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
           if (manifest.format_version !== 2) throw new Error('Unexpected manifest format');
-          if (manifest.header.version.join('.') !== '1.4.0') throw new Error('Expected release 1.4.0');
-          if (manifest.modules[0].version.join('.') !== '1.4.0') throw new Error('Header/module versions differ');
+          if (manifest.header.version.join('.') !== '1.5.0') throw new Error('Expected release 1.5.0');
+          if (manifest.modules[0].version.join('.') !== '1.5.0') throw new Error('Header/module versions differ');
           if (manifest.header.uuid === manifest.modules[0].uuid) throw new Error('Header and module UUIDs must differ');
           if (manifest.dependencies[0].module_name !== '@minecraft/server' || manifest.dependencies[0].version !== '2.8.0') {
             throw new Error('Unexpected Script API dependency');
@@ -81,7 +81,15 @@ jobs:
             'Buried Treasure',
             'enchanted_golden_apple',
             'heavy_core',
-            'echo_shard'
+            'echo_shard',
+            'log:nether_void',
+            'log:end_void',
+            'buildAuxTasks',
+            'processAuxJobs',
+            'buildOverworldEndPortalIfNear',
+            'minecraft:purpur_pillar',
+            'minecraft:end_portal_frame',
+            'OVERWORLD_END_PORTAL'
           ]) if (!script.includes(required)) throw new Error('Missing expected code: ' + required);
           const biomeCount = script.split('biomeProfile("').length - 1;
           const roomCount = script.split('structureRoom("').length - 1;
@@ -109,7 +117,16 @@ jobs:
             'moveSerpent',
             'acquireRegionTickingArea'
           ]) if (script.includes(removed)) throw new Error('Unwanted old system remains: ' + removed);
-          console.log('Validated ' + biomeCount + ' biome profiles and ' + roomCount + ' structure rooms.');
+          if (!script.includes('if (line(x) || line(z))') ||
+    !script.includes('if (line(x) && line(z))')) {
+  throw new Error('Nether horizontal lattice / End intersection-dot generation is missing.');
+}
+if (!script.includes('world.afterEvents.playerDimensionChange.subscribe') ||
+    !script.includes('world.afterEvents.itemUse.subscribe')) {
+  throw new Error('Dimension routing or Eye of Ender guidance is missing.');
+}
+console.log('Validated ' + biomeCount + ' biome profiles, ' + roomCount +
+  ' structure rooms, and both auxiliary void dimensions.');
           NODE
 
       - name: Package current release
