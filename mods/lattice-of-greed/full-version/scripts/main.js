@@ -1575,6 +1575,15 @@ function nearGate(player, cx, y, cz) {
     p.y >= y - 1 && p.y <= y + 5;
 }
 
+function overworldSafeSpawn() {
+  const spawn = world.getDefaultSpawnLocation();
+  return {
+    x: Math.floor(spawn.x) + 0.5,
+    y: Math.floor(spawn.y) + 1,
+    z: Math.floor(spawn.z) + 0.5
+  };
+}
+
 function routeToDimension(player, dimensionId, destination, message) {
   const cooldownKey = player.id + "|" + dimensionId;
   if ((portalCooldowns.get(cooldownKey) || 0) > system.currentTick) return;
@@ -1595,14 +1604,14 @@ function checkScriptPortals() {
       buildReturnGate(DIMENSION_ID);
       if (nearGate(player, 10, 0, 10)) {
         routeToDimension(player, "minecraft:overworld",
-          { x: 0.5, y: 100, z: 0.5 }, "Returned to the Overworld.");
+          overworldSafeSpawn(), "Returned to the Overworld.");
       }
     } else if (id === NETHER_DIMENSION_ID || id === END_DIMENSION_ID) {
       buildReturnGate(id);
       queueAuxNearby(player);
       if (nearGate(player, 0, 64, 0)) {
         routeToDimension(player, "minecraft:overworld",
-          { x: 0.5, y: 100, z: 0.5 }, "Returned to the Overworld.");
+          overworldSafeSpawn(), "Returned to the Overworld.");
       }
     } else if (id === "minecraft:overworld") {
       buildOverworldEndPortalIfNear(player);
