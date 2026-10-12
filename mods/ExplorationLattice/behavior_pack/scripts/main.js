@@ -218,6 +218,13 @@ function scanPlayerAreas() {
 
   const desiredKeys = new Set(nearbyLoaded.keys());
 
+  // Bound memory during long expeditions. If a finished chunk leaves every
+  // player's nearby scan area, forget its marker; revisiting it is safe
+  // because lattice conversion is idempotent.
+  for (const key of completedKeys) {
+    if (!desiredKeys.has(key)) completedKeys.delete(key);
+  }
+
   const stillNearby = [];
   for (const job of queuedChunks) {
     if (desiredKeys.has(job.key)) stillNearby.push(job);
