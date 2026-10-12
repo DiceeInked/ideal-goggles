@@ -108,9 +108,11 @@ jobs:
               assert required in script, f"Missing hardening check: {required}"
           assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
           assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
+          assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
           print("Validated API dependencies, custom block/catalog/recipe/texture links, legacy score migration, per-item market storage, custom-item safety, fractional tax accounting, and key menu functions.")
           print("All pack manifests and JSON files parsed.")
           PY
+          node --test mods/dynamic-economy/bedrock/tests/market-math.test.mjs
           package_pack() {
             SRC="$1"; PREFIX="$2"; OUT_REL="$3"
             mkdir -p "$(dirname "$OUT_REL")"
