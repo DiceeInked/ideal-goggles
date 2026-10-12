@@ -104,7 +104,11 @@ jobs:
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
-          print("Validated stable API dependencies, pack dependency, Sell Barrel item display name/catalog/recipe/loot/texture/localization links, and key market/menu functions.")
+          for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)"]:
+              assert required in script, f"Missing hardening check: {required}"
+          assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
+          assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
+          print("Validated API dependencies, custom block/catalog/recipe/texture links, legacy score migration, per-item market storage, custom-item safety, fractional tax accounting, and key menu functions.")
           print("All pack manifests and JSON files parsed.")
           PY
           package_pack() {
@@ -117,13 +121,13 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.12.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.13.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.2.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
           for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
           for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.12.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.13.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
       - name: Commit generated packs when changed
@@ -137,5 +141,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.12 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.13 and Sell Barrel packs"
           git push
