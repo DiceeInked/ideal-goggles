@@ -8,6 +8,9 @@
       "minecraft:block_placer": {
         "block": "diceyinked:sell_barrel",
         "replace_block_item": true
+      },
+      "minecraft:display_name": {
+        "value": "item.diceyinked:sell_barrel.name"
       }
     }
   }
