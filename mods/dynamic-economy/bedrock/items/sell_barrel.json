@@ -1,0 +1,14 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "diceyinked:sell_barrel"
+    },
+    "components": {
+      "minecraft:block_placer": {
+        "block": "diceyinked:sell_barrel",
+        "replace_block_item": true
+      }
+    }
+  }
+}
