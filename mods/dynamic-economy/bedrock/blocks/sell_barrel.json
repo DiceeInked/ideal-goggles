@@ -28,9 +28,19 @@
       "minecraft:collision_box": true,
       "minecraft:selection_box": true,
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 2.5
+        "seconds_to_destroy": 2.5,
+        "item_specific_speeds": [
+          {
+            "item": {
+              "tags": "q.any_tag('minecraft:is_axe')"
+            },
+            "destroy_speed": 0.5
+          }
+        ]
       },
-      "minecraft:destructible_by_explosion": true,
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2.5
+      },
       "minecraft:block_entity": {
         "container": {
           "slot_count": 27
