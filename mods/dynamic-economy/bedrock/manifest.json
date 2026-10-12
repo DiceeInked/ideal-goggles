@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.17",
-    "description": "A shared survival item market with owner-paid, hopper-compatible Sell Barrels. Use a stick or vanilla sword for trading; use a Blaze Rod for operator tools.",
+    "name": "Dynamic Economy v0.3.18",
+    "description": "A shared survival item market with modern market navigation, trade history, price graphs, and owner-paid Sell Barrels.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      17
+      18
     ],
     "min_engine_version": [
       1,
