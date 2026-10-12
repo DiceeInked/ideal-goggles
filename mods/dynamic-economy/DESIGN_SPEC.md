@@ -72,9 +72,9 @@ If an item type cannot be created or priced safely, it is omitted from the purch
 
 ## 5. Player market menu (current Bedrock behavior)
 
-The normal market menu opens when using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. It is one persistent workspace with three sections, **BUY**, **SELL**, and **ECONOMY**, selected with a selector at the top.
+The normal market menu opens when using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. It is one persistent workspace with three sections, **BUY**, **SELL**, and **ECONOMY**. On API builds that expose `CustomForm.multiButtonRow`, the sections are selected with three horizontal buttons across the top. The legacy 1.26.52-compatible runtime still needs a selector fallback because it lacks that row API.
 
-Each section has its own search field directly above its item list. Search updates the visible, paginated rows as the player types. Switching sections does not open another screen and does not discard the other sections' search text or page. There is no Back button between workspace sections. Selecting a BUY item opens quantity selection and a purchase quote; selecting a SELL item opens quantity selection and a sale quote; selecting an ECONOMY item opens its graph. Returning from a confirmation/graph restores the workspace to its previous section, search, and page.
+Each section has its own search field directly above its item list. On API builds with `multiButtonRow`, the item list is a three-column grid of nine clickable tiles per page; legacy builds use the fallback vertical list. Search updates the visible, paginated items as the player types. Switching sections does not open another screen and does not discard the other sections' search text or page. There is no Back button between workspace sections. Selecting a BUY item opens quantity selection and a purchase quote; selecting a SELL item opens quantity selection and a sale quote; selecting an ECONOMY item opens its graph. Returning from a confirmation/graph restores the workspace to its previous section, search, and page.
 
 BUY lists the survival-buyable catalog, sorted by price (highest first), then alphabetically. SELL lists only plain, undamaged items in the player's inventory, sorted by quantity owned (highest first), then alphabetically. ECONOMY lists items with recorded market activity, sorted alphabetically; selecting one opens its saved price-history graph.
 
@@ -82,7 +82,7 @@ Trade quantities use a maximum of 64 in the quantity slider, but **Sell All** in
 
 The graph shows saved per-unit price points from completed trades only. It does not invent/interpolate values between trades. Each bulk trade contributes one ordered point per item unit, with the corresponding score and price progression.
 
-For compatibility with the manifest-version ceiling accepted by Bedrock 1.26.52, this release uses stable `@minecraft/server-ui` 2.1.0 and its `CustomForm`/observable controls. The requested horizontal `multiButtonRow` is only available in a newer preview API, so this compatible build uses a single-screen selector instead. A true horizontal three-button row requires a game/API build that includes that pre-release method.
+For compatibility with the manifest-version ceiling accepted by Bedrock 1.26.52, the pack retains `@minecraft/server-ui` 2.1.0 and the minimum engine version `[1, 26, 52]`. The code feature-detects `CustomForm.multiButtonRow`: API builds that have it render the requested side-by-side tabs and three-column tile grid; older runtimes use the same-screen dropdown and vertical-button fallback. Microsoft documents `multiButtonRow` in `@minecraft/server-ui` 2.4.0-beta for Minecraft 1.26.60 preview, so the full layout is not available in the older runtime without moving to that preview API.
 
 ## 6. Sell Barrel
 
