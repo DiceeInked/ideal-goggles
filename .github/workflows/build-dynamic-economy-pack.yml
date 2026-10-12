@@ -26,13 +26,13 @@ jobs:
           source = Path("mods/dynamic-economy/resource-pack/texture_sources")
           target = Path("mods/dynamic-economy/resource-pack/textures/blocks")
           target.mkdir(parents=True, exist_ok=True)
-          for name in ("barrel_side.png", "barrel_top.png", "barrel_bottom.png"):
-              encoded = source / (name + ".b64")
+          for source_name, output_name in (("barrel_side.png", "sell_barrel_side.png"), ("barrel_top.png", "sell_barrel_top.png"), ("barrel_bottom.png", "sell_barrel_bottom.png")):
+              encoded = source / (source_name + ".b64")
               raw = base64.b64decode(encoded.read_text().strip(), validate=True)
               assert raw.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid PNG signature: {encoded}"
               width, height = struct.unpack(">II", raw[16:24])
-              assert (width, height) == (16, 16), f"Unexpected vanilla barrel texture size for {name}: {(width, height)}"
-              (target / name).write_bytes(raw)
+              assert (width, height) == (16, 16), f"Unexpected Sell Barrel texture size for {source_name}: {(width, height)}"
+              (target / output_name).write_bytes(raw)
           print("Decoded and verified all three inverted vanilla barrel textures (16x16 PNG).")
           PY
           python3 - <<'PY'
@@ -75,11 +75,11 @@ jobs:
           loot_path = components.get("minecraft:loot")
           assert loot_path and (bp / loot_path).is_file(), f"Missing Sell Barrel loot table: {loot_path}"
           recipe = json.loads((bp / "recipes/sell_barrel.json").read_text())["minecraft:recipe_shaped"]
-          assert recipe.get("description", {}).get("identifier") == "diceyinked:sell_barrel", "Recipe identifier mismatch"
+          assert recipe.get("description", {}).get("identifier") == "diceyinked:sell_barrel_recipe", "Recipe identifier must be unique and separate from the block ID"
           assert recipe.get("result", {}).get("item") == "diceyinked:sell_barrel", "Recipe output mismatch"
           assert recipe.get("pattern") == ["PSP", "PAP", "PSP"], "Unexpected Sell Barrel crafting pattern"
           assert recipe.get("key", {}).get("A", {}).get("item") == "minecraft:stick", "Sell Barrel recipe must have a center stick"
-          assert recipe.get("unlock") == [{"context": "AlwaysUnlocked"}], "Sell Barrel recipe must be explicitly unlocked"
+          assert recipe.get("unlock") == {"context": "AlwaysUnlocked"}, "Sell Barrel recipe must use the current AlwaysUnlocked object schema"
           item_file = json.loads((bp / "items/sell_barrel.json").read_text())
           assert item_file.get("format_version") == "1.26.40", "Sell Barrel item must target Bedrock 1.26.40+ content format"
           item = item_file["minecraft:item"]
@@ -94,7 +94,7 @@ jobs:
           placer = item.get("components", {}).get("minecraft:block_placer", {})
           assert placer.get("block") == definition["description"]["identifier"] and placer.get("replace_block_item") is True, "Sell Barrel item must explicitly link to its block"
           assert (rp / "textures/item_texture.json").is_file() and (rp / "textures/terrain_texture.json").is_file(), "Missing Sell Barrel texture atlas definitions"
-          for name in ("barrel_side.png", "barrel_top.png", "barrel_bottom.png"):
+          for name in ("sell_barrel_side.png", "sell_barrel_top.png", "sell_barrel_bottom.png"):
               texture = rp / "textures/blocks" / name
               data = texture.read_bytes()
               assert data.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", data[16:24]) == (16, 16), f"Invalid or missing inverted barrel texture: {texture}"
@@ -123,13 +123,13 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.13.mcpack"
-          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.2.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.14.mcpack"
+          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
           for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
           for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.13.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.14.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
       - name: Commit generated packs when changed
@@ -143,5 +143,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.13 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.14 and Sell Barrel packs"
           git push
