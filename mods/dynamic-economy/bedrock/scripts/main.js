@@ -627,7 +627,8 @@ function requestMenu(player) {
 }
 
 // Air-use listener, plus block/entity interaction listeners for touch and controller input.
-world.afterEvents.itemUse.subscribe(function (event) {
+world.beforeEvents.itemUse.subscribe(function (event) {
+  // Defer form work until after the restricted before-event callback finishes.
   if (event.itemStack && event.itemStack.typeId === "minecraft:stick") requestMenu(event.source);
 });
 world.afterEvents.playerInteractWithBlock.subscribe(function (event) {

@@ -1,6 +1,6 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.1: form-based market
+## Version 0.3.2: form-based market
 
 This release replaces the chat-command prototype with actual in-game forms. Hold a regular wooden stick and use/right-click to open the market. On touch devices, use the interact/use control while holding the stick.
 
@@ -14,7 +14,7 @@ To protect customized gear, the sell menu lists only plain items with no custom 
 
 Import the `.mcpack` using the direct link below. If the file opens in a preview, use Share and choose Minecraft.
 
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.1.mcpack
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.2.mcpack
 
 ## Source and testing note
 
