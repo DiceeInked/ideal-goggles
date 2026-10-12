@@ -114,7 +114,11 @@ test("creative-only items and spawn eggs are excluded from all trading", () => {
     "minecraft:moving_block", "minecraft:netherreactor", "minecraft:player_head",
     "minecraft:repeating_command_block", "minecraft:reserved6", "minecraft:structure_block",
     "minecraft:structure_void", "minecraft:reinforced_deepslate", "minecraft:trial_spawner",
-    "minecraft:vault", "minecraft:unknown"
+    "minecraft:vault", "minecraft:unknown", "minecraft:chemistry_table", "minecraft:compound", "minecraft:element",
+    "minecraft:lab_table", "minecraft:material_reducer", "minecraft:medicine",
+    "minecraft:underwater_tnt", "minecraft:underwater_torch", "minecraft:glow_stick",
+    "minecraft:balloon", "minecraft:ice_bomb", "minecraft:latex", "minecraft:super_fertilizer",
+    "minecraft:sparkler"
   ]);
   const isSurvivalObtainableItem = new Function("NON_SURVIVAL_ITEM_IDS",
     extract("function isSurvivalObtainableItem(", "function isMarketTool") + "\nreturn isSurvivalObtainableItem;"
@@ -122,6 +126,7 @@ test("creative-only items and spawn eggs are excluded from all trading", () => {
   assert.equal(isSurvivalObtainableItem("minecraft:zombie_spawn_egg"), false);
   assert.equal(isSurvivalObtainableItem("minecraft:bedrock"), false);
   assert.equal(isSurvivalObtainableItem("minecraft:command_block"), false);
+  assert.equal(isSurvivalObtainableItem("minecraft:element_0"), false);
   assert.equal(isSurvivalObtainableItem("minecraft:diamond"), true);
   assert.equal(isSurvivalObtainableItem("example:custom_item"), false);
 });
