@@ -1,0 +1,25 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Spam Start",
+    "description": "A custom void lobby with join teleporting, moderator building permissions, and saved Overworld returns.",
+    "uuid": "b824fe64-6c3d-4b5d-a02a-7d86b3e2c901",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 80]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "d5a1b68f-2a0b-46e9-9b4d-2c7f51e8a603",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "beta"
+    }
+  ]
+}
