@@ -1,7 +1,7 @@
 # Dynamic Economy: Cross-Edition Design Specification
 
 **Specification version:** 1.0  
-**Current Bedrock implementation:** Dynamic Economy v0.3.16  
+**Current Bedrock implementation:** Dynamic Economy v0.3.17  
 **Source branch:** `feature/bedrock-dynamic-economy`  
 **Purpose:** This is the canonical description of what the mod does and how its rules should be recreated in another edition, such as Minecraft Java Edition. Update this file whenever behavior, balance rules, data formats, or player-facing features change.
 
@@ -83,7 +83,7 @@ Buy items are sorted by current buy price, highest first, then alphabetically. S
 
 The current **Market Prices** page lists items whose scores have been tracked by trades. It is not yet a full catalog of every item at its default price.
 
-### Planned UI redesign (not implemented in v0.3.16)
+### Planned UI redesign (not implemented in v0.3.17)
 
 The redesigned menu is intended to have separate top-level sections:
 1. **Buy** — normal purchases.
@@ -101,19 +101,17 @@ The Oversaturated section is a browsing aid only. It must not directly change a 
 
 The Sell Barrel is a custom placeable block with a 27-slot inventory. Its crafting recipe follows the normal barrel layout, except the exact center slot contains a stick: planks occupy the six corner and left/right-middle positions, slabs occupy the top-middle and bottom-middle positions, and the stick occupies the center.
 
-When a player closes a Sell Barrel, the mod attempts to sell all resolvable contents in groups by item type. Each group uses the current market score, applies sales tax, updates the shared item score per unit, and credits the player associated with that close event. Items that cannot be resolved are left in the barrel and reported to the player. Both the behavior pack and Sell Barrel resource pack are required.
+When a player crafts a Sell Barrel, the mod attempts to name the item `<username>'s Sell Barrel` and attach the crafter's owner ID and name as item dynamic properties. Each Sell Barrel item is non-stackable so that distinct owner metadata cannot merge into one stack. On placement, the runtime copies that identity into world-level metadata keyed to the barrel's dimension and coordinates. If an untagged barrel is placed (for example, one created by a command), the placer becomes its owner.
 
-### Personalized crafting name
+**Any player may open a Sell Barrel, but only its saved owner receives the sale proceeds.** The payout never follows the player who opens or closes the container. The owner can be offline; the sale updates the same owner balance used by the regular market. Owner metadata is preserved on the dropped barrel item when it is broken and picked up, so placing the recovered item restores its existing owner.
 
-When the Script API's `playerCraftRecipe` event reports a crafted Sell Barrel, the script attempts to set the crafted item's custom name to:
+The custom block ticks every 20 game ticks. When the inventory is not actively open by a player, the script inspects its contents and sells resolvable item stacks to the owner. This lets hoppers feed the Sell Barrel and have the contents sold automatically, without the owner staying online or anyone needing to close it. While a player has the container open, automated processing pauses; after the last player closes it, processing resumes. Items whose types cannot be resolved remain in the barrel and a warning is logged. Both the behavior pack and Sell Barrel resource pack are required.
 
-```text
-<player username>'s Sell Barrel
-```
+### Owner data and upgrade behavior
 
-This event is currently marked pre-release in the official Script API documentation, so the item-name behavior must be verified in the target Bedrock version. A personalized crafted item name is not, by itself, an ownership or access-control system. **The current implementation still credits the player who closes the barrel**, and does not yet prevent other players from opening it or redirecting its proceeds.
+The crafted-item owner ID and name travel with the non-stackable item. The placed block's owner record is stored as world dynamic data under `diceyinked:economy:sell_barrel_owner:<dimension-and-position>`. Breaking the barrel attempts to drop a new owner-tagged Sell Barrel item and removes the old block-location owner record.
 
-**Still to decide:** whether Sell Barrels should be protected personal machines, public machines that pay their owner, or public machines that pay the player who closes them. If ownership is added, placement, breaking, moving, explosion/piston behavior, and permission to open the inventory should be defined together.
+Barrels from an older add-on version have no saved owner data. The first player to open or close one after upgrading claims the legacy barrel; this is a compatibility fallback, not a secure recovery of an unknown original owner. A successful automated build can validate the JSON and required hooks, but it cannot confirm the custom crafting event, custom component ticks, container open/close pause, owner metadata persistence, or hopper transfers in Minecraft itself. These behaviors need an in-game test on the target Bedrock version before being relied on.
 
 ## 7. Operator tool and permissions
 
@@ -150,6 +148,8 @@ The current Bedrock pack uses the namespace `diceyinked:economy`. Important data
 - Per-player balances: `diceyinked:economy:balance:<player-id>`.
 - Per-item market score: `diceyinked:economy:score:<item-id>`.
 - Shared tax rounding remainder: `diceyinked:economy:sales_tax_remainder`.
+- Sell Barrel owner by placed block: `diceyinked:economy:sell_barrel_owner:<dimension-and-position>`.
+- Owner ID/name on each non-stackable Sell Barrel item: `diceyinked:economy:sell_barrel_item_owner_id` and `diceyinked:economy:sell_barrel_item_owner_name`.
 - Next transaction ID: `diceyinked:economy:history:next_tx`.
 - Transaction summaries: `diceyinked:economy:history:tx:<transaction-id>`.
 - Unit price-series chunks: `diceyinked:economy:history:series:<transaction-id>:<chunk-index>`.
@@ -174,6 +174,17 @@ Recommended edition-independent model:
 For Java, use the target platform's stable server-side APIs and native item/block/menu capabilities. Store player accounts against UUIDs, store world-wide market state and history in persistent server data, and keep the exact price and tax rules covered by shared test cases. Do not use client-only state to authorize trades or operator actions.
 
 ## 11. Decisions and change log
+
+### v0.3.17
+- Save owner identity on the crafted Sell Barrel item and persist it against the placed block location.
+- Route all Sell Barrel proceeds to the saved owner, even when another player opens/closes the inventory or the owner is offline.
+- Add a 20-tick custom block runtime so hoppers can feed and automatically sell contents when the container is not actively open by a player.
+- Pause automation while a player has the container open; resume after the last close event.
+- Preserve the owner-tagged Sell Barrel item on block break so the owner identity follows the item when picked up and re-placed.
+- Make each Sell Barrel item non-stackable, and delegate its normal item drop to the runtime so owner metadata can survive.
+- Add static checks for the owner, tick, and item metadata requirements.
+- Did not redesign the regular market UI. Economy graph and Oversaturated browsing remain planned UI work.
+- Did not change the market formula, sales tax, balance format, or starting balance.
 
 ### v0.3.16
 - Added saved transaction summaries and unit-level price-series history as the backend for the future Economy graph.
