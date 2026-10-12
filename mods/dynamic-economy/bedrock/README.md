@@ -1,6 +1,6 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.13: market storage and transaction hardening for Bedrock 26.52
+## Version 0.3.14: Sell Barrel recipe-book and texture isolation fixes
 
 Every ActionForm menu page except the first/main menu has a bottom **Back** button labelled exactly **Back**, and it returns to the previous menu context. Bedrock search and quantity slider forms only permit a single built-in submit button, so cancelling those input forms returns to their parent menu.
 
