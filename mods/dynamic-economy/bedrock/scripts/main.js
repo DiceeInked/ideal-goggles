@@ -2,7 +2,7 @@ import { world, system, ItemStack, ItemTypes } from "@minecraft/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy: fully form-driven Bedrock UI.
+ * Dynamic Economy v0.3.3: form-driven Bedrock UI with safer quantity-form handling.
  * Use a regular stick to open the market. Purchases and sales update one
  * shared world market. Currency is stored as integer cents.
  */
@@ -450,25 +450,42 @@ function showQuantityForm(player, mode, typeId, maximum) {
     return;
   }
   const max = Math.min(CONFIG.maximumTradeQuantity, maximum);
-  const form = new ModalFormData()
-    .title((mode === "buy" ? "Buy " : "Sell ") + prettyName(typeId))
-    .label(priceNote);
+  const firstItemPrice = mode === "buy"
+    ? money(unitPriceCents(score))
+    : money(totalSaleProceeds(score, 1).net) + " net";
+  const quantityLabel = "Quantity (first item: " + firstItemPrice + ")";
   const hasQuantitySlider = max > 1;
+  const form = new ModalFormData()
+    .title((mode === "buy" ? "Buy " : "Sell ") + prettyName(typeId));
   if (hasQuantitySlider) {
-    form.slider("Quantity", 1, max, { defaultValue: Math.min(max, 8), valueStep: 1 });
+    form.slider(quantityLabel, 1, max, { defaultValue: Math.min(max, 8), valueStep: 1 });
   } else {
-    form.label("Quantity: 1");
+    // Avoid a 1-to-1 slider, which some Bedrock clients reject when rendering forms.
+    form.dropdown(quantityLabel, ["1"], { defaultValueIndex: 0 });
   }
   form.submitButton(mode === "buy" ? "Review Purchase" : "Review Sale");
-  form.show(player).then(function (response) {
-    if (response.canceled || !response.formValues) return;
-    const quantity = hasQuantitySlider
-      ? parseQuantity(Math.round(Number(response.formValues[0])))
-      : 1;
-    showTradeConfirmation(player, mode, typeId, quantity, score);
-  }).catch(function () {
-    tell(player, "The quantity form could not open. Try again.");
-  });
+
+  // Give Bedrock a couple of ticks to finish closing the previous form before
+  // opening this one. Chained forms can otherwise be rejected on some clients.
+  system.runTimeout(function () {
+    try {
+      form.show(player).then(function (response) {
+        if (response.canceled || !response.formValues) return;
+        const quantity = hasQuantitySlider
+          ? parseQuantity(Math.round(Number(response.formValues[0])))
+          : parseQuantity(Number(response.formValues[0]) + 1);
+        showTradeConfirmation(player, mode, typeId, quantity, score);
+      }).catch(function (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        console.warn("[Dynamic Economy] Quantity form rejected for " + typeId + ": " + detail);
+        tell(player, "Quantity form error: " + detail);
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn("[Dynamic Economy] Quantity form failed for " + typeId + ": " + detail);
+      tell(player, "Quantity form error: " + detail);
+    }
+  }, 2);
 }
 function showTradeConfirmation(player, mode, typeId, quantity, quotedScore) {
   const currentScore = getScore(getMarket(), typeId);

@@ -1,10 +1,10 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.2: form-based market
+## Version 0.3.3: quantity-form reliability and diagnostics
 
 This release replaces the chat-command prototype with actual in-game forms. Hold a regular wooden stick and use/right-click to open the market. On touch devices, use the interact/use control while holding the stick.
 
-The menu contains **Buy Items**, **Sell Items**, **Market Prices**, and **My Balance**. Buy and sell screens use searchable, paginated item lists. Each trade opens a quantity slider, shows a price quote, then asks for confirmation. The shared world market price rises with purchases and falls with sales. Sales have a 10% tax.
+The menu contains **Buy Items**, **Sell Items**, **Market Prices**, and **My Balance**. Buy and sell screens use searchable, paginated item lists. Each trade opens a quantity selector, shows a price quote, then asks for confirmation. The quantity screen waits briefly for the previous menu to close, avoids a single-value slider, and reports the actual form error in chat if Bedrock rejects it. The shared world market price rises with purchases and falls with sales. Sales have a 10% tax.
 
 New players start with **$100.00**. That starter amount is used only if the player has no saved economy balance yet; existing saved balances are preserved.
 
@@ -14,7 +14,7 @@ To protect customized gear, the sell menu lists only plain items with no custom 
 
 Import the `.mcpack` using the direct link below. If the file opens in a preview, use Share and choose Minecraft.
 
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.2.mcpack
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.3.mcpack
 
 ## Source and testing note
 
