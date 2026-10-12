@@ -1,0 +1,71 @@
+name: Build Dynamic Economy Bedrock Pack
+
+on:
+  push:
+    branches:
+      - feature/bedrock-dynamic-economy
+    paths:
+      - "mods/dynamic-economy/bedrock/**"
+      - ".github/workflows/build-dynamic-economy-pack.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate source and package .mcpack
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="mods/dynamic-economy/bedrock"
+          OUTDIR="$SRC/releases"
+          mkdir -p "$OUTDIR"
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("mods/dynamic-economy/bedrock")
+          manifest = json.loads((root / "manifest.json").read_text())
+          assert manifest.get("format_version") == 2, "Unexpected manifest format"
+          assert any(m.get("type") == "script" for m in manifest.get("modules", [])), "Script module missing"
+          assert (root / "scripts" / "main.js").is_file(), "scripts/main.js missing"
+          version = ".".join(str(x) for x in manifest["header"]["version"])
+          print(f"Pack version: {version}")
+          (Path("/tmp/dynamic-economy-version.txt")).write_text(version)
+          PY
+
+          VERSION="$(cat /tmp/dynamic-economy-version.txt)"
+          OUT="$OUTDIR/DynamicEconomy_Bedrock_${VERSION}.mcpack"
+          cp "mods/dynamic-economy/bedrock/scripts/main.js" "$RUNNER_TEMP/main.mjs"
+          node --check "$RUNNER_TEMP/main.mjs"
+
+          rm -f "$OUT"
+          (
+            cd "$SRC"
+            zip -q -X "$GITHUB_WORKSPACE/$OUT" manifest.json scripts/main.js
+            if [ -f pack_icon.png ]; then
+              zip -q -X -u "$GITHUB_WORKSPACE/$OUT" pack_icon.png
+            fi
+          )
+          unzip -t "$OUT"
+          echo "Built $OUT"
+
+      - name: Commit generated pack when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mods/dynamic-economy/bedrock/releases/*.mcpack
+          if git diff --cached --quiet; then
+            echo "No generated pack changes to commit."
+            exit 0
+          fi
+          git commit -m "Build Dynamic Economy Bedrock pack from source"
+          git push
