@@ -1,4 +1,4 @@
-import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraft/server";
+import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraftimport { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString } from "@minecraft/server-ui";/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
@@ -656,27 +656,44 @@ function getSellableInventory(player) {
     .sort(function (a, b) { return b.count - a.count || a.name.localeCompare(b.name); });
 }
 function showMainMenu(player) {
-  const form = new ActionFormData()
-    .title("Dynamic Economy")
-    .body("Balance: " + money(getBalance(player)) +
-      "\n\nOne shared market for the world. Buying raises an item's price; selling lowers it. Sales have a " + taxPercentLabel() + " tax.")
-    .button("Buy Items")
-    .button("Sell Items")
-    .button("Market Prices")
-    .button("My Balance")
-    .button("Close");
-  form.show(player).then(function (response) {
-    if (response.canceled) return;
-    if (response.selection === 0) showBuyMenu(player, "", 0);
-    else if (response.selection === 1) showSellMenu(player, "", 0);
-    else if (response.selection === 2) showMarketPrices(player, 0);
-    else if (response.selection === 3) {
-      tell(player, "Your balance is " + money(getBalance(player)) + ".");
-      showMainMenu(player);
-    }
-  }).catch(function (error) {
-    console.warn("[Dynamic Economy] Could not show main menu: " + error);
-    tell(player, "The market menu could not open. Close other menus and try again.");
+  const form = new CustomForm(player, "Dynamic Economy");
+  const query = new ObservableString("", { clientWritable: true });
+  form.closeButton()
+    .header("GLOBAL MARKET")
+    .label("Balance: " + money(getBalance(player)))
+    .label("Buy raises prices. Selling lowers them. Sales tax: " + taxPercentLabel() + ".")
+    .divider()
+    .header("MARKET TABS")
+    .button("BUY", function () {
+      try { form.close(); } catch {}
+      system.run(function () { showBuyMenu(player, "", 0); });
+    })
+    .button("SELL", function () {
+      try { form.close(); } catch {}
+      system.run(function () { showSellMenu(player, "", 0); });
+    })
+    .button("ECONOMY / PRICE HISTORY", function () {
+      try { form.close(); } catch {}
+      system.run(function () { showMarketPrices(player, 0); });
+    })
+    .button("OVERSATURATED ITEMS", function () {
+      try { form.close(); } catch {}
+      system.run(function () {
+        tell(player, "Oversaturated-item filtering is not enabled yet. Showing tracked market prices.");
+        showMarketPrices(player, 0);
+      });
+    })
+    .divider()
+    .header("QUICK SEARCH")
+    .textField("Item name or item ID", query, { placeholder: "Example: oak log" })
+    .button("Search items to buy", function () {
+      const term = String(query.get() || "").trim().toLowerCase();
+      try { form.close(); } catch {}
+      system.run(function () { showBuyMenu(player, term, 0); });
+    });
+  form.show().catch(function (error) {
+    console.warn("[Dynamic Economy] Could not show modern market menu: " + error);
+    tell(player, "The modern market menu could not open. Try again.");
   });
 }
 function showSearchForm(player,mode,currentQuery,currentColorId,returnTo){
