@@ -14,6 +14,10 @@ Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond,
 
 The menu is built with the stable `@minecraft/server-ui` 2.1.0 API. Its navigation is tab-like, but the buttons are vertically stacked; true horizontal button rows and custom banner images require newer or experimental API features and are not enabled here.
 
+### Texture approach
+
+The pack keeps Minecraft's built-in look wherever possible. Item listings use vanilla item identifiers/icons; there is no large AI-generated texture set. The only dedicated art is the Sell Barrel's three 16×16 faces, adapted from the vanilla barrel texture so the custom block fits Minecraft's pixel-art style while remaining distinct.
+
 ### Sell Barrel ownership
 
 Each crafted Sell Barrel is named **`<username>'s Sell Barrel`** and stores the crafter's owner ID on its unstackable item. When placed, that owner identity is saved against the block's location. The owner follows the item if the barrel is broken and picked up, and **all proceeds go to the saved owner**, not to whoever opens or closes the container. Any player can use the barrel; opening it does not transfer ownership.
@@ -46,14 +50,14 @@ Detailed history begins when v0.3.16 or later is installed. Old balances and ite
 
 ### Combined download
 
-Combined behavior/resource pack:  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.17.mcaddon
+Combined installer (contains both importable `.mcpack` files):  
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon
 
 Behavior pack:  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.17.mcpack
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack
 
 Resource pack:  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack
 
 The latest download links only work after the automated build passes and commits the release archives. Enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Keep Upcoming Creator Features enabled for the existing item-specific Sell Barrel mining behavior. The current Microsoft Script API docs mark the crafting-recipe event and custom block-break callback as pre-release, so enable the Beta APIs experiment too when available for your game version. The script handles an unavailable crafting listener without crashing, but in that case a newly crafted barrel may fall back to the player who places it as the owner instead of the original crafter. Test crafting, placing, breaking, re-placing, and hopper payouts in a copied world before using this on a world you care about.
 
