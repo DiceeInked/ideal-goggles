@@ -1,10 +1,10 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.20: modern market navigation and price history
+## Version 0.3.21: horizontal tabs and item-tile grid
 
 A shared market for Minecraft Bedrock. Every item starts at $1.00. Buying raises its global price once per unit; selling lowers it once per unit. Prices do not automatically drift back toward their starting value. Sales have 50% tax, and each player has an individual balance starting at $100.00.
 
-This update keeps BUY, SELL, and ECONOMY inside one workspace, with a section selector, live item search, paginated item lists, recent trade-history pages, and per-item price-trend graphs built only from saved trades.
+This update keeps BUY, SELL, and ECONOMY inside one workspace. When the runtime exposes `CustomForm.multiButtonRow`, three clickable tabs sit side by side at the top and the current section shows nine clickable item tiles in a three-column grid. Search, pagination, recent trade history, and per-item price-trend graphs remain part of the same workspace.
 
 **Canonical design and Java-port specification:** [`mods/dynamic-economy/DESIGN_SPEC.md`](../DESIGN_SPEC.md). Update that file whenever the mod's rules or behavior change.
 
@@ -12,7 +12,7 @@ This update keeps BUY, SELL, and ECONOMY inside one workspace, with a section se
 
 Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword to open the market. The market opens on a single workspace. Use the MARKET SECTION selector to switch between BUY, SELL, and ECONOMY without leaving the workspace. Each section keeps its own search field immediately above a paginated item list, and typing filters that list live. Selecting a BUY item opens quantity selection and purchase confirmation; selecting a SELL item opens quantity selection and sale confirmation; selecting an ECONOMY item opens its saved price-history graph. Returning from an action restores the same section, search, and page.
 
-This release targets the manifest-version ceiling accepted by Bedrock 1.26.52 and uses stable `@minecraft/server-ui` 2.1.0. The true horizontal `multiButtonRow` method is only available in a newer preview API, so this compatible build uses a single-screen section selector instead. The workspace still keeps browsing, searching, and pagination on one screen, without a Back button between BUY, SELL, and ECONOMY. Keep **Upcoming Creator Features** enabled for the existing Sell Barrel mining behavior when required by your game build. The item lists use vanilla item names/icons and do not replace vanilla item textures.
+The add-on keeps its accepted minimum engine version at Bedrock 1.26.52 and does not require a higher manifest engine number. The UI checks for `CustomForm.multiButtonRow` at runtime: newer runtimes that expose this experimental method use the intended three-button header and three-column item grid; older runtimes, including those limited to `@minecraft/server-ui` 2.1.0, fall back to the previous dropdown and vertical button list because their UI API does not provide horizontal button rows. Microsoft added `multiButtonRow` in `@minecraft/server-ui` 2.4.0-beta for Minecraft 1.26.60 preview, so the full visual layout cannot appear on older runtimes without moving to that preview API. No engine-version requirement was raised. Browsing, searching, and pagination remain inside one workspace, with no back-button trip just to switch BUY, SELL, and ECONOMY. Keep **Upcoming Creator Features** enabled for the existing Sell Barrel mining behavior when required by your game build. The item lists use vanilla item names/icons and do not replace vanilla item textures.
 
 ### Texture approach
 
@@ -51,10 +51,10 @@ Detailed history begins when v0.3.16 or later is installed. Old balances and ite
 ### Combined download
 
 Combined installer (contains both importable `.mcpack` files):
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.20.mcaddon
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.21.mcaddon
 
 Behavior pack:
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.20.mcpack
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.21.mcpack
 
 Resource pack:
 https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack
