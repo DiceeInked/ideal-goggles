@@ -1,8 +1,8 @@
 # Dynamic Economy: Cross-Edition Design Specification
 
 **Specification version:** 1.0  
-**Current Bedrock implementation:** Dynamic Economy v0.3.17  
-**Source branch:** `feature/bedrock-dynamic-economy`  
+**Current Bedrock implementation:** Dynamic Economy v0.3.19  
+**Source branch:** `feature/dynamic-economy-modern-market-ui`  
 **Purpose:** This is the canonical description of what the mod does and how its rules should be recreated in another edition, such as Minecraft Java Edition. Update this file whenever behavior, balance rules, data formats, or player-facing features change.
 
 Implementation source lives in `mods/dynamic-economy/bedrock/`. This document describes the intended game rules separately from Bedrock-specific APIs so another implementation does not have to copy the same code.
@@ -72,30 +72,19 @@ If an item type cannot be created or priced safely, it is omitted from the purch
 
 ## 5. Player market menu (current Bedrock behavior)
 
-The normal market menu is opened by using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. The main menu currently contains:
-- **Buy Items**
-- **Sell Items**
-- **Market Prices**
-- **My Balance**
-- **Close**
+The normal market menu opens when using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. It is one persistent workspace with three horizontal tabs across the top:
 
-Buy items are sorted by current buy price, highest first, then alphabetically. Sell items are sorted by quantity owned, highest first, then alphabetically. Trade quantities use a maximum of 64 in the quantity slider, but **Sell All** sells every eligible unit of the chosen item in the player's inventory, even when the total exceeds 64. Buy and sell confirmations show total cost or gross/tax/net amounts before the player confirms. Each submenu has a Back path to the previous context.
+1. **BUY** — the survival-buyable catalog, sorted by price (highest first), then alphabetically.
+2. **SELL** — only plain, undamaged items in the player's inventory, sorted by quantity owned (highest first), then alphabetically.
+3. **ECONOMY** — items with recorded market activity, sorted alphabetically; selecting one opens its saved price-history graph.
 
-The current **Market Prices** page lists items whose scores have been tracked by trades. It is not yet a full catalog of every item at its default price.
+Each tab has a search field directly above its item list. Search updates the visible, paginated rows as the player types. Switching tabs does not open another screen and does not discard the other tabs' search text or page. There is no Back button in the workspace. Selecting a BUY item opens quantity selection and a purchase quote; selecting a SELL item opens quantity selection and a sale quote; selecting an ECONOMY item opens its graph. Returning from a confirmation/graph restores the workspace to its previous tab, search, and page.
 
-### Planned UI redesign (not implemented in v0.3.17)
+Trade quantities use a maximum of 64 in the quantity slider, but **Sell All** in existing sale flows can still sell every eligible unit of a selected item, even when the total exceeds 64. Buy and sell confirmations show totals, and sales show gross, tax, and net amounts. The shared market price changes once per unit traded.
 
-The redesigned menu is intended to have separate top-level sections:
-1. **Buy** — normal purchases.
-2. **Sell** — normal sales.
-3. **Economy** — select an item and view its price history as a stock-market-style line graph.
-4. **Oversaturated** — a discoverability list of items considered oversaturated/cheap.
+The graph shows saved per-unit price points from completed trades only. It does not invent/interpolate values between trades. Each bulk trade contributes one ordered point per item unit, with the corresponding score and price progression.
 
-The graph should plot a point after **each individual item unit** is bought or sold, including the score and price after that unit's market change. A bulk trade of 32 units therefore creates 32 ordered unit-price points, not one point for the bulk transaction. Players should be able to inspect different items' price histories from the start of the tracked timeline.
-
-The Oversaturated section is a browsing aid only. It must not directly change a price, prevent a trade, or alter the market formula. Choosing an item through this section should allow the player to buy it; the section itself does not offer a sell action. The ordinary Sell section still controls normal selling.
-
-**Still to decide:** the precise oversaturation threshold/rule and whether the graph should present in-game time, transaction index, or both on its horizontal axis. The backend history currently saves world ticks and transaction IDs, providing data for either presentation.
+The horizontal tab row uses the pre-release `CustomForm.multiButtonRow` API from `@minecraft/server-ui` 2.2.0. The pack targets a compatible Bedrock 1.26.60+ build. Because this UI API is pre-release, enable **Upcoming Creator Features** and **Beta APIs** in the world experiments when these options are available for the target version, and validate in a copied world before using it in a primary world.
 
 ## 6. Sell Barrel
 

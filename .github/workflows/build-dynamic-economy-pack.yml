@@ -53,11 +53,11 @@ jobs:
           bp_manifest = json.loads((bp / "manifest.json").read_text())
           rp_manifest = json.loads((rp / "manifest.json").read_text())
           deps = bp_manifest.get("dependencies", [])
-          required_modules = {"@minecraft/server": "2.10.0", "@minecraft/server-ui": "2.1.0"}
+          required_modules = {"@minecraft/server": "2.10.0", "@minecraft/server-ui": "2.2.0"}
           actual_modules = {d.get("module_name"): d.get("version") for d in deps if "module_name" in d}
           assert actual_modules == required_modules, f"Unexpected Script API dependencies: {actual_modules}"
-          assert bp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Behavior pack must target Bedrock 26.50+"
-          assert rp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Resource pack must target Bedrock 26.50+"
+          assert bp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 60], "Behavior pack needs Bedrock 1.26.60+ for the horizontal market tab API"
+          assert rp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Resource pack content must remain compatible with Bedrock 1.26.50+"
           assert any(d.get("uuid") == rp_manifest["header"]["uuid"] and d.get("version") == rp_manifest["header"]["version"] for d in deps), "Behavior pack must depend on the Sell Barrel resource pack"
           block = json.loads((bp / "blocks/sell_barrel.json").read_text())
           assert block.get("format_version") == "1.26.40", "Sell Barrel block must use the current stable block format"
@@ -115,7 +115,7 @@ jobs:
           block_sounds = json.loads((rp / "blocks.json").read_text())
           assert block_sounds.get("diceyinked:sell_barrel", {}).get("sound") == "wood", "Sell Barrel should use vanilla wood block sounds"
           script = (bp / "scripts/main.js").read_text()
-          for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
+          for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu(player, workspaceOptions)", ".multiButtonRow([", "new ObservableBoolean(", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
           for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)", "PlayerPermissionLevel", "HISTORY_TRANSACTION_PREFIX", "HISTORY_SERIES_PREFIX", "function persistTradeHistory(", "function showOperatorMenu(", "function showRecentTradeRecords(", "world.afterEvents.playerCraftRecipe.subscribe(nameCraftedSellBarrel)", "function readBarrelOwner(", "function writeBarrelOwner(", "function handleSellBarrelTick(", "sell(owner, typeId, chunkQuantity, container, true, true)", "onTick: handleSellBarrelTick", "onBreak: sellBarrelBlockBroken"]:
               assert required in script, f"Missing hardening check: {required}"
@@ -125,7 +125,7 @@ jobs:
           assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
           assert "const typeId = itemType(rawItemId);" in script, "Sell Barrel sales must use the shared item-type eligibility check"
           assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
-          print("Validated API dependencies, owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
+          print("Validated the pre-release horizontal tab workspace/API version, owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
           print("All pack manifests and JSON files parsed.")
           PY
           node --test mods/dynamic-economy/bedrock/tests/market-math.test.mjs
@@ -139,23 +139,23 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.19.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           # Build the distributable .mcaddon from two independently importable .mcpack archives.
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE"
-          cp "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack" "$STAGE/"
+          cp "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.19.mcpack" "$STAGE/"
           cp "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack" "$STAGE/"
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
-          (cd "$STAGE" && zip -q -X "$GITHUB_WORKSPACE/$MCADDON_REL" "DynamicEconomy_Bedrock_0.3.18.mcpack" "SellBarrel_Resources_1.0.3.mcpack")
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.19.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          (cd "$STAGE" && zip -q -X "$GITHUB_WORKSPACE/$MCADDON_REL" "DynamicEconomy_Bedrock_0.3.19.mcpack" "SellBarrel_Resources_1.0.3.mcpack")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
           python3 - <<'PY'
           import io, json, zipfile
           from pathlib import Path
-          addon_path = Path("mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon")
+          addon_path = Path("mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.19.mcaddon")
           with zipfile.ZipFile(addon_path) as addon:
               names = set(addon.namelist())
-              expected = {"DynamicEconomy_Bedrock_0.3.18.mcpack", "SellBarrel_Resources_1.0.3.mcpack"}
+              expected = {"DynamicEconomy_Bedrock_0.3.19.mcpack", "SellBarrel_Resources_1.0.3.mcpack"}
               assert names == expected, f"Unexpected .mcaddon contents: {sorted(names)}"
               packs = {}
               for name in expected:
@@ -164,7 +164,7 @@ jobs:
                       packs[name] = json.loads(pack.read("manifest.json"))
                       if name.startswith("DynamicEconomy_"):
                           assert "scripts/main.js" in pack.namelist(), "Behavior pack is missing scripts/main.js"
-              bp = packs["DynamicEconomy_Bedrock_0.3.18.mcpack"]
+              bp = packs["DynamicEconomy_Bedrock_0.3.19.mcpack"]
               rp = packs["SellBarrel_Resources_1.0.3.mcpack"]
               assert bp["header"]["version"] == [0, 3, 18], "Behavior pack version mismatch"
               assert rp["header"]["version"] == [1, 0, 3], "Resource pack version mismatch"
@@ -182,5 +182,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.18 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.19 and Sell Barrel packs"
           git push

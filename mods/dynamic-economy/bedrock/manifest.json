@@ -1,18 +1,18 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.18",
-    "description": "A shared survival item market with modern market navigation, trade history, price graphs, and owner-paid Sell Barrels.",
+    "name": "Dynamic Economy v0.3.19",
+    "description": "A shared survival item market with horizontal BUY, SELL, and ECONOMY tabs, live item search, trade history, price graphs, and owner-paid Sell Barrels.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      18
+      19
     ],
     "min_engine_version": [
       1,
       26,
-      50
+      60
     ]
   },
   "modules": [
@@ -23,7 +23,7 @@
       "version": [
         0,
         3,
-        18
+        19
       ],
       "entry": "scripts/main.js"
     }
@@ -35,7 +35,7 @@
     },
     {
       "module_name": "@minecraft/server-ui",
-      "version": "2.1.0"
+      "version": "2.2.0"
     },
     {
       "uuid": "b88ee4c9-ae4b-4d31-8bcf-a1d77aa5c137",

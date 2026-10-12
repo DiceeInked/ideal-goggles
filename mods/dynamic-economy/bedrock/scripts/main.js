@@ -1,8 +1,8 @@
 import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraft/server";
-import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString } from "@minecraft/server-ui";
+import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString, ObservableBoolean } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.18: modern market UI and price history.
+ * Dynamic Economy v0.3.19: horizontal market tabs and live item search.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -325,6 +325,7 @@ function returnToMenu(player,destination){
  const t=destination||{type:"main"};
  if(t.type==="buy")showBuyMenu(player,t.query||"",t.page||0,t.colorId||"",t.backTo);
  else if(t.type==="sell")showSellMenu(player,t.query||"",t.page||0,t.colorId||"",t.backTo);
+ else if(t.type==="workspace")showMainMenu(player,t);
  else if(t.type==="marketDetail")showMarketItemDetail(player,t.id,t.page||0);
  else if(t.type==="marketPrices")showMarketPrices(player,t.page||0);
  else if(t.type==="colors")showColorMenu(player,t.mode,t.page||0,t.returnTo);
@@ -655,46 +656,169 @@ function getSellableInventory(player) {
     })
     .sort(function (a, b) { return b.count - a.count || a.name.localeCompare(b.name); });
 }
-function showMainMenu(player) {
+function showMainMenu(player, workspaceOptions) {
+  const seed = workspaceOptions && typeof workspaceOptions === "object" ? workspaceOptions : {};
+  const tabs = ["buy", "sell", "economy"];
+  const state = {
+    tab: tabs.includes(seed.tab) ? seed.tab : "buy",
+    pages: {
+      buy: Number.isSafeInteger(seed.buyPage) && seed.buyPage >= 0 ? seed.buyPage : 0,
+      sell: Number.isSafeInteger(seed.sellPage) && seed.sellPage >= 0 ? seed.sellPage : 0,
+      economy: Number.isSafeInteger(seed.economyPage) && seed.economyPage >= 0 ? seed.economyPage : 0
+    }
+  };
+  const queries = {
+    buy: new ObservableString(typeof seed.buyQuery === "string" ? seed.buyQuery : "", { clientWritable: true }),
+    sell: new ObservableString(typeof seed.sellQuery === "string" ? seed.sellQuery : "", { clientWritable: true }),
+    economy: new ObservableString(typeof seed.economyQuery === "string" ? seed.economyQuery : "", { clientWritable: true })
+  };
+  const visible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(state.tab === tab)]));
+  const tabLabels = Object.fromEntries(tabs.map(tab => [tab, new ObservableString(tab.toUpperCase())]));
+  const statusLabels = Object.fromEntries(tabs.map(tab => [tab, new ObservableString("")]));
+  const previousVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
+  const nextVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
+  const rows = Object.fromEntries(tabs.map(tab => [tab, Array.from({ length: CONFIG.pageSize }, () => ({
+    entry: null, label: new ObservableString(""), visible: new ObservableBoolean(false)
+  }))]));
+
   const form = new CustomForm(player, "Dynamic Economy");
-  const query = new ObservableString("", { clientWritable: true });
   form.closeButton()
     .header("GLOBAL MARKET")
-    .label("Balance: " + money(getBalance(player)))
-    .label("Buy raises prices. Selling lowers them. Sales tax: " + taxPercentLabel() + ".")
-    .divider()
-    .header("MARKET TABS")
-    .button("BUY", function () {
-      try { form.close(); } catch {}
-      system.run(function () { showBuyMenu(player, "", 0); });
-    })
-    .button("SELL", function () {
-      try { form.close(); } catch {}
-      system.run(function () { showSellMenu(player, "", 0); });
-    })
-    .button("ECONOMY", function () {
-      try { form.close(); } catch {}
-      system.run(function () { showMarketPrices(player, 0); });
-    })
-    .button("PRICE / TRADE HISTORY", function () {
-      try { form.close(); } catch {}
-      system.run(function () { showTradeHistoryPage(player, 0); });
-    })
-    .button("OVERSATURATED ITEMS", function () {
-      try { form.close(); } catch {}
-      system.run(function () { showMarketPrices(player, 0, true); });
-    })
-    .divider()
-    .header("QUICK SEARCH")
-    .textField("Item name or item ID", query, { description: "Type an item name or Minecraft item ID." })
-    .button("Search items to buy", function () {
-      const term = String(query.getData() || "").trim().toLowerCase();
-      try { form.close(); } catch {}
-      system.run(function () { showBuyMenu(player, term, 0); });
+    .label("Balance: " + money(getBalance(player)) + "   |   Sales tax: " + taxPercentLabel())
+    .multiButtonRow([
+      { label: tabLabels.buy, onClick: function () { setTab("buy"); } },
+      { label: tabLabels.sell, onClick: function () { setTab("sell"); } },
+      { label: tabLabels.economy, onClick: function () { setTab("economy"); } }
+    ])
+    .divider();
+
+  function captureWorkspace(tab) {
+    return {
+      type: "workspace", tab: tab || state.tab,
+      buyQuery: queries.buy.getData(), sellQuery: queries.sell.getData(), economyQuery: queries.economy.getData(),
+      buyPage: state.pages.buy, sellPage: state.pages.sell, economyPage: state.pages.economy
+    };
+  }
+  function findItems(tab) {
+    const needle = String(queries[tab].getData() || "").trim().toLowerCase();
+    if (tab === "buy") {
+      const market = getMarket();
+      const matches = getCatalog().filter(item =>
+        !needle || item.name.toLowerCase().includes(needle) || item.id.toLowerCase().includes(needle));
+      matches.sort(function (a, b) {
+        let pa = 0, pb = 0;
+        try { pa = unitPriceCents(getScore(market, a.id)); } catch {}
+        try { pb = unitPriceCents(getScore(market, b.id)); } catch {}
+        return pb - pa || a.name.localeCompare(b.name);
+      });
+      return matches.map(item => ({ id: item.id, name: item.name, score: getScore(market, item.id), count: 0 }));
+    }
+    if (tab === "sell") {
+      return getSellableInventory(player).filter(item =>
+        !needle || item.name.toLowerCase().includes(needle) || item.id.toLowerCase().includes(needle));
+    }
+    return Object.entries(getMarket())
+      .filter(entry => Number.isSafeInteger(entry[1]))
+      .map(entry => ({ id: entry[0], name: prettyName(entry[0]), score: entry[1], count: 0 }))
+      .filter(item => !needle || item.name.toLowerCase().includes(needle) || item.id.toLowerCase().includes(needle))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+  function itemLabel(tab, entry) {
+    if (tab === "sell") return entry.name + " x" + entry.count + "\n" + currentPriceLabel(entry.id, "sell");
+    if (tab === "economy") return entry.name + "\n" + currentPriceLabel(entry.id, "buy") + "  |  score " + entry.score;
+    return entry.name + "\n" + currentPriceLabel(entry.id, "buy");
+  }
+  function renderTab(tab) {
+    let matches;
+    try { matches = findItems(tab); }
+    catch (error) {
+      console.warn("[Dynamic Economy] Could not refresh " + tab + " items: " + error);
+      statusLabels[tab].setData("The list could not refresh. Try another search.");
+      rows[tab].forEach(row => { row.entry = null; row.visible.setData(false); });
+      previousVisible[tab].setData(false); nextVisible[tab].setData(false);
+      return;
+    }
+    const maxPage = Math.max(0, Math.ceil(matches.length / CONFIG.pageSize) - 1);
+    state.pages[tab] = Math.max(0, Math.min(state.pages[tab], maxPage));
+    const startIndex = state.pages[tab] * CONFIG.pageSize;
+    const pageItems = matches.slice(startIndex, startIndex + CONFIG.pageSize);
+    rows[tab].forEach(function (row, index) {
+      const entry = pageItems[index] || null;
+      row.entry = entry;
+      row.visible.setData(!!entry);
+      if (!entry) { row.label.setData(""); return; }
+      try { row.label.setData(itemLabel(tab, entry)); } catch { row.label.setData(entry.name); }
     });
-  form.show().catch(function (error) {
-    console.warn("[Dynamic Economy] Could not show modern market menu: " + error);
-    tell(player, "The modern market menu could not open. Try again.");
+    if (!matches.length) {
+      statusLabels[tab].setData(tab === "sell" ? "No sellable inventory items match this search."
+        : tab === "economy" ? "No traded items match this search yet."
+        : "No buyable items match this search.");
+    } else {
+      const sorting = tab === "buy" ? "Highest price first" : tab === "sell" ? "Most owned first" : "Alphabetical";
+      statusLabels[tab].setData(matches.length + " items  |  Page " + (state.pages[tab] + 1) + "/" + (maxPage + 1) + "  |  " + sorting);
+    }
+    previousVisible[tab].setData(state.pages[tab] > 0);
+    nextVisible[tab].setData(state.pages[tab] < maxPage);
+  }
+  function addTabContent(tab, description) {
+    form.textField("Search by item name or ID", queries[tab], { description: description, visible: visible[tab] });
+    form.label(statusLabels[tab], { visible: visible[tab] });
+    for (const row of rows[tab]) {
+      form.button(row.label, function () {
+        const selected = row.entry;
+        if (!selected) return;
+        const returnState = captureWorkspace(tab);
+        try { form.close(); } catch {}
+        system.run(function () {
+          if (tab === "buy") {
+            showQuantityForm(player, "buy", selected.id, CONFIG.maximumTradeQuantity, returnState);
+          } else if (tab === "sell") {
+            const count = countTradableItem(inventoryOf(player), selected.id);
+            if (count < 1) {
+              tell(player, "You no longer have any eligible " + prettyName(selected.id) + " to sell.");
+              showMainMenu(player, returnState);
+            } else showQuantityForm(player, "sell", selected.id, count, returnState);
+          } else {
+            showItemPriceHistory(player, selected.id, state.pages.economy, false, returnState);
+          }
+        });
+      }, { visible: row.visible });
+    }
+    form.button("‹ Previous", function () {
+      state.pages[tab] = Math.max(0, state.pages[tab] - 1);
+      renderTab(tab);
+    }, { visible: previousVisible[tab] });
+    form.button("Next ›", function () {
+      state.pages[tab] += 1;
+      renderTab(tab);
+    }, { visible: nextVisible[tab] });
+  }
+  function setTab(tab) {
+    state.tab = tab;
+    tabs.forEach(function (name) {
+      visible[name].setData(name === tab);
+      tabLabels[name].setData(name === tab ? "§a§l" + name.toUpperCase() : "§7" + name.toUpperCase());
+    });
+    renderTab(tab);
+  }
+
+  addTabContent("buy", "Browse the market catalog; highest-priced items appear first.");
+  addTabContent("sell", "Search plain, undamaged items currently in your inventory.");
+  addTabContent("economy", "Search items with trade history and a saved price graph.");
+  const subscriptions = tabs.map(tab => queries[tab].subscribe(function () {
+    state.pages[tab] = 0;
+    renderTab(tab);
+  }));
+  tabs.forEach(function (tab) {
+    tabLabels[tab].setData(tab === state.tab ? "§a§l" + tab.toUpperCase() : "§7" + tab.toUpperCase());
+    renderTab(tab);
+  });
+  form.show().then(function () {
+    tabs.forEach((tab, index) => { try { queries[tab].unsubscribe(subscriptions[index]); } catch {} });
+  }).catch(function (error) {
+    tabs.forEach((tab, index) => { try { queries[tab].unsubscribe(subscriptions[index]); } catch {} });
+    console.warn("[Dynamic Economy] Could not show market workspace: " + error);
+    tell(player, "The market menu could not open. Enable the required creator experiments and try again.");
   });
 }
 function showSearchForm(player,mode,currentQuery,currentColorId,returnTo){
@@ -956,7 +1080,7 @@ function showTradeHistoryPage(player, page) {
   });
 }
 
-function showItemPriceHistory(player, typeId, returnPage, oversaturatedOnly) {
+function showItemPriceHistory(player, typeId, returnPage, oversaturatedOnly, workspaceReturn) {
   const records = getRecentTradeRecords(100).filter(function (record) { return record.itemId === typeId; }).reverse();
   const points = [];
   for (const record of records) {
@@ -999,17 +1123,20 @@ function showItemPriceHistory(player, typeId, returnPage, oversaturatedOnly) {
       " · " + money(point.priceCents) + " · score " + point.score;
   }
   const form = new ActionFormData().title("Price History").body(body)
-    .button("Back to " + prettyName(typeId))
+    .button(workspaceReturn ? "Back to Economy" : "Back to " + prettyName(typeId))
     .button("Trade History Pages")
     .button("Market Home");
   form.show(player).then(function (response) {
     if (response.canceled || response.selection === undefined) return;
-    if (response.selection === 0) showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
-    else if (response.selection === 1) showTradeHistoryPage(player, 0);
-    else if (response.selection === 2) showMainMenu(player);
+    if (response.selection === 0) {
+      if (workspaceReturn) showMainMenu(player, workspaceReturn);
+      else showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
+    } else if (response.selection === 1) showTradeHistoryPage(player, 0);
+    else if (response.selection === 2) showMainMenu(player, workspaceReturn ? { ...workspaceReturn, tab: "buy" } : undefined);
   }).catch(function () {
     tell(player, "Price history could not open. Try again.");
-    showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
+    if (workspaceReturn) showMainMenu(player, workspaceReturn);
+    else showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
   });
 }
 

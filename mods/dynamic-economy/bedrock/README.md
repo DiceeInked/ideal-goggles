@@ -1,18 +1,18 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.18: modern market navigation and price history
+## Version 0.3.19: modern market navigation and price history
 
 A shared market for Minecraft Bedrock. Every item starts at $1.00. Buying raises its global price once per unit; selling lowers it once per unit. Prices do not automatically drift back toward their starting value. Sales have 50% tax, and each player has an individual balance starting at $100.00.
 
-This update repairs the market script's imports and adds a tab-like market home, a low-price oversaturated filter, recent trade-history pages, and per-item price-trend graphs built from saved trades. The graphs show recorded prices only, not invented/interpolated values.
+This update gives the market a persistent three-tab workspace with horizontal BUY, SELL, and ECONOMY tabs, live item search, paginated item lists, recent trade-history pages, and per-item price-trend graphs built only from saved trades.
 
 **Canonical design and Java-port specification:** [`mods/dynamic-economy/DESIGN_SPEC.md`](../DESIGN_SPEC.md). Update that file whenever the mod's rules or behavior change.
 
 ### Market access
 
-Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword to open the market. The home screen includes Buy, Sell, Economy, Price / Trade History, and Oversaturated Items sections, plus quick item search. The market-price list keeps pagination and item details; item details include a price-history graph when saved trade data exists. The oversaturated filter identifies tracked items at or below $0.10 and does not itself alter prices or trading rules.
+Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword to open the market. The market opens on a single workspace. BUY, SELL, and ECONOMY stay in one horizontal tab row at the top. Each tab has its own search field immediately above a paginated item list, and typing filters that list live. Selecting a BUY item opens quantity selection and purchase confirmation; selecting a SELL item opens quantity selection and sale confirmation; selecting an ECONOMY item opens its saved price-history graph. Returning from an action restores the same tab, search, and page.
 
-The menu is built with the stable `@minecraft/server-ui` 2.1.0 API. Its navigation is tab-like, but the buttons are vertically stacked; true horizontal button rows and custom banner images require newer or experimental API features and are not enabled here.
+The horizontal tab row uses the pre-release `CustomForm.multiButtonRow` API from `@minecraft/server-ui` 2.2.0. Use a compatible Bedrock 1.26.60+ build and enable **Upcoming Creator Features** and **Beta APIs** in the world experiments when those options are available. This API is pre-release and may change between game versions. The item lists use vanilla item names/icons and do not replace vanilla item textures.
 
 ### Texture approach
 
@@ -50,13 +50,13 @@ Detailed history begins when v0.3.16 or later is installed. Old balances and ite
 
 ### Combined download
 
-Combined installer (contains both importable `.mcpack` files):  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon
+Combined installer (contains both importable `.mcpack` files):
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.19.mcaddon
 
-Behavior pack:  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack
+Behavior pack:
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.19.mcpack
 
-Resource pack:  
+Resource pack:
 https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/dynamic-economy-modern-market-ui/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack
 
 The latest download links only work after the automated build passes and commits the release archives. Enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Keep Upcoming Creator Features enabled for the existing item-specific Sell Barrel mining behavior. The current Microsoft Script API docs mark the crafting-recipe event and custom block-break callback as pre-release, so enable the Beta APIs experiment too when available for your game version. The script handles an unavailable crafting listener without crashing, but in that case a newly crafted barrel may fall back to the player who places it as the owner instead of the original crafter. Test crafting, placing, breaking, re-placing, and hopper payouts in a copied world before using this on a world you care about.
