@@ -9,13 +9,14 @@ import {
 } from "@minecraft/server";
 
 // Exploration Lattice: preserve one-block-thick beams on a world-origin grid.
-// This version uses native bulk fills instead of reading/changing every block
-// individually. Each batch is only two Y layers high to limit tick spikes.
+// Native bulk fills replace thousands of individual block API calls. Work is
+// split into small batches so one tick cannot try to transform a whole chunk.
 const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
-const CHUNKS_RADIUS = 4;
+const CHUNKS_RADIUS = 2; // 5 x 5 chunks near each player, not 9 x 9.
 const RESCAN_INTERVAL_TICKS = 20;
-const BATCH_HEIGHT = 2;
+const BATCH_HEIGHT = 4;
+const BATCHES_PER_TICK = 2;
 const WATERLOGGABLE_TYPES_PER_TICK = 32;
 
 const BASE_PROTECTED_TYPES = [
@@ -52,6 +53,21 @@ const BASE_PROTECTED_TYPES = [
   "minecraft:black_concrete_powder"
 ];
 
+const GRAVITY_BLOCKS = new Set([
+  "minecraft:sand", "minecraft:red_sand", "minecraft:gravel",
+  "minecraft:suspicious_sand", "minecraft:suspicious_gravel",
+  "minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil",
+  "minecraft:dragon_egg",
+  "minecraft:white_concrete_powder", "minecraft:orange_concrete_powder",
+  "minecraft:magenta_concrete_powder", "minecraft:light_blue_concrete_powder",
+  "minecraft:yellow_concrete_powder", "minecraft:lime_concrete_powder",
+  "minecraft:pink_concrete_powder", "minecraft:gray_concrete_powder",
+  "minecraft:light_gray_concrete_powder", "minecraft:cyan_concrete_powder",
+  "minecraft:purple_concrete_powder", "minecraft:blue_concrete_powder",
+  "minecraft:brown_concrete_powder", "minecraft:green_concrete_powder",
+  "minecraft:red_concrete_powder", "minecraft:black_concrete_powder"
+]);
+
 const queuedChunks = [];
 const queuedKeys = new Set();
 const completedKeys = new Set();
@@ -60,22 +76,11 @@ let protectedTypes = BASE_PROTECTED_TYPES.slice();
 let currentJob = null;
 let tickCounter = 0;
 
-// Discover waterloggable block types gradually. That lets the add-on preserve
-// custom as well as vanilla waterloggable blocks without doing a costly
-// one-time catalog scan during a single game tick.
 let blockTypeCatalog = [];
 let discoveryIndex = 0;
+let discoveryStarted = false;
 let discoveryComplete = false;
 let discoveryFailed = false;
-
-try {
-  blockTypeCatalog = BlockTypes.getAll();
-  if (!blockTypeCatalog || blockTypeCatalog.length === 0) {
-    discoveryFailed = true;
-  }
-} catch (error) {
-  discoveryFailed = true;
-}
 
 function floorToChunk(blockCoordinate) {
   return Math.floor(blockCoordinate / CHUNK_SIZE);
@@ -106,16 +111,25 @@ function isWaterlogged(block) {
 }
 
 function isGravityBlock(block) {
-  return BASE_PROTECTED_TYPES.includes(block.typeId) &&
-    block.typeId !== "minecraft:bedrock" &&
-    block.typeId !== "minecraft:water" &&
-    block.typeId !== "minecraft:flowing_water" &&
-    block.typeId !== "minecraft:lava" &&
-    block.typeId !== "minecraft:flowing_lava" &&
-    block.typeId !== "minecraft:bubble_column";
+  return GRAVITY_BLOCKS.has(block.typeId);
+}
+
+function initializeBlockTypeCatalog() {
+  if (discoveryStarted || discoveryFailed) return;
+  discoveryStarted = true;
+
+  try {
+    blockTypeCatalog = BlockTypes.getAll();
+    if (!blockTypeCatalog || blockTypeCatalog.length === 0) {
+      discoveryFailed = true;
+    }
+  } catch (error) {
+    discoveryFailed = true;
+  }
 }
 
 function discoverWaterloggableTypes() {
+  initializeBlockTypeCatalog();
   if (discoveryComplete || discoveryFailed) return;
 
   const end = Math.min(
@@ -131,8 +145,8 @@ function discoverWaterloggableTypes() {
         waterloggableTypes.push(blockType.id);
       }
     } catch (error) {
-      // Some registered/custom block types may not expose a resolvable
-      // default permutation. Ignore those types rather than stop the pack.
+      // Some custom block types may not expose a resolvable default
+      // permutation. Skip those instead of interrupting the whole add-on.
     }
   }
 
@@ -240,7 +254,7 @@ function startNextJob() {
       const dimension = world.getDimension(job.dimensionId);
       const loaded = dimension.isChunkLoaded({
         x: job.startX + 8,
-        y: job.minY,
+        y: Math.max(job.minY, Math.min(job.maxYExclusive - 1, job.nextY)),
         z: job.startZ + 8
       });
 
@@ -275,27 +289,30 @@ function processNextBatch(job) {
     const topY = job.nextY;
     const bottomY = Math.max(job.minY, topY - BATCH_HEIGHT + 1);
 
-    const stillLoaded = dimension.isChunkLoaded({
+    if (!dimension.isChunkLoaded({
       x: job.startX + 8,
       y: topY,
       z: job.startZ + 8
-    });
-    if (!stillLoaded) {
+    })) {
       releaseJobForRetry(job);
       return;
     }
 
-    // The list volume contains only coordinates outside the lattice. The
-    // native fill operation can then clear many blocks in one API call.
+    // Only off-lattice positions are included in this list volume. The
+    // native fill operation can clear hundreds of positions with one call.
     const removalLocations = [];
     for (let y = bottomY; y <= topY; y++) {
+      const yOnGrid = y % GRID_SPACING === 0;
       for (let zOffset = 0; zOffset < CHUNK_SIZE; zOffset++) {
         const z = job.startZ + zOffset;
+        const zOnGrid = z % GRID_SPACING === 0;
         for (let xOffset = 0; xOffset < CHUNK_SIZE; xOffset++) {
           const x = job.startX + xOffset;
-          if (!isLatticeBlock(x, y, z)) {
-            removalLocations.push({ x, y, z });
-          }
+          const xOnGrid = x % GRID_SPACING === 0;
+          const onLattice = (xOnGrid && yOnGrid) ||
+                            (xOnGrid && zOnGrid) ||
+                            (yOnGrid && zOnGrid);
+          if (!onLattice) removalLocations.push({ x, y, z });
         }
       }
     }
@@ -311,9 +328,8 @@ function processNextBatch(job) {
       );
     }
 
-    // Waterloggable block types are excluded from the bulk fill so water
-    // isn't accidentally erased inside them. Query only this small batch,
-    // and remove off-lattice instances whose waterlogged state is not set.
+    // Waterloggable block types are excluded from the bulk fill. Query this
+    // small batch for those types and remove only off-lattice, dry instances.
     if (waterloggableTypes.length > 0) {
       const volume = new BlockVolume(
         { x: job.startX, y: bottomY, z: job.startZ },
@@ -347,8 +363,7 @@ function processNextBatch(job) {
     job.nextY = bottomY - 1;
     if (job.nextY < job.minY) finishCurrentJob();
   } catch (error) {
-    // If a chunk unloads or an edit is rejected, repeat this small batch
-    // later. Bulk edits are idempotent, so retrying won't damage the pattern.
+    // A failed batch is safe to retry because the lattice edits are idempotent.
     releaseJobForRetry(job);
   }
 }
@@ -366,13 +381,13 @@ system.runInterval(() => {
 
   discoverWaterloggableTypes();
 
-  // Fail closed if the block catalog cannot be inspected. It is safer to
-  // pause than to clear terrain without knowing which block types are
-  // waterloggable.
+  // Fail closed if the catalog cannot be inspected. It is safer to pause
+  // than to clear terrain without knowing which blocks may be waterlogged.
   if (!discoveryComplete) return;
 
-  startNextJob();
-
-  // Exactly one small bulk batch per tick: no thousands-of-calls burst.
-  if (currentJob) processNextBatch(currentJob);
+  for (let batch = 0; batch < BATCHES_PER_TICK; batch++) {
+    startNextJob();
+    if (!currentJob) break;
+    processNextBatch(currentJob);
+  }
 }, 1);
