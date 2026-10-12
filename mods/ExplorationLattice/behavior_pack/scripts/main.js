@@ -6,7 +6,7 @@ const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
 const CHUNKS_RADIUS = 4; // Radius 4 means up to 9 x 9 chunks per player.
 const RESCAN_INTERVAL_TICKS = 20;
-const BLOCK_BUDGET_PER_TICK = 256;
+const BLOCK_BUDGET_PER_TICK = 1024; // Four times the previous throughput; adjust down if a device lags.
 
 const queuedChunks = [];
 const queuedKeys = new Set();
@@ -179,8 +179,17 @@ function processOneBlock(job) {
       return;
     }
 
-    if (!block.isAir && !isLatticeBlock(x, y, z)) {
-      dimension.setBlockType({ x, y, z }, "minecraft:air");
+    // Leave flowing/source fluids untouched so the lattice does not carve
+    // through water or lava. Also preserve waterlogged blocks.
+    if (!block.isAir && !block.isLiquid && !isLatticeBlock(x, y, z)) {
+      const permutation = block.permutation;
+      const waterlogged =
+        permutation.getState("waterlogged") === true ||
+        permutation.getState("waterlogged_bit") === true;
+
+      if (!waterlogged) {
+        dimension.setBlockType({ x, y, z }, "minecraft:air");
+      }
     }
   } catch (error) {
     // Avoid marking a partially edited chunk complete after an API error.
