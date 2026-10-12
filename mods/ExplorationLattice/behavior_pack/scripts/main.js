@@ -34,90 +34,102 @@ function isLatticeBlock(x, y, z) {
          (yOnGrid && zOnGrid);
 }
 
-function releaseJobForRetry(job) {
-  queuedKeys.delete(job.key);
-  currentJob = null;
-  // A later scan queues this chunk again only while it is loaded.
-}
+function scanPlayerAreas() {
+  // Build the set of loaded chunks that are currently near any player.
+  // This keeps the queue bounded when a player travels quickly.
+  const nearbyLoaded = new Map();
 
-function enqueueLoadedChunksAround(player) {
-  let dimension;
-  let heightRange;
+  for (const player of world.getAllPlayers()) {
+    let dimension;
+    let heightRange;
+    try {
+      dimension = player.dimension;
+      heightRange = dimension.heightRange;
+    } catch (error) {
+      continue;
+    }
 
-  try {
-    dimension = player.dimension;
-    heightRange = dimension.heightRange;
-  } catch (error) {
-    return;
-  }
+    const centerChunkX = floorToChunk(player.location.x);
+    const centerChunkZ = floorToChunk(player.location.z);
+    const minY = Math.ceil(heightRange.min);
+    const maxYExclusive = Math.ceil(heightRange.max);
 
-  const centerChunkX = floorToChunk(player.location.x);
-  const centerChunkZ = floorToChunk(player.location.z);
-  const candidates = [];
+    for (let offsetZ = -CHUNKS_RADIUS; offsetZ <= CHUNKS_RADIUS; offsetZ++) {
+      for (let offsetX = -CHUNKS_RADIUS; offsetX <= CHUNKS_RADIUS; offsetX++) {
+        const chunkX = centerChunkX + offsetX;
+        const chunkZ = centerChunkZ + offsetZ;
+        const key = makeChunkKey(dimension.id, chunkX, chunkZ);
 
-  for (let offsetZ = -CHUNKS_RADIUS; offsetZ <= CHUNKS_RADIUS; offsetZ++) {
-    for (let offsetX = -CHUNKS_RADIUS; offsetX <= CHUNKS_RADIUS; offsetX++) {
-      const chunkX = centerChunkX + offsetX;
-      const chunkZ = centerChunkZ + offsetZ;
-      const key = makeChunkKey(dimension.id, chunkX, chunkZ);
+        let loaded = false;
+        try {
+          loaded = dimension.isChunkLoaded({
+            x: chunkX * CHUNK_SIZE + 8,
+            y: Math.max(minY, Math.min(maxYExclusive - 1, Math.floor(player.location.y))),
+            z: chunkZ * CHUNK_SIZE + 8
+          });
+        } catch (error) {
+          continue;
+        }
+        if (!loaded) continue;
 
-      if (queuedKeys.has(key) || completedKeys.has(key)) continue;
-
-      // Prioritize chunks closest to the player so the effect appears nearby first.
-      candidates.push({
-        key,
-        dimensionId: dimension.id,
-        chunkX,
-        chunkZ,
-        distanceSquared: offsetX * offsetX + offsetZ * offsetZ,
-        minY: Math.ceil(heightRange.min),
-        maxYExclusive: Math.ceil(heightRange.max)
-      });
+        const distanceSquared = offsetX * offsetX + offsetZ * offsetZ;
+        const previous = nearbyLoaded.get(key);
+        if (!previous || distanceSquared < previous.distanceSquared) {
+          nearbyLoaded.set(key, {
+            key,
+            dimensionId: dimension.id,
+            startX: chunkX * CHUNK_SIZE,
+            startZ: chunkZ * CHUNK_SIZE,
+            minY,
+            maxYExclusive,
+            distanceSquared
+          });
+        }
+      }
     }
   }
 
+  const desiredKeys = new Set(nearbyLoaded.keys());
+
+  // Remove queued-but-not-started chunks that have left every player's area.
+  const stillNearby = [];
+  for (const job of queuedChunks) {
+    if (desiredKeys.has(job.key)) stillNearby.push(job);
+    else queuedKeys.delete(job.key);
+  }
+  queuedChunks.length = 0;
+  queuedChunks.push(...stillNearby);
+
+  // Stop a partially processed job if its chunk is no longer near any player.
+  // Its edits are idempotent, so it can safely restart if revisited later.
+  if (currentJob && !desiredKeys.has(currentJob.key)) {
+    queuedKeys.delete(currentJob.key);
+    currentJob = null;
+  }
+
+  const candidates = Array.from(nearbyLoaded.values());
   candidates.sort((a, b) => a.distanceSquared - b.distanceSquared);
 
   for (const candidate of candidates) {
-    try {
-      const isLoaded = dimension.isChunkLoaded({
-        x: candidate.chunkX * CHUNK_SIZE + 8,
-        y: Math.max(candidate.minY, Math.min(candidate.maxYExclusive - 1, Math.floor(player.location.y))),
-        z: candidate.chunkZ * CHUNK_SIZE + 8
-      });
-
-      if (!isLoaded) continue;
-
-      queuedKeys.add(candidate.key);
-      queuedChunks.push({
-        key: candidate.key,
-        dimensionId: candidate.dimensionId,
-        startX: candidate.chunkX * CHUNK_SIZE,
-        startZ: candidate.chunkZ * CHUNK_SIZE,
-        minY: candidate.minY,
-        maxYExclusive: candidate.maxYExclusive,
-        xOffset: 0,
-        zOffset: 0,
-        y: candidate.minY
-      });
-    } catch (error) {
-      // If a chunk or dimension isn't available, a later scan can retry it.
-    }
+    if (queuedKeys.has(candidate.key) || completedKeys.has(candidate.key)) continue;
+    queuedKeys.add(candidate.key);
+    queuedChunks.push({
+      ...candidate,
+      xOffset: 0,
+      zOffset: 0,
+      y: candidate.minY
+    });
   }
-}
 
-function scanPlayerAreas() {
-  for (const player of world.getAllPlayers()) {
-    enqueueLoadedChunksAround(player);
-  }
+  // Keep closest chunks first, even when fresh chunks are discovered later.
+  queuedChunks.sort((a, b) => a.distanceSquared - b.distanceSquared);
 }
 
 function startNextJob() {
   while (!currentJob && queuedChunks.length > 0) {
     const job = queuedChunks.shift();
 
-    // Chunks can unload while waiting in the queue. Drop unloaded jobs and let
-    // a later player-area scan queue them again.
+    // Chunks may unload after being queued. Let the next area scan retry them.
     try {
       const dimension = world.getDimension(job.dimensionId);
       const loaded = dimension.isChunkLoaded({
@@ -146,6 +158,12 @@ function finishCurrentJob() {
   currentJob = null;
 }
 
+function releaseJobForRetry(job) {
+  queuedKeys.delete(job.key);
+  currentJob = null;
+  // A later area scan will queue this chunk again if it is loaded and nearby.
+}
+
 function processOneBlock(job) {
   const x = job.startX + job.xOffset;
   const y = job.y;
@@ -155,8 +173,7 @@ function processOneBlock(job) {
     const dimension = world.getDimension(job.dimensionId);
     const block = dimension.getBlock({ x, y, z });
 
-    // Undefined means the chunk is no longer loaded. Reprocess it from the
-    // beginning after it loads again; edits already made are idempotent.
+    // Undefined means the chunk is no longer loaded. Do not mark it completed.
     if (!block) {
       releaseJobForRetry(job);
       return;
@@ -166,7 +183,7 @@ function processOneBlock(job) {
       dimension.setBlockType({ x, y, z }, "minecraft:air");
     }
   } catch (error) {
-    // Avoid marking a partially edited chunk as complete after an API error.
+    // Avoid marking a partially edited chunk complete after an API error.
     releaseJobForRetry(job);
     return;
   }
@@ -192,8 +209,7 @@ world.afterEvents.playerSpawn.subscribe(() => {
   scanPlayerAreas();
 });
 
-// Keep discovering newly loaded chunks as players move. The chunk edits
-// themselves are spread across ticks to limit per-tick work.
+// Re-scan nearby chunks once a second; edits themselves are spread across ticks.
 system.runInterval(() => {
   tickCounter++;
 
