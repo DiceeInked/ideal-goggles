@@ -4,7 +4,7 @@ Exploration Lattice is a separate Bedrock behavior-pack add-on that progressivel
 
 ## Direct install
 
-**[Download ExplorationLattice-v1.0.5.mcpack](https://raw.githubusercontent.com/DiceeInked/ideal-goggles/main/mods/ExplorationLattice/ExplorationLattice.mcpack)**
+**[Download ExplorationLattice-v1.0.5.mcpack](https://raw.githubusercontent.com/DiceeInked/ideal-goggles/main/mods/ExplorationLattice/ExplorationLattice-v1.0.5.mcpack)**
 
 Open the downloaded file with Minecraft to import it, then activate the Exploration Lattice behavior pack in a world's Behavior Packs settings. Use a test world first.
 
@@ -14,7 +14,7 @@ Open the downloaded file with Minecraft to import it, then activate the Explorat
 - A block is preserved only when at least two of its world coordinates (X, Y, Z) are divisible by 4. This leaves one-block-thick beams running along the X, Y, and Z directions rather than three solid grid planes.
 - The pattern uses absolute world coordinates, so it stays aligned across chunk boundaries. The three beam directions intersect at (0, 0, 0).
 - The add-on checks a 9 x 9 chunk square centered on each player. It only queues chunks that Bedrock reports as loaded, then processes nearby chunks first.
-- Work is spread across ticks using a per-tick block budget of 8,192 blocks, four times the previous version. It discovers newly loaded chunks as players explore and drops queued chunks that are no longer near a player, avoiding an ever-growing backlog.
+- Work is spread across ticks using a per-tick block budget of 8,192 blocks, twice the previous version. It discovers newly loaded chunks as players explore and drops queued chunks that are no longer near a player, avoiding an ever-growing backlog.
 - Water/lava blocks and waterlogged blocks are preserved. Adjacent blocks are not checked for nearby fluids. Bedrock is never deleted.
 - Sand, red sand, gravel, suspicious sand/gravel, anvils, dragon eggs, and concrete powder are preserved. The scan runs top-down and keeps the support block beneath gravity blocks, including stacked gravity-block columns.
 - It uses each dimension's reported height range and works in the dimension where each player is exploring.
