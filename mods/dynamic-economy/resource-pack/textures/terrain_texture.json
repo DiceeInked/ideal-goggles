@@ -4,14 +4,14 @@
   "padding": 8,
   "num_mip_levels": 4,
   "texture_data": {
-    "barrel_side": {
-      "textures": "textures/blocks/barrel_side"
+    "sell_barrel_side": {
+      "textures": "textures/blocks/sell_barrel_side"
     },
-    "barrel_top": {
-      "textures": "textures/blocks/barrel_top"
+    "sell_barrel_top": {
+      "textures": "textures/blocks/sell_barrel_top"
     },
-    "barrel_bottom": {
-      "textures": "textures/blocks/barrel_bottom"
+    "sell_barrel_bottom": {
+      "textures": "textures/blocks/sell_barrel_bottom"
     }
   }
 }
