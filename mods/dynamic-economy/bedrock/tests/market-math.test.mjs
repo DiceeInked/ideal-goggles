@@ -8,7 +8,7 @@ const CONFIG = Object.freeze({
   scoreChangePerItem: 1,
   minimumPriceCents: 1,
   maximumSafeCents: Number.MAX_SAFE_INTEGER,
-  salesTaxRate: 0.10
+  salesTaxRate: 0.50
 });
 const TAX_REMAINDER_DENOMINATOR = 10000;
 
@@ -61,8 +61,8 @@ test("a sale uses the post-sale score and buying uses the pre-purchase score", (
   assert.equal(totalBuyCost(0, 2), 201);
   const sale = totalSaleProceeds(1, 1, 0);
   assert.equal(sale.gross, 100);
-  assert.equal(sale.tax, 10);
-  assert.equal(sale.net, 90);
+  assert.equal(sale.tax, 50);
+  assert.equal(sale.net, 50);
 });
 
 test("splitting a sale preserves its gross, tax, net, and final rounding remainder", () => {
@@ -101,4 +101,37 @@ test("fractional tax does not disappear when items remain at the one-cent price 
   assert.equal(whole.gross, 64);
   assert.equal(tax, whole.tax);
   assert.equal(remainder, whole.taxRemainderAfter);
+});
+
+test("creative-only items and spawn eggs are excluded from all trading", () => {
+  const blockedIds = new Set([
+    "minecraft:allow", "minecraft:barrier", "minecraft:bedrock", "minecraft:border_block",
+    "minecraft:budding_amethyst", "minecraft:camera", "minecraft:chain_command_block",
+    "minecraft:command_block", "minecraft:command_block_minecart", "minecraft:debug_stick",
+    "minecraft:deny", "minecraft:end_gateway", "minecraft:end_portal", "minecraft:end_portal_frame",
+    "minecraft:info_update", "minecraft:info_update2", "minecraft:jigsaw",
+    "minecraft:knowledge_book", "minecraft:light_block", "minecraft:mob_spawner",
+    "minecraft:moving_block", "minecraft:netherreactor", "minecraft:player_head",
+    "minecraft:repeating_command_block", "minecraft:reserved6", "minecraft:structure_block",
+    "minecraft:structure_void", "minecraft:reinforced_deepslate", "minecraft:trial_spawner",
+    "minecraft:vault", "minecraft:unknown"
+  ]);
+  const isSurvivalObtainableItem = new Function("NON_SURVIVAL_ITEM_IDS",
+    extract("function isSurvivalObtainableItem(", "function isMarketTool") + "\nreturn isSurvivalObtainableItem;"
+  )(blockedIds);
+  assert.equal(isSurvivalObtainableItem("minecraft:zombie_spawn_egg"), false);
+  assert.equal(isSurvivalObtainableItem("minecraft:bedrock"), false);
+  assert.equal(isSurvivalObtainableItem("minecraft:command_block"), false);
+  assert.equal(isSurvivalObtainableItem("minecraft:diamond"), true);
+  assert.equal(isSurvivalObtainableItem("example:custom_item"), false);
+});
+
+test("market menu tools include every vanilla sword and the original stick", () => {
+  const toolIds = [
+    "minecraft:stick", "minecraft:wooden_sword", "minecraft:stone_sword",
+    "minecraft:iron_sword", "minecraft:golden_sword", "minecraft:diamond_sword",
+    "minecraft:netherite_sword"
+  ];
+  for (const id of toolIds) assert.ok(source.includes('"'+id+'"'), "Missing market tool: " + id);
+  assert.match(source, /salesTaxRate: 0\.50/);
 });
