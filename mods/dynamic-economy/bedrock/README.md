@@ -14,7 +14,7 @@ Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond,
 
 Each crafted Sell Barrel is named **`<username>'s Sell Barrel`** and stores the crafter's owner ID on its unstackable item. When placed, that owner identity is saved against the block's location. The owner follows the item if the barrel is broken and picked up, and **all proceeds go to the saved owner**, not to whoever opens or closes the container. Any player can use the barrel; opening it does not transfer ownership.
 
-If a barrel from an older version has no saved owner, the first player to open or close it after upgrading claims it. New barrels record ownership as they are placed. A command-created or otherwise untagged barrel defaults to the player who places it.
+A barrel from an older version with no saved owner will not sell its contents to whoever opens it. Ask an operator to break and replace it with an owner-tagged barrel; a newly placed untagged/command-created barrel is assigned to the player who places it. This avoids letting a passerby claim someone else's old barrel.
 
 ### Hopper support and auto-selling
 
@@ -55,4 +55,4 @@ The latest download links only work after the automated build passes and commits
 
 ### Build and test status
 
-GitHub Actions validates manifests and JSON files, checks JavaScript syntax, runs the market math and regression tests, verifies the pack links/recipe/texture assets, validates the owner/tick data, packages the behavior and resource packs, and checks ZIP integrity. Minecraft itself is not available to this workflow for runtime testing. In particular, verify crafted-item owner metadata, ownership across breaking and re-placing, operator permission gating, offline owner payouts, hopper transfers, manual deposit behavior, and upgrades against a copied world in Bedrock before relying on this version.
+GitHub Actions validates manifests and JSON files, checks JavaScript syntax, runs the market math and regression tests, verifies the pack links/recipe/texture assets, validates the owner/tick data and stale-open cleanup, packages the behavior and resource packs, and checks ZIP integrity. Minecraft itself is not available to this workflow for runtime testing. In particular, verify crafted-item owner metadata, ownership across breaking and re-placing, operator permission gating, offline owner payouts, hopper transfers, manual deposit behavior, and upgrades against a copied world in Bedrock before relying on this version.
