@@ -56,6 +56,8 @@ jobs:
           required_modules = {"@minecraft/server": "2.9.0", "@minecraft/server-ui": "2.1.0"}
           actual_modules = {d.get("module_name"): d.get("version") for d in deps if "module_name" in d}
           assert actual_modules == required_modules, f"Unexpected Script API dependencies: {actual_modules}"
+          assert bp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Behavior pack must target Bedrock 26.50+"
+          assert rp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Resource pack must target Bedrock 26.50+"
           assert any(d.get("uuid") == rp_manifest["header"]["uuid"] and d.get("version") == rp_manifest["header"]["version"] for d in deps), "Behavior pack must depend on the Sell Barrel resource pack"
           block = json.loads((bp / "blocks/sell_barrel.json").read_text())
           assert block.get("format_version") == "1.26.40", "Sell Barrel block must use the current stable block format"
