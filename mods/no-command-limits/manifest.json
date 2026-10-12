@@ -1,0 +1,37 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "No Command Limits",
+    "description": "A script-powered, batched fill command for Minecraft Bedrock Edition.",
+    "uuid": "9f5bc60d-0c7d-4e1b-9c83-0e2a5df4a1c1",
+    "version": [
+      1,
+      0,
+      0
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      80
+    ]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "a2d7a0b4-7c9b-45c4-9d2e-6f7a8b9c0d1e",
+      "version": [
+        1,
+        0,
+        0
+      ],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    }
+  ]
+}
