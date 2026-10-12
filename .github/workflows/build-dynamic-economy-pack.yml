@@ -29,14 +29,14 @@ jobs:
           for name in ("barrel_side.png", "barrel_top.png", "barrel_bottom.png"):
               encoded = source / (name + ".b64")
               raw = base64.b64decode(encoded.read_text().strip(), validate=True)
-              assert raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), f"Invalid PNG signature: {encoded}"
+              assert raw.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid PNG signature: {encoded}"
               width, height = struct.unpack(">II", raw[16:24])
               assert (width, height) == (16, 16), f"Unexpected vanilla barrel texture size for {name}: {(width, height)}"
               (target / name).write_bytes(raw)
           print("Decoded and verified all three inverted vanilla barrel textures (16x16 PNG).")
           PY
           python3 - <<'PY'
-          import json
+          import json, struct
           from pathlib import Path
           for folder in (Path("mods/dynamic-economy/bedrock"), Path("mods/dynamic-economy/resource-pack"), Path("mods/recovery-compass/bedrock")):
               manifest_path = folder / "manifest.json"
@@ -95,7 +95,7 @@ jobs:
           for name in ("barrel_side.png", "barrel_top.png", "barrel_bottom.png"):
               texture = rp / "textures/blocks" / name
               data = texture.read_bytes()
-              assert data.startswith(b"\\x89PNG\\r\\n\\x1a\\n") and struct.unpack(">II", data[16:24]) == (16, 16), f"Invalid or missing inverted barrel texture: {texture}"
+              assert data.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", data[16:24]) == (16, 16), f"Invalid or missing inverted barrel texture: {texture}"
           assert "tile.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel localization"
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
