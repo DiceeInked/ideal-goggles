@@ -2,7 +2,7 @@ import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@min
 import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.17: owner-paid hopper-compatible Sell Barrels.
+ * Dynamic Economy v0.3.18: modern market UI and price history.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -882,7 +882,7 @@ function showMarketPrices(player, page, oversaturatedOnly) {
     if (action === "previous") showMarketPrices(player, safePage - 1, oversaturatedOnly);
     else if (action === "next") showMarketPrices(player, safePage + 1, oversaturatedOnly);
     else if (action === "back") showMainMenu(player);
-    else if (action && action.type === "item") showMarketItemDetail(player, action.id, safePage);
+    else if (action && action.type === "item") showMarketItemDetail(player, action.id, safePage, oversaturatedOnly);
   }).catch(function () {});
 }
 function showMarketItemDetail(player, typeId, page, oversaturatedOnly) {
@@ -893,9 +893,9 @@ function showMarketItemDetail(player, typeId, page, oversaturatedOnly) {
   const form = new ActionFormData()
     .title(prettyName(typeId))
     .body("Current shared-market score: " + score +
-      "\\nBuy price: " + buyPrice + " per item" +
-      "\\nEstimated first-item sale payout after tax: " + sellPrice +
-      "\\n\\nPrices can move as anyone in the world trades.")
+      "\nBuy price: " + buyPrice + " per item" +
+      "\nEstimated first-item sale payout after tax: " + sellPrice +
+      "\n\nPrices can move as anyone in the world trades.")
     .button("Buy This Item")
     .button("Sell This Item")
     .button("Price History Graph")
@@ -929,14 +929,14 @@ function showTradeHistoryPage(player, page) {
   const form = new ActionFormData()
     .title("Trade History")
     .body(records.length
-      ? "Recent completed trades across the shared market. Select a trade to view that item's price graph.\\nPage " + (safePage + 1) + " of " + (maxPage + 1)
+      ? "Recent completed trades across the shared market. Select a trade to view that item's price graph.\nPage " + (safePage + 1) + " of " + (maxPage + 1)
       : "No trade history has been recorded yet. Graphs appear after the first successful trades.");
   const actions = [];
   for (const record of visible) {
     const actionLabel = record.action === "buy" ? "BOUGHT" : "SOLD";
     const amount = Number.isSafeInteger(record.netCents) ? money(record.netCents) : "Unknown";
     form.button(actionLabel + " " + record.quantity + " x " + prettyName(record.itemId) +
-      "\\n" + record.playerName + " | " + amount + " | tick " + record.tick);
+      "\n" + record.playerName + " | " + amount + " | tick " + record.tick);
     actions.push({ type: "record", itemId: record.itemId });
   }
   if (safePage > 0) { form.button("Previous Page"); actions.push({ type: "previous" }); }
@@ -985,17 +985,17 @@ function showItemPriceHistory(player, typeId, returnPage, oversaturatedOnly) {
     const level = max === min ? 4 : Math.max(1, Math.min(8, Math.round(((point.priceCents - min) / (max - min)) * 7) + 1));
     return "▁▂▃▄▅▆▇█"[level - 1];
   }).join("");
-  let body = "Item: " + prettyName(typeId) + "\\nCurrent price: " + currentPriceLabel(typeId, "buy");
+  let body = "Item: " + prettyName(typeId) + "\nCurrent price: " + currentPriceLabel(typeId, "buy");
   if (!visible.length) {
-    body += "\\n\\nNo saved price points for this item yet. New successful trades will add graph data.";
+    body += "\n\nNo saved price points for this item yet. New successful trades will add graph data.";
   } else {
-    body += "\\n\\nRecent price trend (oldest → newest):\\n" + bars +
-      "\\nLow: " + money(min) + "   High: " + money(max) +
-      "\\nPoints shown: " + visible.length +
-      "\\n\\nEach bar represents a saved per-item price after a trade. The graph uses only saved trades, not estimated prices between trades.";
+    body += "\n\nRecent price trend (oldest → newest):\n" + bars +
+      "\nLow: " + money(min) + "   High: " + money(max) +
+      "\nPoints shown: " + visible.length +
+      "\n\nEach bar represents a saved per-item price after a trade. The graph uses only saved trades, not estimated prices between trades.";
     const recent = visible.slice(-5).reverse();
-    body += "\\n\\nLatest points:";
-    for (const point of recent) body += "\\n" + (point.action === "buy" ? "Buy" : "Sell") +
+    body += "\n\nLatest points:";
+    for (const point of recent) body += "\n" + (point.action === "buy" ? "Buy" : "Sell") +
       " · " + money(point.priceCents) + " · score " + point.score;
   }
   const form = new ActionFormData().title("Price History").body(body)
