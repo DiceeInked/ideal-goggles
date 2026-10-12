@@ -164,5 +164,28 @@ test("Blaze Rod opens operator tools only after a permission-level check", () =>
 test("crafted Sell Barrels receive the crafting player's name", () => {
   assert.match(source, /world\.afterEvents\.playerCraftRecipe\.subscribe\(nameCraftedSellBarrel\)/);
   assert.match(source, /function nameCraftedSellBarrel\(/);
-  assert.match(source, /player\.name \+ "'s Sell Barrel"/);
+  assert.match(source, /owner\.name \+ "'s Sell Barrel"/);
+  assert.match(source, /SELL_BARREL_ITEM_OWNER_ID_PROPERTY/);
+  assert.match(source, /setDynamicProperty\(SELL_BARREL_ITEM_OWNER_ID_PROPERTY, owner\.id\)/);
+});
+
+
+test("Sell Barrels have per-item owner metadata and persisted block-owner records", () => {
+  assert.match(source, /SELL_BARREL_OWNER_PROPERTY_PREFIX/);
+  assert.match(source, /function readBarrelOwner\(/);
+  assert.match(source, /function writeBarrelOwner\(/);
+  assert.match(source, /function readOwnerFromItemOrPlayer\(/);
+  assert.match(source, /function assignOwnerBeforePlacement\(/);
+  assert.match(source, /function saveOwnerAfterPlacement\(/);
+  assert.match(source, /function ownerAccount\(/);
+  assert.match(source, /sell\(owner, typeId, quantity, container, true, true\)/);
+});
+
+test("Sell Barrels are ticked for hopper-fed auto-selling and avoid selling while a player has them open", () => {
+  assert.match(source, /function handleSellBarrelTick\(/);
+  assert.match(source, /processClosedSellBarrel\(event\.dimension, event\.block\.location\)/);
+  assert.match(source, /if \(processingBarrels\.has\(key\) \|\| isBarrelOpenToPlayer\(dimension, location\)\) return/);
+  assert.match(source, /blockComponentRegistry\.registerCustomComponent\(SELL_BARREL_COMPONENT_ID/);
+  assert.match(source, /onTick: handleSellBarrelTick/);
+  assert.match(source, /onBreak: sellBarrelBlockBroken/);
 });
