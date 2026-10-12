@@ -276,7 +276,7 @@ function totalBuyCost(startScore, quantity) {
   }
   return total;
 }
-function totalSaleProceeds(startScore, quantity) {
+function totalSaleProceeds(startScore, quantity, startingTaxRemainder) {
   let gross = 0;
   for (let i = 1; i <= quantity; i++) {
     gross += unitPriceCents(startScore - i * CONFIG.scoreChangePerItem);
@@ -284,7 +284,8 @@ function totalSaleProceeds(startScore, quantity) {
   }
   // Carry tenths of a cent forward so splitting the same score path into smaller
   // transactions cannot erase the tax that would have been charged on a bulk sale.
-  const remainderBefore = getTaxRemainder();
+  const remainderBefore = Number.isSafeInteger(startingTaxRemainder) && startingTaxRemainder >= 0 && startingTaxRemainder < TAX_REMAINDER_DENOMINATOR
+    ? startingTaxRemainder : getTaxRemainder();
   const combinedRemainder = (gross % TAX_REMAINDER_DENOMINATOR) + remainderBefore;
   const tax = Math.floor(gross / TAX_REMAINDER_DENOMINATOR) +
     Math.floor(combinedRemainder / TAX_REMAINDER_DENOMINATOR);
