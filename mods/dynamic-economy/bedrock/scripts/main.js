@@ -976,7 +976,7 @@ function requestMenu(player, menuType) {
     try { if (menuType === "operator") showOperatorMenu(player); else showMainMenu(player); }
     catch (error) {
       console.warn("[Dynamic Economy] Market menu error: " + error);
-      tell(player, "The market menu couldn't open. Try using the stick again.");
+      tell(player, "The requested economy menu could not open. Try using the selected tool again.");
     }
   });
 }
