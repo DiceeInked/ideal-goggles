@@ -9,7 +9,7 @@ Buy items sort from highest price to lowest, then alphabetically for ties. Sell 
 ### Sell Barrel
 Craft it using the normal barrel layout with a stick in the center slot: 6 planks at the corners and left/right middle, wooden slabs at top-middle and bottom-middle, and a stick in the exact center. Place it and put items inside. Closing it sells all item stacks the Script API can resolve, including renamed, enchanted, damaged, and custom-property stacks, at the current market price with 10% sales tax. If the API cannot resolve a custom item type, that stack remains inside with a warning.
 
-The Sell Barrel requires both packs. Its block definition uses Bedrock format 1.26.30 and the block-entity container component. The **Upcoming Creator Features** experiment must be enabled in the world settings for this custom block inventory. This is an experimental Bedrock feature, not an optional optimization. The combined `.mcaddon` bundles the behavior and resource packs:
+The Sell Barrel requires both packs. Its block definition uses the current Bedrock block format 1.26.40 and the block-entity container component. The **Upcoming Creator Features** experiment must be enabled in the world settings for this custom block inventory. This is an experimental Bedrock feature, not an optional optimization. The combined `.mcaddon` bundles the behavior and resource packs:
 https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.9.mcaddon
 
 Behavior pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.9.mcpack
