@@ -14,7 +14,8 @@
       },
       "minecraft:display_name": {
         "value": "item.diceyinked:sell_barrel.name"
-      }
+      },
+      "minecraft:icon": "sell_barrel"
     }
   }
 }
