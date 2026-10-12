@@ -411,6 +411,7 @@ function showSellMenu(player,query,page,colorId,backTo){
 function showQuantityForm(player,mode,typeId,maximum,returnTo){
  const available=mode==="sell"?maximum:Math.min(CONFIG.maximumTradeQuantity,maximum);
  if(available<1){tell(player,"You don't have that item available to sell.");returnToMenu(player,returnTo);return;}
+ // Only the slider is capped at 64; Sell All uses the full available count.
  const sliderMaximum=Math.min(CONFIG.maximumTradeQuantity,available),score=getScore(getMarket(),typeId);
  if(mode==="sell"){
   let priceNote;try{priceNote="First item's estimated payout after tax: "+money(totalSaleProceeds(score,1).net)+".";}catch(error){tell(player,error instanceof Error?error.message:"This item can't be traded right now.");return;}
