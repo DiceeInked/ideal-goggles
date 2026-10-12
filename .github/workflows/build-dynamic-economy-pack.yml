@@ -119,13 +119,17 @@ jobs:
               assert required in script, f"Missing expected menu/market function: {required}"
           for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)", "PlayerPermissionLevel", "HISTORY_TRANSACTION_PREFIX", "HISTORY_SERIES_PREFIX", "function persistTradeHistory(", "function showOperatorMenu(", "function showRecentTradeRecords(", "world.afterEvents.playerCraftRecipe.subscribe(nameCraftedSellBarrel)", "function readBarrelOwner(", "function writeBarrelOwner(", "function handleSellBarrelTick(", "sell(owner, typeId, chunkQuantity, container, true, true)", "onTick: handleSellBarrelTick", "onBreak: sellBarrelBlockBroken"]:
               assert required in script, f"Missing hardening check: {required}"
+          assert "const workspacePageSize = 9;" in script, "Marketplace grid should display nine tiles per page"
+          assert "form.multiButtonRow(" in script, "Marketplace should use horizontal tab and tile rows when supported"
+          assert "offset += 3" in script, "Marketplace item grid should use three columns"
+          assert 'typeof form.multiButtonRow === "function"' in script, "Marketplace layout must retain a runtime compatibility check"
           assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
           assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
           assert "isSurvivalObtainableItem(id)" in script, "Creative-only items must be filtered out of the buy catalog"
           assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
           assert "const typeId = itemType(rawItemId);" in script, "Sell Barrel sales must use the shared item-type eligibility check"
           assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
-          print("Validated Bedrock 1.26.52 manifest compatibility, stable one-screen market selector, owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
+          print("Validated Bedrock 1.26.52 manifest compatibility, horizontal market tabs and 3-column item grid when supported (with a legacy fallback), owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
           print("All pack manifests and JSON files parsed.")
           PY
           node --test mods/dynamic-economy/bedrock/tests/market-math.test.mjs
@@ -139,23 +143,23 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.20.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.21.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           # Build the distributable .mcaddon from two independently importable .mcpack archives.
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE"
-          cp "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.20.mcpack" "$STAGE/"
+          cp "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.21.mcpack" "$STAGE/"
           cp "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack" "$STAGE/"
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.20.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
-          (cd "$STAGE" && zip -q -X "$GITHUB_WORKSPACE/$MCADDON_REL" "DynamicEconomy_Bedrock_0.3.20.mcpack" "SellBarrel_Resources_1.0.3.mcpack")
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.21.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          (cd "$STAGE" && zip -q -X "$GITHUB_WORKSPACE/$MCADDON_REL" "DynamicEconomy_Bedrock_0.3.21.mcpack" "SellBarrel_Resources_1.0.3.mcpack")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
           python3 - <<'PY'
           import io, json, zipfile
           from pathlib import Path
-          addon_path = Path("mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.20.mcaddon")
+          addon_path = Path("mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.21.mcaddon")
           with zipfile.ZipFile(addon_path) as addon:
               names = set(addon.namelist())
-              expected = {"DynamicEconomy_Bedrock_0.3.20.mcpack", "SellBarrel_Resources_1.0.3.mcpack"}
+              expected = {"DynamicEconomy_Bedrock_0.3.21.mcpack", "SellBarrel_Resources_1.0.3.mcpack"}
               assert names == expected, f"Unexpected .mcaddon contents: {sorted(names)}"
               packs = {}
               for name in expected:
@@ -164,9 +168,9 @@ jobs:
                       packs[name] = json.loads(pack.read("manifest.json"))
                       if name.startswith("DynamicEconomy_"):
                           assert "scripts/main.js" in pack.namelist(), "Behavior pack is missing scripts/main.js"
-              bp = packs["DynamicEconomy_Bedrock_0.3.20.mcpack"]
+              bp = packs["DynamicEconomy_Bedrock_0.3.21.mcpack"]
               rp = packs["SellBarrel_Resources_1.0.3.mcpack"]
-              assert bp["header"]["version"] == [0, 3, 20], "Behavior pack version mismatch"
+              assert bp["header"]["version"] == [0, 3, 21], "Behavior pack version mismatch"
               assert rp["header"]["version"] == [1, 0, 3], "Resource pack version mismatch"
               assert any(d.get("uuid") == rp["header"]["uuid"] and d.get("version") == rp["header"]["version"] for d in bp.get("dependencies", [])), "Behavior pack dependency doesn't match the bundled resource pack"
           print("Verified .mcaddon contains valid behavior/resource .mcpack archives with matching manifest dependencies.")
@@ -182,5 +186,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.20 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.21 and Sell Barrel packs"
           git push
