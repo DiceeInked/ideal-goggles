@@ -1,0 +1,60 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:block": {
+    "description": {
+      "identifier": "diceyinked:sell_barrel",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "minecraft:geometry.full_block"
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "sell_barrel_side",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "sell_barrel_top",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "sell_barrel_bottom",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:collision_box": true,
+      "minecraft:selection_box": true,
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.5,
+        "item_specific_speeds": [
+          {
+            "item": {
+              "tags": "q.any_tag('minecraft:is_axe')"
+            },
+            "destroy_speed": 0.5
+          }
+        ]
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 2.5
+      },
+      "minecraft:block_entity": {
+        "container": {
+          "slot_count": 27
+        }
+      },
+      "minecraft:loot": "loot_tables/blocks/sell_barrel.json",
+      "minecraft:tick": {
+        "interval_range": [
+          20,
+          20
+        ],
+        "looping": true
+      },
+      "diceyinked:sell_barrel_runtime": {}
+    }
+  }
+}

@@ -1,0 +1,163 @@
+name: Build Bedrock Add-on Packs
+on:
+  push:
+    branches: [feature/bedrock-dynamic-economy]
+    paths:
+      - "mods/dynamic-economy/bedrock/**"
+      - "mods/dynamic-economy/resource-pack/**"
+      - "mods/recovery-compass/bedrock/**"
+      - ".github/workflows/build-dynamic-economy-pack.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate sources and package .mcpack / .mcaddon
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, struct
+          from pathlib import Path
+          source = Path("mods/dynamic-economy/resource-pack/texture_sources")
+          target = Path("mods/dynamic-economy/resource-pack/textures/blocks")
+          target.mkdir(parents=True, exist_ok=True)
+          for source_name, output_name in (("barrel_side.png", "sell_barrel_side.png"), ("barrel_top.png", "sell_barrel_top.png"), ("barrel_bottom.png", "sell_barrel_bottom.png")):
+              encoded = source / (source_name + ".b64")
+              raw = base64.b64decode(encoded.read_text().strip(), validate=True)
+              assert raw.startswith(b"\x89PNG\r\n\x1a\n"), f"Invalid PNG signature: {encoded}"
+              width, height = struct.unpack(">II", raw[16:24])
+              assert (width, height) == (16, 16), f"Unexpected Sell Barrel texture size for {source_name}: {(width, height)}"
+              (target / output_name).write_bytes(raw)
+          print("Decoded and verified all three inverted vanilla barrel textures (16x16 PNG).")
+          PY
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          for folder in (Path("mods/dynamic-economy/bedrock"), Path("mods/dynamic-economy/resource-pack"), Path("mods/recovery-compass/bedrock")):
+              manifest_path = folder / "manifest.json"
+              manifest = json.loads(manifest_path.read_text())
+              assert manifest.get("format_version") == 2, f"Bad manifest format: {manifest_path}"
+              assert manifest.get("header", {}).get("uuid"), f"Missing header UUID: {manifest_path}"
+              assert manifest.get("modules"), f"Missing module: {manifest_path}"
+              for p in folder.rglob("*.json"):
+                  if "releases" not in p.parts: json.loads(p.read_text())
+              if any(m.get("type") == "script" for m in manifest["modules"]):
+                  assert (folder / "scripts" / "main.js").is_file(), f"Missing main.js: {folder}"
+          bp = Path("mods/dynamic-economy/bedrock")
+          rp = Path("mods/dynamic-economy/resource-pack")
+          bp_manifest = json.loads((bp / "manifest.json").read_text())
+          rp_manifest = json.loads((rp / "manifest.json").read_text())
+          deps = bp_manifest.get("dependencies", [])
+          required_modules = {"@minecraft/server": "2.10.0", "@minecraft/server-ui": "2.1.0"}
+          actual_modules = {d.get("module_name"): d.get("version") for d in deps if "module_name" in d}
+          assert actual_modules == required_modules, f"Unexpected Script API dependencies: {actual_modules}"
+          assert bp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Behavior pack must target Bedrock 26.50+"
+          assert rp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Resource pack must target Bedrock 26.50+"
+          assert any(d.get("uuid") == rp_manifest["header"]["uuid"] and d.get("version") == rp_manifest["header"]["version"] for d in deps), "Behavior pack must depend on the Sell Barrel resource pack"
+          block = json.loads((bp / "blocks/sell_barrel.json").read_text())
+          assert block.get("format_version") == "1.26.40", "Sell Barrel block must use the current stable block format"
+          definition = block.get("minecraft:block", {})
+          assert definition.get("description", {}).get("identifier") == "diceyinked:sell_barrel", "Unexpected Sell Barrel identifier"
+          assert definition.get("description", {}).get("menu_category", {}).get("category") == "items", "Sell Barrel must appear in Creative inventory"
+          components = definition.get("components", {})
+          material_textures = components.get("minecraft:material_instances", {})
+          assert material_textures.get("*", {}).get("texture") == "sell_barrel_side", "Sell Barrel must use its own side texture alias"
+          assert material_textures.get("up", {}).get("texture") == "sell_barrel_top", "Sell Barrel must use its own top texture alias"
+          assert material_textures.get("down", {}).get("texture") == "sell_barrel_bottom", "Sell Barrel must use its own bottom texture alias"
+          terrain = json.loads((rp / "textures/terrain_texture.json").read_text()).get("texture_data", {})
+          for alias in ("sell_barrel_side", "sell_barrel_top", "sell_barrel_bottom"):
+              assert alias in terrain, f"Missing dedicated Sell Barrel terrain texture alias: {alias}"
+          assert not any(alias in terrain for alias in ("barrel_side", "barrel_top", "barrel_bottom")), "Resource pack must not override vanilla barrel texture aliases"
+          mining = components.get("minecraft:destructible_by_mining", {})
+          assert mining.get("seconds_to_destroy") == 2.5, "Sell Barrel base mining hardness should match a wooden barrel"
+          axe_speeds = mining.get("item_specific_speeds", [])
+          assert any(speed.get("item", {}).get("tags") == "q.any_tag('minecraft:is_axe')" and speed.get("destroy_speed") == 0.5 for speed in axe_speeds), "Sell Barrel must mine faster with axes"
+          assert components.get("minecraft:destructible_by_explosion", {}).get("explosion_resistance") == 2.5, "Sell Barrel explosion resistance should match wood"
+          assert components.get("minecraft:tick") == {"interval_range": [20, 20], "looping": True}, "Sell Barrel must tick regularly to process hopper input"
+          assert components.get("diceyinked:sell_barrel_runtime") == {}, "Sell Barrel must register its runtime ownership/tick component"
+          loot_path = components.get("minecraft:loot")
+          assert loot_path and (bp / loot_path).is_file(), f"Missing Sell Barrel loot table: {loot_path}"
+          assert json.loads((bp / loot_path).read_text()).get("pools") == [], "Sell Barrel's owner-tagged item drop is handled by its script component"
+          container = components.get("minecraft:block_entity", {}).get("container", {})
+          assert 1 <= container.get("slot_count", 0) <= 54, "Sell Barrel container slot count must be between 1 and 54"
+          recipe = json.loads((bp / "recipes/sell_barrel.json").read_text())["minecraft:recipe_shaped"]
+          assert recipe.get("description", {}).get("identifier") == "diceyinked:sell_barrel_recipe", "Recipe identifier must be unique and separate from the block ID"
+          assert recipe.get("result", {}).get("item") == "diceyinked:sell_barrel", "Recipe output mismatch"
+          assert recipe.get("pattern") == ["PSP", "PAP", "PSP"], "Unexpected Sell Barrel crafting pattern"
+          assert recipe.get("key", {}).get("A", {}).get("item") == "minecraft:stick", "Sell Barrel recipe must have a center stick"
+          assert recipe.get("unlock") == [{"context": "AlwaysUnlocked"}], "Sell Barrel recipe must be explicitly unlocked"
+          item_file = json.loads((bp / "items/sell_barrel.json").read_text())
+          assert item_file.get("format_version") == "1.26.40", "Sell Barrel item must target Bedrock 1.26.40+ content format"
+          item = item_file["minecraft:item"]
+          assert item.get("description", {}).get("identifier") == definition["description"]["identifier"], "Sell Barrel item identifier must match the block"
+          assert item.get("description", {}).get("menu_category", {}).get("category") == "items", "Sell Barrel item must be assigned to the Items catalog category"
+          assert item.get("components", {}).get("minecraft:display_name", {}).get("value") == "item.diceyinked:sell_barrel.name", "Sell Barrel item must use its localized display name"
+          assert item.get("components", {}).get("minecraft:icon") == "sell_barrel", "Sell Barrel item must explicitly use its dedicated icon"
+          assert item.get("components", {}).get("minecraft:max_stack_size") == 1, "Owner-tagged Sell Barrels must be non-stackable so their owner metadata stays per item"
+          assert "item.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel item display-name localization"
+          catalog_file = json.loads((bp / "item_catalog/crafting_item_catalog.json").read_text())
+          assert catalog_file.get("format_version") == "1.26.50", "Crafting item catalog must use the current Bedrock 26.52-compatible format"
+          catalog = catalog_file["minecraft:crafting_items_catalog"]
+          assert any(category.get("category_name") == "items" and any("diceyinked:sell_barrel" in group.get("items", []) for group in category.get("groups", [])) for category in catalog.get("categories", [])), "Sell Barrel must be listed in the Items category of the crafting item catalog"
+          placer = item.get("components", {}).get("minecraft:block_placer", {})
+          assert placer.get("block") == definition["description"]["identifier"] and placer.get("replace_block_item") is True, "Sell Barrel item must explicitly link to its block"
+          assert (rp / "textures/item_texture.json").is_file() and (rp / "textures/terrain_texture.json").is_file(), "Missing Sell Barrel texture atlas definitions"
+          for name in ("sell_barrel_side.png", "sell_barrel_top.png", "sell_barrel_bottom.png"):
+              texture = rp / "textures/blocks" / name
+              data = texture.read_bytes()
+              assert data.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", data[16:24]) == (16, 16), f"Invalid or missing inverted barrel texture: {texture}"
+          assert "tile.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel localization"
+          block_sounds = json.loads((rp / "blocks.json").read_text())
+          assert block_sounds.get("diceyinked:sell_barrel", {}).get("sound") == "wood", "Sell Barrel should use vanilla wood block sounds"
+          script = (bp / "scripts/main.js").read_text()
+          for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
+              assert required in script, f"Missing expected menu/market function: {required}"
+          for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)", "PlayerPermissionLevel", "HISTORY_TRANSACTION_PREFIX", "HISTORY_SERIES_PREFIX", "function persistTradeHistory(", "function showOperatorMenu(", "function showRecentTradeRecords(", "world.afterEvents.playerCraftRecipe.subscribe(nameCraftedSellBarrel)", "function readBarrelOwner(", "function writeBarrelOwner(", "function handleSellBarrelTick(", "sell(owner, typeId, chunkQuantity, container, true, true)", "onTick: handleSellBarrelTick", "onBreak: sellBarrelBlockBroken"]:
+              assert required in script, f"Missing hardening check: {required}"
+          assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
+          assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
+          assert "isSurvivalObtainableItem(id)" in script, "Creative-only items must be filtered out of the buy catalog"
+          assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
+          assert "const typeId = itemType(rawItemId);" in script, "Sell Barrel sales must use the shared item-type eligibility check"
+          assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
+          print("Validated API dependencies, owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
+          print("All pack manifests and JSON files parsed.")
+          PY
+          node --test mods/dynamic-economy/bedrock/tests/market-math.test.mjs
+          package_pack() {
+            SRC="$1"; PREFIX="$2"; OUT_REL="$3"
+            mkdir -p "$(dirname "$OUT_REL")"
+            OUT="$GITHUB_WORKSPACE/$OUT_REL"
+            if [ -f "$SRC/scripts/main.js" ]; then cp "$SRC/scripts/main.js" "$RUNNER_TEMP/$PREFIX.mjs"; node --check "$RUNNER_TEMP/$PREFIX.mjs"; fi
+            rm -f "$OUT"
+            (cd "$SRC"; zip -q -X "$OUT" manifest.json; if [ -f blocks.json ]; then zip -q -X "$OUT" blocks.json; fi; for ENTRY in scripts blocks items item_catalog recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
+            unzip -t "$OUT"
+            echo "Built $OUT_REL"
+          }
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.17.mcpack"
+          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
+          package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
+          STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
+          for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
+          for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.17.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
+          unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
+      - name: Commit generated packs when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mods/dynamic-economy/bedrock/releases/*.mcpack
+          git add mods/dynamic-economy/bedrock/releases/*.mcaddon
+          git add mods/dynamic-economy/resource-pack/releases/*.mcpack
+          git add mods/recovery-compass/bedrock/releases/*.mcpack
+          if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
+          git commit -m "Build Dynamic Economy v0.3.17 and Sell Barrel packs"
+          git push

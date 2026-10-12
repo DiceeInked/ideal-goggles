@@ -1,0 +1,9 @@
+{
+  "resource_pack_name": "Sell Barrel Resources",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "sell_barrel": {
+      "textures": "textures/blocks/sell_barrel_side"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "format_version": "1.26.40",
+  "minecraft:item": {
+    "description": {
+      "identifier": "diceyinked:sell_barrel",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:block_placer": {
+        "block": "diceyinked:sell_barrel",
+        "replace_block_item": true
+      },
+      "minecraft:display_name": {
+        "value": "item.diceyinked:sell_barrel.name"
+      },
+      "minecraft:icon": "sell_barrel",
+      "minecraft:max_stack_size": 1
+    }
+  }
+}

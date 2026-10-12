@@ -1,0 +1,29 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Sell Barrel Resources v1.0.3",
+    "description": "Sell Barrel-only textures and display-name localization; vanilla barrel textures remain unchanged.",
+    "uuid": "b88ee4c9-ae4b-4d31-8bcf-a1d77aa5c137",
+    "version": [
+      1,
+      0,
+      3
+    ],
+    "min_engine_version": [
+      1,
+      26,
+      50
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "00e8e5cc-b54b-45fd-a6b6-dcf09db1c3a5",
+      "version": [
+        1,
+        0,
+        3
+      ]
+    }
+  ]
+}
