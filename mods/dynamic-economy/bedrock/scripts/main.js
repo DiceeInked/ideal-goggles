@@ -685,7 +685,7 @@ function showMainMenu(player) {
     })
     .divider()
     .header("QUICK SEARCH")
-    .textField("Item name or item ID", query, { placeholder: "Example: oak log" })
+    .textField("Item name or item ID", query, { description: "Type an item name or Minecraft item ID." })
     .button("Search items to buy", function () {
       const term = String(query.getData() || "").trim().toLowerCase();
       try { form.close(); } catch {}
