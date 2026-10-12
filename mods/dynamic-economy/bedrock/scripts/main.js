@@ -2,7 +2,7 @@ import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@min
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.16: trade history, operator tools, and named Sell Barrels.
+ * Dynamic Economy v0.3.17: owner-paid hopper-compatible Sell Barrels.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -37,6 +37,13 @@ const COLOR_ITEM_SUFFIXES = [
 ];
 
 const SELL_BARREL_ID = "diceyinked:sell_barrel";
+const SELL_BARREL_COMPONENT_ID = "diceyinked:sell_barrel_runtime";
+const SELL_BARREL_OWNER_PROPERTY_PREFIX = CONFIG.namespace + ":sell_barrel_owner:";
+const SELL_BARREL_ITEM_OWNER_ID_PROPERTY = CONFIG.namespace + ":sell_barrel_item_owner_id";
+const SELL_BARREL_ITEM_OWNER_NAME_PROPERTY = CONFIG.namespace + ":sell_barrel_item_owner_name";
+const pendingBarrelOwners = new Map();
+const openBarrelUsers = new Map();
+const processingBarrels = new Set();
 const OPERATOR_TOOL_ID = "minecraft:blaze_rod";
 const MARKET_TOOL_IDS = new Set([
   "minecraft:stick",
@@ -119,6 +126,87 @@ function taxRateUnits() {
 function taxPercentLabel() {
   return (CONFIG.salesTaxRate * 100).toLocaleString("en-US", { maximumFractionDigits: 2 }) + "%";
 }
+
+function barrelLocationId(dimension, location) {
+  return dimension.id + ":" + Math.floor(location.x) + "," + Math.floor(location.y) + "," + Math.floor(location.z);
+}
+function barrelOwnerPropertyId(dimension, location) {
+  return SELL_BARREL_OWNER_PROPERTY_PREFIX + barrelLocationId(dimension, location);
+}
+function readBarrelOwner(dimension, location) {
+  const raw = world.getDynamicProperty(barrelOwnerPropertyId(dimension, location));
+  if (typeof raw !== "string") return null;
+  try {
+    const record = JSON.parse(raw);
+    if (record && typeof record.id === "string" && record.id.length > 0 &&
+        typeof record.name === "string" && record.name.length > 0) return record;
+  } catch {}
+  return null;
+}
+function writeBarrelOwner(dimension, location, owner) {
+  if (!owner || typeof owner.id !== "string" || !owner.id ||
+      typeof owner.name !== "string" || !owner.name) {
+    throw new Error("Sell Barrel owner data is invalid.");
+  }
+  world.setDynamicProperty(barrelOwnerPropertyId(dimension, location),
+    JSON.stringify({ id: owner.id, name: owner.name }));
+}
+function clearBarrelOwner(dimension, location) {
+  world.setDynamicProperty(barrelOwnerPropertyId(dimension, location), undefined);
+}
+function readOwnerFromItemOrPlayer(player, itemStack) {
+  try {
+    const ownerId = itemStack && itemStack.getDynamicProperty(SELL_BARREL_ITEM_OWNER_ID_PROPERTY);
+    const ownerName = itemStack && itemStack.getDynamicProperty(SELL_BARREL_ITEM_OWNER_NAME_PROPERTY);
+    if (typeof ownerId === "string" && ownerId && typeof ownerName === "string" && ownerName) {
+      return { id: ownerId, name: ownerName };
+    }
+  } catch (error) {
+    console.warn("[Dynamic Economy] Could not read Sell Barrel item ownership: " + error);
+  }
+  return { id: player.id, name: player.name };
+}
+function heldMainhandItem(player) {
+  try {
+    const inventory = player.getComponent("minecraft:inventory");
+    return inventory && inventory.container
+      ? inventory.container.getItem(player.selectedSlotIndex)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+function setSellBarrelItemOwner(itemStack, owner) {
+  if (!owner) return;
+  itemStack.nameTag = owner.name + "'s Sell Barrel";
+  itemStack.setDynamicProperty(SELL_BARREL_ITEM_OWNER_ID_PROPERTY, owner.id);
+  itemStack.setDynamicProperty(SELL_BARREL_ITEM_OWNER_NAME_PROPERTY, owner.name);
+}
+function ownerAccount(owner) {
+  return { id: owner.id, name: owner.name, sendMessage: function () {} };
+}
+function sourcePlayer(source) {
+  const entity = source && source.entity;
+  return entity && entity.typeId === "minecraft:player" ? entity : null;
+}
+function addOpenBarrelUser(dimension, location, player) {
+  const key = barrelLocationId(dimension, location);
+  let players = openBarrelUsers.get(key);
+  if (!players) { players = new Set(); openBarrelUsers.set(key, players); }
+  players.add(player.id);
+}
+function removeOpenBarrelUser(dimension, location, player) {
+  const key = barrelLocationId(dimension, location);
+  const players = openBarrelUsers.get(key);
+  if (!players) return;
+  if (player) players.delete(player.id);
+  if (!players.size) openBarrelUsers.delete(key);
+}
+function isBarrelOpenToPlayer(dimension, location) {
+  const players = openBarrelUsers.get(barrelLocationId(dimension, location));
+  return !!players && players.size > 0;
+}
+
 function getBalance(player) {
   const key = BALANCE_PREFIX + player.id;
   const value = world.getDynamicProperty(key);
@@ -779,49 +867,147 @@ function showMarketItemDetail(player,typeId,page){
  }).catch(function(){tell(player,"The item details could not open. Try again.");showMarketPrices(player,page);});
 }
 
-function processClosedSellBarrel(dimension, location, player) {
+
+function processClosedSellBarrel(dimension, location) {
+  const key = barrelLocationId(dimension, location);
+  if (processingBarrels.has(key) || isBarrelOpenToPlayer(dimension, location)) return;
+  const lockOwner = readBarrelOwner(dimension, location);
+  if (!lockOwner) return;
+  processingBarrels.add(key);
   try {
     const block = dimension.getBlock(location);
-    if (!block || block.typeId !== SELL_BARREL_ID) return;
+    if (!block || block.typeId !== SELL_BARREL_ID) {
+      clearBarrelOwner(dimension, location);
+      return;
+    }
     const inventoryComponent = block.getComponent("minecraft:inventory");
     const container = inventoryComponent && inventoryComponent.container;
     if (!container) throw new Error("Could not access the Sell Barrel inventory.");
-
     const quantities = new Map();
     for (let slot = 0; slot < container.size; slot++) {
       const stack = container.getItem(slot);
       if (!stack || stack.typeId === "minecraft:air") continue;
       quantities.set(stack.typeId, (quantities.get(stack.typeId) || 0) + stack.amount);
     }
-
+    if (!quantities.size) return;
+    const owner = ownerAccount(lockOwner);
     let unitsSold = 0;
     let payoutCents = 0;
     let failedTypes = 0;
     for (const [typeId, quantity] of quantities.entries()) {
       try {
-        // Include renamed, enchanted, damaged, and custom-property stacks. If the Script API
-        // cannot resolve an item type, sell() throws and the stack remains inside the barrel.
-        const result = sell(player, typeId, quantity, container, true, true);
+        const result = sell(owner, typeId, quantity, container, true, true);
         unitsSold += result.quantity;
         payoutCents += result.net;
       } catch (error) {
         failedTypes++;
-        console.warn("[Dynamic Economy] Sell Barrel left " + typeId + " unsold: " + error);
+        console.warn("[Dynamic Economy] Sell Barrel owned by " + lockOwner.name +
+          " left " + typeId + " unsold: " + error);
       }
     }
     if (unitsSold > 0) {
-      tell(player, "Sell Barrel sold " + unitsSold + " item(s) for " + money(payoutCents) +
-        " after tax. Balance: " + money(getBalance(player)) + ".");
-    } else {
-      tell(player, "Sell Barrel closed. It found no item types the market could sell.");
+      const onlineOwner = world.getAllPlayers().find(function (player) { return player.id === lockOwner.id; });
+      if (onlineOwner) {
+        tell(onlineOwner, "Your Sell Barrel sold " + unitsSold + " item(s) for " + money(payoutCents) +
+          " after tax. Balance: " + money(getBalance(onlineOwner)) + ".");
+      }
     }
     if (failedTypes > 0) {
-      tell(player, failedTypes + " item type(s) stayed in the Sell Barrel because this game could not resolve them for trading.");
+      console.warn("[Dynamic Economy] " + failedTypes + " item type(s) stayed in the Sell Barrel owned by " +
+        lockOwner.name + " because this game could not resolve them for trading.");
     }
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    console.warn("[Dynamic Economy] Sell Barrel processing failed: " + detail);
-    tell(player, "The Sell Barrel could not finish selling its contents: " + detail);
+    console.warn("[Dynamic Economy] Sell Barrel processing failed: " + error);
+  } finally {
+    processingBarrels.delete(key);
+  }
+}
+function claimUnownedSellBarrel(dimension, location, player) {
+  if (!player || readBarrelOwner(dimension, location)) return;
+  try {
+    writeBarrelOwner(dimension, location, { id: player.id, name: player.name });
+    tell(player, "This older Sell Barrel had no saved owner, so it is now assigned to you.");
+  } catch (error) {
+    console.warn("[Dynamic Economy] Could not claim older Sell Barrel: " + error);
+  }
+}
+function assignOwnerBeforePlacement(event) {
+  const player = event && event.player;
+  if (!player || !event.block || !event.dimension) return;
+  const location = event.block.location;
+  const key = barrelLocationId(event.dimension, location);
+  pendingBarrelOwners.set(key, readOwnerFromItemOrPlayer(player, heldMainhandItem(player)));
+  system.runTimeout(function () { pendingBarrelOwners.delete(key); }, 2);
+}
+function saveOwnerAfterPlacement(event) {
+  if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID || !event.dimension) return;
+  const location = event.block.location;
+  const key = barrelLocationId(event.dimension, location);
+  const owner = pendingBarrelOwners.get(key);
+  pendingBarrelOwners.delete(key);
+  if (owner) {
+    try { writeBarrelOwner(event.dimension, location, owner); }
+    catch (error) { console.warn("[Dynamic Economy] Could not save Sell Barrel owner: " + error); }
+  }
+}
+function placeOwnerFallback(event) {
+  try {
+    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID || !event.dimension) return;
+    const location = event.block.location;
+    if (!readBarrelOwner(event.dimension, location)) {
+      writeBarrelOwner(event.dimension, location, { id: event.player.id, name: event.player.name });
+    }
+  } catch (error) {
+    console.warn("[Dynamic Economy] Sell Barrel placement owner fallback failed: " + error);
+  }
+}
+function sellBarrelBlockBroken(event) {
+  try {
+    if (!event || !event.block || !event.dimension) return;
+    const location = event.block.location;
+    const dimension = event.dimension;
+    const owner = readBarrelOwner(dimension, location);
+    const item = new ItemStack(SELL_BARREL_ID, 1);
+    if (owner) setSellBarrelItemOwner(item, owner);
+    dimension.spawnItem(item, { x: location.x + 0.5, y: location.y + 0.5, z: location.z + 0.5 });
+    clearBarrelOwner(dimension, location);
+    openBarrelUsers.delete(barrelLocationId(dimension, location));
+  } catch (error) {
+    console.warn("[Dynamic Economy] Could not preserve Sell Barrel ownership when broken: " + error);
+  }
+}
+function handleSellBarrelOpened(event) {
+  try {
+    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID) return;
+    const player = sourcePlayer(event.openSource);
+    if (!player) return;
+    const location = event.block.location;
+    addOpenBarrelUser(event.dimension, location, player);
+    claimUnownedSellBarrel(event.dimension, location, player);
+  } catch (error) {
+    console.warn("[Dynamic Economy] Sell Barrel open event failed: " + error);
+  }
+}
+function handleSellBarrelClosed(event) {
+  try {
+    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID) return;
+    const player = sourcePlayer(event.closeSource);
+    const location = event.block.location;
+    if (player) {
+      removeOpenBarrelUser(event.dimension, location, player);
+      claimUnownedSellBarrel(event.dimension, location, player);
+    }
+    system.runTimeout(function () { processClosedSellBarrel(event.dimension, location); }, 1);
+  } catch (error) {
+    console.warn("[Dynamic Economy] Sell Barrel close event failed: " + error);
+  }
+}
+function handleSellBarrelTick(event) {
+  try {
+    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID || !event.dimension) return;
+    processClosedSellBarrel(event.dimension, event.block.location);
+  } catch (error) {
+    console.warn("[Dynamic Economy] Sell Barrel hopper tick failed: " + error);
   }
 }
 
@@ -956,13 +1142,13 @@ function nameCraftedSellBarrel(event) {
     const player = event && event.player;
     const crafted = event && event.itemStack;
     if (!player || !crafted || crafted.typeId !== SELL_BARREL_ID) return;
-    const personalizedName = player.name + "'s Sell Barrel";
-    crafted.nameTag = personalizedName;
-    tell(player, "Crafted " + personalizedName + ".");
+    const owner = { id: player.id, name: player.name };
+    setSellBarrelItemOwner(crafted, owner);
+    tell(player, "Crafted " + owner.name + "'s Sell Barrel. Its sales will always pay you, even if someone else uses it.");
   } catch (error) {
     console.warn("[Dynamic Economy] Could not personalize crafted Sell Barrel: " + error);
     try {
-      if (event && event.player) tell(event.player, "Your Sell Barrel was crafted, but its personalized name could not be applied.");
+      if (event && event.player) tell(event.player, "Your Sell Barrel was crafted, but its owner tag could not be applied. Verify before using automated sales.");
     } catch {}
   }
 }
@@ -1012,15 +1198,17 @@ world.afterEvents.playerSpawn.subscribe(function (event) {
     tell(player, "Starting balance: " + money(getBalance(player)) + ". All item prices start at $1.00.");
   }, 20);
 });
-world.afterEvents.blockContainerClosed.subscribe(function(event){
- try{
-  if(!event.block||event.block.typeId!==SELL_BARREL_ID)return;
-  const source=event.closeSource&&event.closeSource.entity;if(!source||source.typeId!=="minecraft:player")return;
-  const player=world.getAllPlayers().find(function(p){return p.id===source.id;});if(!player)return;
-  const loc={x:event.block.location.x,y:event.block.location.y,z:event.block.location.z},dimension=event.dimension;
-  system.runTimeout(function(){processClosedSellBarrel(dimension,loc,player);},1);
- }catch(e){console.warn("[Dynamic Economy] Sell Barrel close event failed: "+e);}
+system.beforeEvents.startup.subscribe(function (startupEvent) {
+  startupEvent.blockComponentRegistry.registerCustomComponent(SELL_BARREL_COMPONENT_ID, {
+    beforeOnPlayerPlace: assignOwnerBeforePlacement,
+    onPlace: saveOwnerAfterPlacement,
+    onTick: handleSellBarrelTick,
+    onBreak: sellBarrelBlockBroken
+  });
 });
+world.afterEvents.playerPlaceBlock.subscribe(placeOwnerFallback);
+world.afterEvents.blockContainerOpened.subscribe(handleSellBarrelOpened);
+world.afterEvents.blockContainerClosed.subscribe(handleSellBarrelClosed);
 
 world.afterEvents.worldLoad.subscribe(function () {
   try {
