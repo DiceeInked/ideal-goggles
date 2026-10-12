@@ -1,7 +1,7 @@
 name: Build Bedrock Add-on Packs
 on:
   push:
-    branches: [feature/bedrock-dynamic-economy]
+    branches: [feature/bedrock-dynamic-economy, feature/dynamic-economy-modern-market-ui]
     paths:
       - "mods/dynamic-economy/bedrock/**"
       - "mods/dynamic-economy/resource-pack/**"
@@ -139,15 +139,38 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.17.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
-          STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
-          for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
-          for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.17.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
-          (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
+          # Build the distributable .mcaddon from two independently importable .mcpack archives.
+          STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE"
+          cp "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.18.mcpack" "$STAGE/"
+          cp "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack" "$STAGE/"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          (cd "$STAGE" && zip -q -X "$GITHUB_WORKSPACE/$MCADDON_REL" "DynamicEconomy_Bedrock_0.3.18.mcpack" "SellBarrel_Resources_1.0.3.mcpack")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
+          python3 - <<'PY'
+          import io, json, zipfile
+          from pathlib import Path
+          addon_path = Path("mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.18.mcaddon")
+          with zipfile.ZipFile(addon_path) as addon:
+              names = set(addon.namelist())
+              expected = {"DynamicEconomy_Bedrock_0.3.18.mcpack", "SellBarrel_Resources_1.0.3.mcpack"}
+              assert names == expected, f"Unexpected .mcaddon contents: {sorted(names)}"
+              packs = {}
+              for name in expected:
+                  with zipfile.ZipFile(io.BytesIO(addon.read(name))) as pack:
+                      assert "manifest.json" in pack.namelist(), f"{name} has no root manifest"
+                      packs[name] = json.loads(pack.read("manifest.json"))
+                      if name.startswith("DynamicEconomy_"):
+                          assert "scripts/main.js" in pack.namelist(), "Behavior pack is missing scripts/main.js"
+              bp = packs["DynamicEconomy_Bedrock_0.3.18.mcpack"]
+              rp = packs["SellBarrel_Resources_1.0.3.mcpack"]
+              assert bp["header"]["version"] == [0, 3, 18], "Behavior pack version mismatch"
+              assert rp["header"]["version"] == [1, 0, 3], "Resource pack version mismatch"
+              assert any(d.get("uuid") == rp["header"]["uuid"] and d.get("version") == rp["header"]["version"] for d in bp.get("dependencies", [])), "Behavior pack dependency doesn't match the bundled resource pack"
+          print("Verified .mcaddon contains valid behavior/resource .mcpack archives with matching manifest dependencies.")
+          PY
       - name: Commit generated packs when changed
         shell: bash
         run: |
@@ -159,5 +182,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.17 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.18 and Sell Barrel packs"
           git push
