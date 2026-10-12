@@ -13,15 +13,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "barrel_side",
+          "texture": "sell_barrel_side",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "barrel_top",
+          "texture": "sell_barrel_top",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "barrel_bottom",
+          "texture": "sell_barrel_bottom",
           "render_method": "opaque"
         }
       },
