@@ -1,11 +1,6 @@
 {
   "format_version": "1.19.30",
   "diceyinked:sell_barrel": {
-    "sound": "wood",
-    "textures": {
-      "up": "barrel_top",
-      "down": "barrel_bottom",
-      "side": "barrel_side"
-    }
+    "sound": "wood"
   }
 }
