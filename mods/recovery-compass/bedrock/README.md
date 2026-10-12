@@ -1,20 +1,28 @@
-# Recovery Compass for Minecraft Bedrock
+# Recovery Compass
 
-## Version 1.0.0
+**Minecraft Bedrock Edition · Version 1.0.0**
 
-This separate behavior pack gives a player one recovery compass each time they respawn after dying. It does not give one on the player's first join.
+A behavior pack that gives a player one recovery compass each time they respawn after dying. It does not grant one on the player's first join.
 
-The compass is enchanted with **Curse of Vanishing** when the installed Bedrock Script API allows that enchantment on a recovery compass. If that enchantment cannot be applied on a particular game build, the script still grants a regular recovery compass and displays a warning instead of silently pretending the curse worked.
+## Download
 
-If the player's inventory is full, the compass is dropped at their feet. A successful automated build checks the manifest, JavaScript syntax, and generated `.mcpack`; the behavior still needs to be tested in-game on your Minecraft version.
+[**Recovery Compass V1.0.0.mcpack**](releases/Recovery%20Compass%20V1.0.0.mcpack)
 
-## Install on iPhone/iPad
+## Behavior
 
-Import the `.mcpack` using the direct link below. If the file opens in a preview, use Share and choose Minecraft.
+- Grants one recovery compass after each respawn following death.
+- Applies **Curse of Vanishing** when the installed Bedrock Script API supports it for recovery compasses.
+- If the enchantment is unavailable, grants a regular recovery compass and displays a warning.
+- If the inventory is full, drops the compass at the player's feet.
 
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack
+The pack's manifest and JavaScript can be checked automatically, but the in-game behavior still needs testing on the Minecraft version you use.
 
-## Source
+## Install on iPhone or iPad
 
-- Manifest: `manifest.json`
-- Script: `scripts/main.js`
+Open the download link above. If iOS shows a file preview, use **Share** and choose **Minecraft** to import the pack.
+
+## Source files
+
+- `manifest.json`: pack metadata and Script API dependency.
+- `scripts/main.js`: respawn and compass-granting behavior.
+- `releases/Recovery Compass V1.0.0.mcpack`: versioned import package.
