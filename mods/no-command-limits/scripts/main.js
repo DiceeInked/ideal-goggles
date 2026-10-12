@@ -55,7 +55,7 @@ system.beforeEvents.startup.subscribe((event) => {
     let skippedBatches = 0;
 
     source.sendMessage(
-      `[No Command Limits] Starting ${max.x - min.x + 1}×${max.y - min.y + 1}×${max.z - min.z + 1} fill in ${totalBatches} small batches. Unloaded chunks may be skipped.`
+      `[Fill Forever] Starting ${max.x - min.x + 1}×${max.y - min.y + 1}×${max.z - min.z + 1} fill in ${totalBatches} small batches. Unloaded chunks may be skipped.`
     );
 
     const processNextBatches = () => {
@@ -96,7 +96,7 @@ system.beforeEvents.startup.subscribe((event) => {
       }
 
       source.sendMessage(
-        `[No Command Limits] Finished. Batches attempted: ${totalBatches}; successful calls: ${filledBatches}; skipped/failed calls: ${skippedBatches}. Chunks that were not loaded cannot be force-loaded by this add-on.`
+        `[Fill Forever] Finished. Batches attempted: ${totalBatches}; successful calls: ${filledBatches}; skipped/failed calls: ${skippedBatches}. Chunks that were not loaded cannot be force-loaded by this add-on.`
       );
     };
 
