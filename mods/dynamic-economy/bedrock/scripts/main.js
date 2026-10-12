@@ -40,8 +40,8 @@ const SELL_BARREL_ID = "diceyinked:sell_barrel";
 const MARKET_KEY = CONFIG.namespace + ":market"; // Legacy JSON key, migrated on world load.
 const MARKET_SCORE_PREFIX = CONFIG.namespace + ":score:";
 const BALANCE_PREFIX = CONFIG.namespace + ":balance:";
-const TAX_REMAINDER_KEY = CONFIG.namespace + ":sales_tax_remainder_tenths";
-const TAX_REMAINDER_DENOMINATOR = 10; // One remainder unit is one tenth of a cent at 10% tax.
+const TAX_REMAINDER_KEY = CONFIG.namespace + ":sales_tax_remainder";
+const TAX_REMAINDER_DENOMINATOR = 10000; // Remainder units are 1/10,000 of a cent.
 const openCooldown = new Map();
 let cachedMarket;
 
@@ -66,6 +66,15 @@ function setTaxRemainder(value) {
     throw new Error("The sales-tax rounding remainder is invalid.");
   }
   world.setDynamicProperty(TAX_REMAINDER_KEY, value);
+}
+function taxRateUnits() {
+  if (!Number.isFinite(CONFIG.salesTaxRate) || CONFIG.salesTaxRate < 0 || CONFIG.salesTaxRate > 1) {
+    throw new Error("The sales-tax rate must be between 0% and 100%.");
+  }
+  return Math.round(CONFIG.salesTaxRate * TAX_REMAINDER_DENOMINATOR);
+}
+function taxPercentLabel() {
+  return (CONFIG.salesTaxRate * 100).toLocaleString("en-US", { maximumFractionDigits: 2 }) + "%";
 }
 function getBalance(player) {
   const key = BALANCE_PREFIX + player.id;
@@ -282,14 +291,15 @@ function totalSaleProceeds(startScore, quantity, startingTaxRemainder) {
     gross += unitPriceCents(startScore - i * CONFIG.scoreChangePerItem);
     if (!safeInteger(gross)) throw new Error("That sale is too large to price safely.");
   }
-  // Carry tenths of a cent forward so splitting the same score path into smaller
+  // Carry fractional cents forward so splitting the same score path into smaller
   // transactions cannot erase the tax that would have been charged on a bulk sale.
   const remainderBefore = Number.isSafeInteger(startingTaxRemainder) && startingTaxRemainder >= 0 && startingTaxRemainder < TAX_REMAINDER_DENOMINATOR
     ? startingTaxRemainder : getTaxRemainder();
-  const combinedRemainder = (gross % TAX_REMAINDER_DENOMINATOR) + remainderBefore;
-  const tax = Math.floor(gross / TAX_REMAINDER_DENOMINATOR) +
-    Math.floor(combinedRemainder / TAX_REMAINDER_DENOMINATOR);
-  const remainderAfter = combinedRemainder % TAX_REMAINDER_DENOMINATOR;
+  const rateUnits = taxRateUnits();
+  const fractionalTaxNumerator = (gross % TAX_REMAINDER_DENOMINATOR) * rateUnits + remainderBefore;
+  const wholeTaxCents = Math.floor(gross / TAX_REMAINDER_DENOMINATOR) * rateUnits;
+  const tax = wholeTaxCents + Math.floor(fractionalTaxNumerator / TAX_REMAINDER_DENOMINATOR);
+  const remainderAfter = fractionalTaxNumerator % TAX_REMAINDER_DENOMINATOR;
   return {
     gross: gross,
     tax: tax,
@@ -435,7 +445,7 @@ function showMainMenu(player) {
   const form = new ActionFormData()
     .title("Dynamic Economy")
     .body("Balance: " + money(getBalance(player)) +
-      "\n\nOne shared market for the world. Buying raises an item's price; selling lowers it. Sales have a 10% tax.")
+      "\n\nOne shared market for the world. Buying raises an item's price; selling lowers it. Sales have a " + taxPercentLabel() + " tax.")
     .button("Buy Items")
     .button("Sell Items")
     .button("Market Prices")
@@ -575,7 +585,7 @@ function showTradeConfirmation(player,mode,typeId,quantity,quotedScore,returnTo,
  const quotedTaxRemainder=mode==="sell"?getTaxRemainder():null;
  let body;
  try{if(mode==="buy"){const total=totalBuyCost(quotedScore,quantity);body="Buy "+quantity+" "+prettyName(typeId)+"?\n\nTotal: "+money(total)+"\nBalance: "+money(getBalance(player))+"\n\nThis purchase raises the global item's price.";}
- else{const q=totalSaleProceeds(quotedScore,quantity,quotedTaxRemainder);body="Sell "+quantity+" "+prettyName(typeId)+"?\n\nGross: "+money(q.gross)+"\nSales tax (10%): "+money(q.tax)+"\nYou receive: "+money(q.net)+"\n\nThis sale lowers the global item's price.";}}
+ else{const q=totalSaleProceeds(quotedScore,quantity,quotedTaxRemainder);body="Sell "+quantity+" "+prettyName(typeId)+"?\n\nGross: "+money(q.gross)+"\nSales tax ("+taxPercentLabel()+"): "+money(q.tax)+"\nYou receive: "+money(q.net)+"\n\nThis sale lowers the global item's price.";}}
  catch(e){tell(player,e instanceof Error?e.message:"Couldn't calculate that trade.");returnToMenu(player,returnTo);return;}
  const form=new MessageFormData().title(mode==="buy"?"Confirm Purchase":"Confirm Sale").body(body).button1(mode==="buy"?"Confirm Purchase":"Confirm Sale").button2("Back");
  form.show(player).then(function(r){
