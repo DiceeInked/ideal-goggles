@@ -1,14 +1,18 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.17: owner-paid, hopper-compatible Sell Barrels
+## Version 0.3.18: modern market navigation and price history
 
 A shared market for Minecraft Bedrock. Every item starts at $1.00. Buying raises its global price once per unit; selling lowers it once per unit. Prices do not automatically drift back toward their starting value. Sales have 50% tax, and each player has an individual balance starting at $100.00.
+
+This update repairs the market script's imports and adds a tab-like market home, a low-price oversaturated filter, recent trade-history pages, and per-item price-trend graphs built from saved trades. The graphs show recorded prices only, not invented/interpolated values.
 
 **Canonical design and Java-port specification:** [`mods/dynamic-economy/DESIGN_SPEC.md`](../DESIGN_SPEC.md). Update that file whenever the mod's rules or behavior change.
 
 ### Market access
 
-Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword to open the regular market menu. The existing menu supports buying, selling, item search, color browsing, quantity selection, confirmation, market-price inspection, and balance display. The cleaner UI with separate Buy, Sell, Economy, and Oversaturated sections is planned for a later redesign and is not included in v0.3.17.
+Hold and use a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword to open the market. The home screen includes Buy, Sell, Economy, Price / Trade History, and Oversaturated Items sections, plus quick item search. The market-price list keeps pagination and item details; item details include a price-history graph when saved trade data exists. The oversaturated filter identifies tracked items at or below $0.10 and does not itself alter prices or trading rules.
+
+The menu is built with the stable `@minecraft/server-ui` 2.1.0 API. Its navigation is tab-like, but the buttons are vertically stacked; true horizontal button rows and custom banner images require newer or experimental API features and are not enabled here.
 
 ### Sell Barrel ownership
 
