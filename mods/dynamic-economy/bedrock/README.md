@@ -18,7 +18,7 @@ A barrel from an older version with no saved owner will not sell its contents to
 
 ### Hopper support and auto-selling
 
-The Sell Barrel has a 27-slot inventory and a script tick every 20 game ticks. While no player has the container open, the script checks its contents and sells resolvable item stacks to the owner. That supports hoppers feeding items into the barrel without requiring the owner to be online. If a player opens the container, automated processing pauses until the container closes, then resumes. This lets players deposit items by hand without having items disappear while the menu is open.
+The Sell Barrel has a 27-slot inventory and a script tick every 20 game ticks. While no player has the container open, the script checks its contents and sells resolvable item stacks to the owner. If more than 64 items of one type are present, it processes that type in multiple transactions of at most 64 items each, so a full barrel does not become stuck at the market's per-transaction limit. That supports hoppers feeding items into the barrel without requiring the owner to be online. If a player opens the container, automated processing pauses until the container closes, then resumes. This lets players deposit items by hand without having items disappear while the menu is open.
 
 The behavior pack uses a registered custom block component for owner recording, ticking, and owner-tagged item drops. Sell Barrels are unstackable because their owner identity is stored on each item. Both the behavior pack and Sell Barrel resource pack are required.
 
@@ -51,7 +51,7 @@ https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynam
 Resource pack:  
 https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack
 
-The latest download links only work after the automated build passes and commits the release archives. Enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Keep Upcoming Creator Features enabled for the existing item-specific Sell Barrel mining behavior. Back up the world before replacing packs.
+The latest download links only work after the automated build passes and commits the release archives. Enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Keep Upcoming Creator Features enabled for the existing item-specific Sell Barrel mining behavior. The current Microsoft Script API docs mark the crafting-recipe event and custom block-break callback as pre-release, so enable the Beta APIs experiment too when available for your game version. The script handles an unavailable crafting listener without crashing, but in that case a newly crafted barrel may fall back to the player who places it as the owner instead of the original crafter. Test crafting, placing, breaking, re-placing, and hopper payouts in a copied world before using this on a world you care about.
 
 ### Build and test status
 

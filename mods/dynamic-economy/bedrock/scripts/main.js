@@ -895,14 +895,21 @@ function processClosedSellBarrel(dimension, location) {
     let payoutCents = 0;
     let failedTypes = 0;
     for (const [typeId, quantity] of quantities.entries()) {
+      let remainingQuantity = quantity;
       try {
-        const result = sell(owner, typeId, quantity, container, true, true);
-        unitsSold += result.quantity;
-        payoutCents += result.net;
+        // The market UI's per-transaction limit is 64. Keep selling this item
+        // in bounded chunks so a full 27-slot barrel never gets stuck unsold.
+        while (remainingQuantity > 0) {
+          const chunkQuantity = Math.min(remainingQuantity, CONFIG.maximumTradeQuantity);
+          const result = sell(owner, typeId, chunkQuantity, container, true, true);
+          remainingQuantity -= result.quantity;
+          unitsSold += result.quantity;
+          payoutCents += result.net;
+        }
       } catch (error) {
         failedTypes++;
         console.warn("[Dynamic Economy] Sell Barrel owned by " + lockOwner.name +
-          " left " + typeId + " unsold: " + error);
+          " left " + remainingQuantity + " " + typeId + " item(s) unsold: " + error);
       }
     }
     if (unitsSold > 0) {

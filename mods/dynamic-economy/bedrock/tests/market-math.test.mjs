@@ -178,7 +178,7 @@ test("Sell Barrels have per-item owner metadata and persisted block-owner record
   assert.match(source, /function assignOwnerBeforePlacement\(/);
   assert.match(source, /function saveOwnerAfterPlacement\(/);
   assert.match(source, /function ownerAccount\(/);
-  assert.match(source, /sell\(owner, typeId, quantity, container, true, true\)/);
+  assert.match(source, /sell\(owner, typeId, chunkQuantity, container, true, true\)/);
 });
 
 test("Sell Barrels are ticked for hopper-fed auto-selling and avoid selling while a player has them open", () => {
@@ -201,4 +201,11 @@ test("barrel placement fallback preserves a tagged item's saved owner", () => {
   assert.match(source, /const owner = pendingBarrelOwners\.get\(key\) \|\| \{ id: event\.player\.id, name: event\.player\.name \}/);
   assert.match(source, /world\.afterEvents\.playerLeave\.subscribe/);
   assert.match(source, /players\.delete\(playerId\)/);
+});
+
+test("hopper-fed barrels split large item groups into transaction-safe chunks", () => {
+  const processor = extract("function processClosedSellBarrel(", "function warnUnownedSellBarrel(");
+  assert.match(processor, /let remainingQuantity = quantity/);
+  assert.match(processor, /Math\.min\(remainingQuantity, CONFIG\.maximumTradeQuantity\)/);
+  assert.match(processor, /remainingQuantity -= result\.quantity/);
 });
