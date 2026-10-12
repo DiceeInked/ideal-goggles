@@ -23,7 +23,7 @@
       "version": [
         0,
         3,
-        13
+        14
       ],
       "entry": "scripts/main.js"
     }
@@ -42,7 +42,7 @@
       "version": [
         1,
         0,
-        2
+        3
       ]
     }
   ]
