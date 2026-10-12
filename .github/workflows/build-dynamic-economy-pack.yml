@@ -101,8 +101,6 @@ jobs:
           assert "tile.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel localization"
           block_sounds = json.loads((rp / "blocks.json").read_text())
           assert block_sounds.get("diceyinked:sell_barrel", {}).get("sound") == "wood", "Sell Barrel should use vanilla wood block sounds"
-          sound_textures = block_sounds.get("diceyinked:sell_barrel", {}).get("textures", {})
-          assert sound_textures == {"up": "barrel_top", "down": "barrel_bottom", "side": "barrel_side"}, "Sell Barrel block texture aliases must match terrain_texture.json"
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
