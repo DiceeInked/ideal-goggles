@@ -123,7 +123,7 @@ jobs:
           assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
           assert "isSurvivalObtainableItem(id)" in script, "Creative-only items must be filtered out of the buy catalog"
           assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
-          assert "isSurvivalObtainableItem(stack.typeId)" in script, "Sell Barrel contents must reject creative-only items"
+          assert "const typeId = itemType(rawItemId);" in script, "Sell Barrel sales must use the shared item-type eligibility check"
           assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
           print("Validated API dependencies, owner-paid hopper-compatible Sell Barrels, custom drops, item naming, operator permissions, trade history, catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
           print("All pack manifests and JSON files parsed.")
