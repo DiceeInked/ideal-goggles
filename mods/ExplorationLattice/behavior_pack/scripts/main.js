@@ -1,18 +1,81 @@
-import { world, system } from "@minecraft/server";
+import {
+  world,
+  system,
+  BlockVolume,
+  ListBlockVolume,
+  BlockPermutation,
+  BlockTypes,
+  LiquidType
+} from "@minecraft/server";
 
-// Exploration Lattice: preserve one-block-thick axis-aligned beams.
-// The grid is absolute-world-coordinate based and intersects at (0, 0, 0).
+// Exploration Lattice: preserve one-block-thick beams on a world-origin grid.
+// This version uses native bulk fills instead of reading/changing every block
+// individually. Each batch is only two Y layers high to limit tick spikes.
 const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
-const CHUNKS_RADIUS = 4; // Radius 4 means up to 9 x 9 chunks per player.
+const CHUNKS_RADIUS = 4;
 const RESCAN_INTERVAL_TICKS = 20;
-const BLOCK_BUDGET_PER_TICK = 8192; // Increased throughput; no adjacent-fluid scans or gravity-support bookkeeping.
+const BATCH_HEIGHT = 2;
+const WATERLOGGABLE_TYPES_PER_TICK = 32;
+
+const BASE_PROTECTED_TYPES = [
+  "minecraft:bedrock",
+  "minecraft:water",
+  "minecraft:flowing_water",
+  "minecraft:lava",
+  "minecraft:flowing_lava",
+  "minecraft:bubble_column",
+  "minecraft:sand",
+  "minecraft:red_sand",
+  "minecraft:gravel",
+  "minecraft:suspicious_sand",
+  "minecraft:suspicious_gravel",
+  "minecraft:anvil",
+  "minecraft:chipped_anvil",
+  "minecraft:damaged_anvil",
+  "minecraft:dragon_egg",
+  "minecraft:white_concrete_powder",
+  "minecraft:orange_concrete_powder",
+  "minecraft:magenta_concrete_powder",
+  "minecraft:light_blue_concrete_powder",
+  "minecraft:yellow_concrete_powder",
+  "minecraft:lime_concrete_powder",
+  "minecraft:pink_concrete_powder",
+  "minecraft:gray_concrete_powder",
+  "minecraft:light_gray_concrete_powder",
+  "minecraft:cyan_concrete_powder",
+  "minecraft:purple_concrete_powder",
+  "minecraft:blue_concrete_powder",
+  "minecraft:brown_concrete_powder",
+  "minecraft:green_concrete_powder",
+  "minecraft:red_concrete_powder",
+  "minecraft:black_concrete_powder"
+];
 
 const queuedChunks = [];
 const queuedKeys = new Set();
 const completedKeys = new Set();
+const waterloggableTypes = [];
+let protectedTypes = BASE_PROTECTED_TYPES.slice();
 let currentJob = null;
 let tickCounter = 0;
+
+// Discover waterloggable block types gradually. That lets the add-on preserve
+// custom as well as vanilla waterloggable blocks without doing a costly
+// one-time catalog scan during a single game tick.
+let blockTypeCatalog = [];
+let discoveryIndex = 0;
+let discoveryComplete = false;
+let discoveryFailed = false;
+
+try {
+  blockTypeCatalog = BlockTypes.getAll();
+  if (!blockTypeCatalog || blockTypeCatalog.length === 0) {
+    discoveryFailed = true;
+  }
+} catch (error) {
+  discoveryFailed = true;
+}
 
 function floorToChunk(blockCoordinate) {
   return Math.floor(blockCoordinate / CHUNK_SIZE);
@@ -28,26 +91,10 @@ function isLatticeBlock(x, y, z) {
   const zOnGrid = z % GRID_SPACING === 0;
 
   // Any two coordinates on grid lines make an X-, Y-, or Z-running beam.
-  // This is a beam lattice, not a set of solid horizontal/vertical planes.
   return (xOnGrid && yOnGrid) ||
          (xOnGrid && zOnGrid) ||
          (yOnGrid && zOnGrid);
 }
-
-const GRAVITY_BLOCKS = new Set([
-  "minecraft:sand", "minecraft:red_sand", "minecraft:gravel",
-  "minecraft:suspicious_sand", "minecraft:suspicious_gravel",
-  "minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil",
-  "minecraft:dragon_egg",
-  "minecraft:white_concrete_powder", "minecraft:orange_concrete_powder",
-  "minecraft:magenta_concrete_powder", "minecraft:light_blue_concrete_powder",
-  "minecraft:yellow_concrete_powder", "minecraft:lime_concrete_powder",
-  "minecraft:pink_concrete_powder", "minecraft:gray_concrete_powder",
-  "minecraft:light_gray_concrete_powder", "minecraft:cyan_concrete_powder",
-  "minecraft:purple_concrete_powder", "minecraft:blue_concrete_powder",
-  "minecraft:brown_concrete_powder", "minecraft:green_concrete_powder",
-  "minecraft:red_concrete_powder", "minecraft:black_concrete_powder"
-]);
 
 function isWaterlogged(block) {
   try {
@@ -59,20 +106,57 @@ function isWaterlogged(block) {
 }
 
 function isGravityBlock(block) {
-  return GRAVITY_BLOCKS.has(block.typeId);
+  return BASE_PROTECTED_TYPES.includes(block.typeId) &&
+    block.typeId !== "minecraft:bedrock" &&
+    block.typeId !== "minecraft:water" &&
+    block.typeId !== "minecraft:flowing_water" &&
+    block.typeId !== "minecraft:lava" &&
+    block.typeId !== "minecraft:flowing_lava" &&
+    block.typeId !== "minecraft:bubble_column";
+}
+
+function discoverWaterloggableTypes() {
+  if (discoveryComplete || discoveryFailed) return;
+
+  const end = Math.min(
+    discoveryIndex + WATERLOGGABLE_TYPES_PER_TICK,
+    blockTypeCatalog.length
+  );
+
+  for (; discoveryIndex < end; discoveryIndex++) {
+    const blockType = blockTypeCatalog[discoveryIndex];
+    try {
+      const permutation = BlockPermutation.resolve(blockType.id);
+      if (permutation.canContainLiquid(LiquidType.Water)) {
+        waterloggableTypes.push(blockType.id);
+      }
+    } catch (error) {
+      // Some registered/custom block types may not expose a resolvable
+      // default permutation. Ignore those types rather than stop the pack.
+    }
+  }
+
+  if (discoveryIndex >= blockTypeCatalog.length) {
+    protectedTypes = Array.from(new Set([
+      ...BASE_PROTECTED_TYPES,
+      ...waterloggableTypes
+    ]));
+    discoveryComplete = true;
+    blockTypeCatalog = [];
+  }
 }
 
 function scanPlayerAreas() {
-  // Build the set of loaded chunks that are currently near any player.
-  // This keeps the queue bounded when a player travels quickly.
   const nearbyLoaded = new Map();
 
   for (const player of world.getAllPlayers()) {
     let dimension;
     let heightRange;
+    let playerY;
     try {
       dimension = player.dimension;
       heightRange = dimension.heightRange;
+      playerY = Math.floor(player.location.y);
     } catch (error) {
       continue;
     }
@@ -81,6 +165,7 @@ function scanPlayerAreas() {
     const centerChunkZ = floorToChunk(player.location.z);
     const minY = Math.ceil(heightRange.min);
     const maxYExclusive = Math.ceil(heightRange.max);
+    const checkY = Math.max(minY, Math.min(maxYExclusive - 1, playerY));
 
     for (let offsetZ = -CHUNKS_RADIUS; offsetZ <= CHUNKS_RADIUS; offsetZ++) {
       for (let offsetX = -CHUNKS_RADIUS; offsetX <= CHUNKS_RADIUS; offsetX++) {
@@ -92,7 +177,7 @@ function scanPlayerAreas() {
         try {
           loaded = dimension.isChunkLoaded({
             x: chunkX * CHUNK_SIZE + 8,
-            y: Math.max(minY, Math.min(maxYExclusive - 1, Math.floor(player.location.y))),
+            y: checkY,
             z: chunkZ * CHUNK_SIZE + 8
           });
         } catch (error) {
@@ -119,7 +204,6 @@ function scanPlayerAreas() {
 
   const desiredKeys = new Set(nearbyLoaded.keys());
 
-  // Remove queued-but-not-started chunks that have left every player's area.
   const stillNearby = [];
   for (const job of queuedChunks) {
     if (desiredKeys.has(job.key)) stillNearby.push(job);
@@ -128,8 +212,6 @@ function scanPlayerAreas() {
   queuedChunks.length = 0;
   queuedChunks.push(...stillNearby);
 
-  // Stop a partially processed job if its chunk is no longer near any player.
-  // Its edits are idempotent, so it can safely restart if revisited later.
   if (currentJob && !desiredKeys.has(currentJob.key)) {
     queuedKeys.delete(currentJob.key);
     currentJob = null;
@@ -143,14 +225,10 @@ function scanPlayerAreas() {
     queuedKeys.add(candidate.key);
     queuedChunks.push({
       ...candidate,
-      xOffset: 0,
-      zOffset: 0,
-      // Scan top-down; gravity blocks themselves are preserved, without preserving supports.
-      y: candidate.maxYExclusive - 1
+      nextY: candidate.maxYExclusive - 1
     });
   }
 
-  // Keep closest chunks first, even when fresh chunks are discovered later.
   queuedChunks.sort((a, b) => a.distanceSquared - b.distanceSquared);
 }
 
@@ -158,7 +236,6 @@ function startNextJob() {
   while (!currentJob && queuedChunks.length > 0) {
     const job = queuedChunks.shift();
 
-    // Chunks may unload after being queued. Let the next area scan retry them.
     try {
       const dimension = world.getDimension(job.dimensionId);
       const loaded = dimension.isChunkLoaded({
@@ -190,56 +267,89 @@ function finishCurrentJob() {
 function releaseJobForRetry(job) {
   queuedKeys.delete(job.key);
   currentJob = null;
-  // A later area scan will queue this chunk again if it is loaded and nearby.
 }
 
-function processOneBlock(job) {
-  const x = job.startX + job.xOffset;
-  const y = job.y;
-  const z = job.startZ + job.zOffset;
-
+function processNextBatch(job) {
   try {
-    const dimension = job.dimension || world.getDimension(job.dimensionId);
-    const block = dimension.getBlock({ x, y, z });
+    const dimension = world.getDimension(job.dimensionId);
+    const topY = job.nextY;
+    const bottomY = Math.max(job.minY, topY - BATCH_HEIGHT + 1);
 
-    if (!block) {
+    const stillLoaded = dimension.isChunkLoaded({
+      x: job.startX + 8,
+      y: topY,
+      z: job.startZ + 8
+    });
+    if (!stillLoaded) {
       releaseJobForRetry(job);
       return;
     }
 
-    const gravityBlock = isGravityBlock(block);
-    const bedrockBlock = block.typeId === "minecraft:bedrock";
-    const fluidBlock = block.isLiquid || isWaterlogged(block);
-    const eligibleForRemoval = !block.isAir &&
-        !bedrockBlock &&
-        !fluidBlock &&
-        !gravityBlock &&
-        !isLatticeBlock(x, y, z);
-
-    // Preserve fluids, waterlogged blocks, bedrock, and gravity blocks only.
-    // No neighboring-block checks or extra support blocks are needed.
-    if (eligibleForRemoval) {
-      dimension.setBlockType({ x, y, z }, "minecraft:air");
+    // The list volume contains only coordinates outside the lattice. The
+    // native fill operation can then clear many blocks in one API call.
+    const removalLocations = [];
+    for (let y = bottomY; y <= topY; y++) {
+      for (let zOffset = 0; zOffset < CHUNK_SIZE; zOffset++) {
+        const z = job.startZ + zOffset;
+        for (let xOffset = 0; xOffset < CHUNK_SIZE; xOffset++) {
+          const x = job.startX + xOffset;
+          if (!isLatticeBlock(x, y, z)) {
+            removalLocations.push({ x, y, z });
+          }
+        }
+      }
     }
+
+    if (removalLocations.length > 0) {
+      dimension.fillBlocks(
+        new ListBlockVolume(removalLocations),
+        "minecraft:air",
+        {
+          blockFilter: { excludeTypes: protectedTypes },
+          ignoreChunkBoundErrors: true
+        }
+      );
+    }
+
+    // Waterloggable block types are excluded from the bulk fill so water
+    // isn't accidentally erased inside them. Query only this small batch,
+    // and remove off-lattice instances whose waterlogged state is not set.
+    if (waterloggableTypes.length > 0) {
+      const volume = new BlockVolume(
+        { x: job.startX, y: bottomY, z: job.startZ },
+        { x: job.startX + CHUNK_SIZE - 1, y: topY, z: job.startZ + CHUNK_SIZE - 1 }
+      );
+      const candidates = dimension.getBlocks(
+        volume,
+        { includeTypes: waterloggableTypes },
+        true
+      );
+
+      for (const location of candidates.getBlockLocationIterator()) {
+        if (isLatticeBlock(location.x, location.y, location.z)) continue;
+
+        const block = dimension.getBlock(location);
+        if (!block) {
+          releaseJobForRetry(job);
+          return;
+        }
+
+        if (isWaterlogged(block) || block.isLiquid ||
+            block.typeId === "minecraft:bedrock" ||
+            isGravityBlock(block)) {
+          continue;
+        }
+
+        dimension.setBlockType(location, "minecraft:air");
+      }
+    }
+
+    job.nextY = bottomY - 1;
+    if (job.nextY < job.minY) finishCurrentJob();
   } catch (error) {
+    // If a chunk unloads or an edit is rejected, repeat this small batch
+    // later. Bulk edits are idempotent, so retrying won't damage the pattern.
     releaseJobForRetry(job);
-    return;
-  }
-
-  // Descend through the column, then start the next column at the top.
-  job.y--;
-  if (job.y < job.minY) {
-    job.y = job.maxYExclusive - 1;
-    job.xOffset++;
-
-    if (job.xOffset >= CHUNK_SIZE) {
-      job.xOffset = 0;
-      job.zOffset++;
-    }
-  }
-
-  if (job.zOffset >= CHUNK_SIZE) {
-    finishCurrentJob();
   }
 }
 
@@ -247,7 +357,6 @@ world.afterEvents.playerSpawn.subscribe(() => {
   scanPlayerAreas();
 });
 
-// Re-scan nearby chunks once a second; edits themselves are spread across ticks.
 system.runInterval(() => {
   tickCounter++;
 
@@ -255,10 +364,15 @@ system.runInterval(() => {
     scanPlayerAreas();
   }
 
+  discoverWaterloggableTypes();
+
+  // Fail closed if the block catalog cannot be inspected. It is safer to
+  // pause than to clear terrain without knowing which block types are
+  // waterloggable.
+  if (!discoveryComplete) return;
+
   startNextJob();
 
-  for (let i = 0; i < BLOCK_BUDGET_PER_TICK && currentJob; i++) {
-    processOneBlock(currentJob);
-    startNextJob();
-  }
+  // Exactly one small bulk batch per tick: no thousands-of-calls burst.
+  if (currentJob) processNextBatch(currentJob);
 }, 1);
