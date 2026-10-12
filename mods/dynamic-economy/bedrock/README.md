@@ -1,6 +1,6 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.7: back navigation and Sell Barrel
+## Version 0.3.8: back navigation and Sell Barrel
 
 Every ActionForm menu page except the first/main menu has a bottom **Back** button labelled exactly **Back**, and it returns to the previous menu context. Bedrock search and quantity slider forms only permit a single built-in submit button, so cancelling those input forms returns to their parent menu.
 
@@ -9,10 +9,10 @@ Buy items sort from highest price to lowest, then alphabetically for ties. Sell 
 ### Sell Barrel
 Craft it using the normal barrel layout with a stick in the center slot: 6 planks at the corners and left/right middle, wooden slabs at top-middle and bottom-middle, and a stick in the exact center. Place it and put items inside. Closing it sells all item stacks the Script API can resolve, including renamed, enchanted, damaged, and custom-property stacks, at the current market price with 10% sales tax. If the API cannot resolve a custom item type, that stack remains inside with a warning.
 
-The Sell Barrel requires both packs. The combined `.mcaddon` bundles the behavior and resource packs:
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.7.mcaddon
+The Sell Barrel requires both packs. Its block definition uses Bedrock format 1.26.30 and the block-entity container component. Depending on your exact Minecraft build, you may need to enable the **Upcoming Creator Features** experiment in the world settings for this custom inventory block. The combined `.mcaddon` bundles the behavior and resource packs:
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.8.mcaddon
 
-Behavior pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.7.mcpack
+Behavior pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.8.mcpack
 Resource pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.0.mcpack
 
 After importing, enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Back up the world before replacing packs.

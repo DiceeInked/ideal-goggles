@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.60",
+  "format_version": "1.26.30",
   "minecraft:block": {
     "description": {
       "identifier": "diceyinked:sell_barrel",
@@ -23,25 +23,6 @@
         "down": {
           "texture": "barrel_bottom",
           "render_method": "opaque"
-        }
-      },
-      "minecraft:item_visual": {
-        "geometry": {
-          "identifier": "minecraft:geometry.full_block"
-        },
-        "material_instances": {
-          "*": {
-            "texture": "barrel_side",
-            "render_method": "opaque"
-          },
-          "up": {
-            "texture": "barrel_top",
-            "render_method": "opaque"
-          },
-          "down": {
-            "texture": "barrel_bottom",
-            "render_method": "opaque"
-          }
         }
       },
       "minecraft:collision_box": true,
