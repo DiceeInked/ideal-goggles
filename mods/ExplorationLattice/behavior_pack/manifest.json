@@ -1,0 +1,25 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Exploration Lattice",
+    "description": "Gradually turns explored terrain into a world-origin-aligned 3D lattice.",
+    "uuid": "83cfcf91-27a0-45ce-9b57-1d5cf0f28c11",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 80]
+  },
+  "modules": [
+    {
+      "type": "script",
+      "language": "javascript",
+      "uuid": "3e5a5b8d-2bd5-4b2e-99d0-73fd44c6ad7f",
+      "version": [1, 0, 0],
+      "entry": "scripts/main.js"
+    }
+  ],
+  "dependencies": [
+    {
+      "module_name": "@minecraft/server",
+      "version": "2.0.0"
+    }
+  ]
+}
