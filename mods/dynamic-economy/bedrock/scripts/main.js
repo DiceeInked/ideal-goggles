@@ -2,9 +2,9 @@ import { world, system, ItemStack, ItemTypes } from "@minecraft/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.10: form-driven Bedrock UI with safer quantity-form handling.
- * Use a regular stick to open the market. Purchases and sales update one
- * shared world market. Currency is stored as integer cents.
+ * Dynamic Economy v0.3.13: form-driven Bedrock UI and shared market.
+ * Use a regular stick to open the market. Market scores are stored per item,
+ * balances are integer cents, and sales tax carries fractional cents forward.
  */
 const CONFIG = Object.freeze({
   namespace: "diceyinked:economy",
@@ -37,9 +37,13 @@ const COLOR_ITEM_SUFFIXES = [
 ];
 
 const SELL_BARREL_ID = "diceyinked:sell_barrel";
-const MARKET_KEY = CONFIG.namespace + ":market";
+const MARKET_KEY = CONFIG.namespace + ":market"; // Legacy JSON key, migrated on world load.
+const MARKET_SCORE_PREFIX = CONFIG.namespace + ":score:";
 const BALANCE_PREFIX = CONFIG.namespace + ":balance:";
+const TAX_REMAINDER_KEY = CONFIG.namespace + ":sales_tax_remainder_tenths";
+const TAX_REMAINDER_DENOMINATOR = 10; // One remainder unit is one tenth of a cent at 10% tax.
 const openCooldown = new Map();
+let cachedMarket;
 
 function tell(player, message) {
   try { player.sendMessage("§2[Market]§r " + message); } catch {}
@@ -52,6 +56,16 @@ function money(cents) {
 }
 function safeInteger(value) {
   return Number.isSafeInteger(value) && Math.abs(value) <= CONFIG.maximumSafeCents;
+}
+function getTaxRemainder() {
+  const value = world.getDynamicProperty(TAX_REMAINDER_KEY);
+  return Number.isSafeInteger(value) && value >= 0 && value < TAX_REMAINDER_DENOMINATOR ? value : 0;
+}
+function setTaxRemainder(value) {
+  if (!Number.isSafeInteger(value) || value < 0 || value >= TAX_REMAINDER_DENOMINATOR) {
+    throw new Error("The sales-tax rounding remainder is invalid.");
+  }
+  world.setDynamicProperty(TAX_REMAINDER_KEY, value);
 }
 function getBalance(player) {
   const key = BALANCE_PREFIX + player.id;
@@ -68,17 +82,72 @@ function setBalance(player, cents) {
   world.setDynamicProperty(BALANCE_PREFIX + player.id, cents);
 }
 function getMarket() {
+  if (cachedMarket) return cachedMarket;
+  const market = {};
   const raw = world.getDynamicProperty(MARKET_KEY);
-  if (typeof raw !== "string") return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-  } catch {
-    return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        for (const [itemId, score] of Object.entries(parsed)) {
+          if (Number.isSafeInteger(score)) market[itemId] = score;
+        }
+      }
+    } catch {
+      // Keep the legacy value untouched if it is malformed; readable scores below still load.
+    }
   }
+  for (const propertyId of world.getDynamicPropertyIds()) {
+    if (!propertyId.startsWith(MARKET_SCORE_PREFIX)) continue;
+    const itemId = propertyId.slice(MARKET_SCORE_PREFIX.length);
+    const score = world.getDynamicProperty(propertyId);
+    if (itemId && Number.isSafeInteger(score)) market[itemId] = score;
+  }
+  cachedMarket = market;
+  return cachedMarket;
 }
-function setMarket(market) {
-  world.setDynamicProperty(MARKET_KEY, JSON.stringify(market));
+function persistScore(itemId, score) {
+  if (typeof itemId !== "string" || !itemId || !Number.isSafeInteger(score)) {
+    throw new Error("The market score is invalid.");
+  }
+  world.setDynamicProperty(MARKET_SCORE_PREFIX + itemId, score);
+  if (!cachedMarket) cachedMarket = getMarket();
+  cachedMarket[itemId] = score;
+}
+function migrateLegacyMarket() {
+  const raw = world.getDynamicProperty(MARKET_KEY);
+  if (typeof raw !== "string") return;
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    console.warn("[Dynamic Economy] Legacy market data is malformed and was kept for recovery: " + error);
+    return;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    console.warn("[Dynamic Economy] Legacy market data has an unexpected format and was kept for recovery.");
+    return;
+  }
+  try {
+    let migrated = 0;
+    for (const [itemId, score] of Object.entries(parsed)) {
+      if (!itemId || !Number.isSafeInteger(score)) continue;
+      const propertyId = MARKET_SCORE_PREFIX + itemId;
+      const existing = world.getDynamicProperty(propertyId);
+      if (Number.isSafeInteger(existing)) continue;
+      world.setDynamicProperty(propertyId, score);
+      if (world.getDynamicProperty(propertyId) !== score) {
+        throw new Error("Could not verify the migrated score for " + itemId);
+      }
+      migrated++;
+    }
+    world.setDynamicProperty(MARKET_KEY, undefined);
+    cachedMarket = undefined;
+    console.warn("[Dynamic Economy] Migrated legacy market scores to per-item properties (" + migrated + " new score(s)).");
+  } catch (error) {
+    cachedMarket = undefined;
+    console.warn("[Dynamic Economy] Market migration did not finish; the legacy market data was retained: " + error);
+  }
 }
 function getScore(market, itemId) {
   const score = market[itemId];
@@ -126,6 +195,8 @@ function safePlainStack(stack) {
   try {
     if (stack.nameTag) return false;
     if (stack.getLore().length > 0) return false;
+    if (stack.getDynamicPropertyIds().length > 0) return false;
+    if (stack.getCanPlaceOn().length > 0 || stack.getCanDestroy().length > 0) return false;
     const enchantable = stack.getComponent("minecraft:enchantable");
     if (enchantable && enchantable.getEnchantments().length > 0) return false;
     const durability = stack.getComponent("minecraft:durability");
@@ -211,8 +282,20 @@ function totalSaleProceeds(startScore, quantity) {
     gross += unitPriceCents(startScore - i * CONFIG.scoreChangePerItem);
     if (!safeInteger(gross)) throw new Error("That sale is too large to price safely.");
   }
-  const tax = Math.floor(gross * CONFIG.salesTaxRate);
-  return { gross: gross, tax: tax, net: gross - tax };
+  // Carry tenths of a cent forward so splitting the same score path into smaller
+  // transactions cannot erase the tax that would have been charged on a bulk sale.
+  const remainderBefore = getTaxRemainder();
+  const combinedRemainder = (gross % TAX_REMAINDER_DENOMINATOR) + remainderBefore;
+  const tax = Math.floor(gross / TAX_REMAINDER_DENOMINATOR) +
+    Math.floor(combinedRemainder / TAX_REMAINDER_DENOMINATOR);
+  const remainderAfter = combinedRemainder % TAX_REMAINDER_DENOMINATOR;
+  return {
+    gross: gross,
+    tax: tax,
+    net: gross - tax,
+    taxRemainderBefore: remainderBefore,
+    taxRemainderAfter: remainderAfter
+  };
 }
 function parseQuantity(value,maximum){
  const max=Number.isSafeInteger(maximum)&&maximum>=1?maximum:CONFIG.maximumTradeQuantity;
@@ -235,8 +318,7 @@ function buy(player, rawItemId, rawQuantity) {
     inserted = addItems(inventory, typeId, quantity);
     if (inserted !== quantity) throw new Error("Your inventory could not accept all the items.");
     setBalance(player, balance - cost);
-    market[typeId] = score + quantity * CONFIG.scoreChangePerItem;
-    setMarket(market);
+    persistScore(typeId, score + quantity * CONFIG.scoreChangePerItem);
   } catch (error) {
     if (inserted > 0) {
       try { removeTradableItems(inventory, typeId, inserted); } catch {}
@@ -277,8 +359,8 @@ function sell(player, rawItemId, rawQuantity, sourceContainer, silent, includeCu
   }
   try {
     setBalance(player, balance + quote.net);
-    market[typeId] = score - quantity * CONFIG.scoreChangePerItem;
-    setMarket(market);
+    persistScore(typeId, score - quantity * CONFIG.scoreChangePerItem);
+    setTaxRemainder(quote.taxRemainderAfter);
   } catch (error) {
     if (rollbackStacks) {
       for (const entry of rollbackStacks) {
@@ -291,6 +373,8 @@ function sell(player, rawItemId, rawQuantity, sourceContainer, silent, includeCu
       try { addItems(inventory, typeId, quantity); } catch {}
     }
     try { setBalance(player, balance); } catch {}
+    try { persistScore(typeId, score); } catch {}
+    try { setTaxRemainder(quote.taxRemainderBefore); } catch {}
     throw error;
   }
   if (!silent) {
@@ -487,15 +571,16 @@ function showQuantitySliderForm(player,mode,typeId,maximum,quotedScore,returnTo)
 function showTradeConfirmation(player,mode,typeId,quantity,quotedScore,returnTo,fromSlider){
  const currentScore=getScore(getMarket(),typeId);
  if(currentScore!==quotedScore){tell(player,"The market price changed while you were choosing. Please review the new quote.");showQuantityForm(player,mode,typeId,mode==="buy"?CONFIG.maximumTradeQuantity:countTradableItem(inventoryOf(player),typeId),returnTo);return;}
+ const quotedTaxRemainder=mode==="sell"?getTaxRemainder():null;
  let body;
  try{if(mode==="buy"){const total=totalBuyCost(quotedScore,quantity);body="Buy "+quantity+" "+prettyName(typeId)+"?\n\nTotal: "+money(total)+"\nBalance: "+money(getBalance(player))+"\n\nThis purchase raises the global item's price.";}
- else{const q=totalSaleProceeds(quotedScore,quantity);body="Sell "+quantity+" "+prettyName(typeId)+"?\n\nGross: "+money(q.gross)+"\nSales tax (10%): "+money(q.tax)+"\nYou receive: "+money(q.net)+"\n\nThis sale lowers the global item's price.";}}
+ else{const q=totalSaleProceeds(quotedScore,quantity,quotedTaxRemainder);body="Sell "+quantity+" "+prettyName(typeId)+"?\n\nGross: "+money(q.gross)+"\nSales tax (10%): "+money(q.tax)+"\nYou receive: "+money(q.net)+"\n\nThis sale lowers the global item's price.";}}
  catch(e){tell(player,e instanceof Error?e.message:"Couldn't calculate that trade.");returnToMenu(player,returnTo);return;}
  const form=new MessageFormData().title(mode==="buy"?"Confirm Purchase":"Confirm Sale").body(body).button1(mode==="buy"?"Confirm Purchase":"Confirm Sale").button2("Back");
  form.show(player).then(function(r){
   if(r.canceled||r.selection===1){if(fromSlider){const mx=mode==="buy"?CONFIG.maximumTradeQuantity:Math.min(CONFIG.maximumTradeQuantity,countTradableItem(inventoryOf(player),typeId));showQuantitySliderForm(player,mode,typeId,mx,quotedScore,returnTo);}else showQuantityForm(player,mode,typeId,mode==="buy"?CONFIG.maximumTradeQuantity:countTradableItem(inventoryOf(player),typeId),returnTo);return;}
   if(r.selection!==0)return;
-  if(getScore(getMarket(),typeId)!==quotedScore){tell(player,"The price changed before confirmation, so no trade was made. Review the fresh quote.");showQuantityForm(player,mode,typeId,mode==="buy"?CONFIG.maximumTradeQuantity:countTradableItem(inventoryOf(player),typeId),returnTo);return;}
+  if(getScore(getMarket(),typeId)!==quotedScore||(mode==="sell"&&getTaxRemainder()!==quotedTaxRemainder)){tell(player,"The market quote changed before confirmation, so no trade was made. Review the fresh quote.");showQuantityForm(player,mode,typeId,mode==="buy"?CONFIG.maximumTradeQuantity:countTradableItem(inventoryOf(player),typeId),returnTo);return;}
   try{if(mode==="buy")buy(player,typeId,quantity);else sell(player,typeId,quantity);system.runTimeout(function(){try{returnToMenu(player,returnTo);}catch{}},5);}
   catch(e){tell(player,e instanceof Error?e.message:"Trade failed safely.");system.runTimeout(function(){try{returnToMenu(player,returnTo);}catch{}},5);}
  }).catch(function(){tell(player,"The confirmation form could not open. No trade was made.");returnToMenu(player,returnTo);});
@@ -650,6 +735,12 @@ world.afterEvents.blockContainerClosed.subscribe(function(event){
 });
 
 world.afterEvents.worldLoad.subscribe(function () {
-  if (world.getDynamicProperty(MARKET_KEY) === undefined) setMarket({});
+  try {
+    migrateLegacyMarket();
+    getMarket();
+    getTaxRemainder();
+  } catch (error) {
+    console.warn("[Dynamic Economy] Market initialization warning: " + error);
+  }
   console.warn("[Dynamic Economy] Form-based market initialized.");
 });
