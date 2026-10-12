@@ -6,7 +6,7 @@ const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
 const CHUNKS_RADIUS = 4; // Radius 4 means up to 9 x 9 chunks per player.
 const RESCAN_INTERVAL_TICKS = 20;
-const BLOCK_BUDGET_PER_TICK = 1024; // Four times the original throughput; lower this if a device lags.
+const BLOCK_BUDGET_PER_TICK = 4096; // Higher throughput; fluid-neighbor checks are only done for blocks that would actually be removed.
 
 const queuedChunks = [];
 const queuedKeys = new Set();
@@ -227,21 +227,23 @@ function processOneBlock(job) {
 
     const gravityBlock = isGravityBlock(block);
     const protectedSupport = job.protectBelow === true;
+    const bedrockBlock = block.typeId === "minecraft:bedrock" ||
+                         block.typeId === "minecraft:deepslate";
     const fluidBlock = block.isLiquid || isWaterlogged(block);
-    const fluidNeighbor = !fluidBlock && isNearFluid(dimension, x, y, z);
-
-    // Never replace fluids, waterlogged blocks, or their immediate neighbors.
-    // Scan downward so gravity blocks can preserve their support and stacked
-    // sand/gravel/concrete powder continues protecting the column beneath it.
-    if (!block.isAir &&
+    const eligibleForRemoval = !block.isAir &&
+        !bedrockBlock &&
         !fluidBlock &&
-        !fluidNeighbor &&
         !gravityBlock &&
         !protectedSupport &&
-        !isLatticeBlock(x, y, z)) {
+        !isLatticeBlock(x, y, z);
+
+    // Cheap exclusions come first. Only inspect adjacent blocks when this
+    // block would otherwise be deleted, reducing expensive API calls sharply.
+    if (eligibleForRemoval && !isNearFluid(dimension, x, y, z)) {
       dimension.setBlockType({ x, y, z }, "minecraft:air");
     }
 
+    // Descending scan preserves the support under sand, gravel, anvils, etc.
     job.protectBelow = gravityBlock;
   } catch (error) {
     releaseJobForRetry(job);
