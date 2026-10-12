@@ -58,13 +58,17 @@ const NON_SURVIVAL_ITEM_IDS = new Set([
   "minecraft:moving_block", "minecraft:netherreactor", "minecraft:player_head",
   "minecraft:repeating_command_block", "minecraft:reserved6", "minecraft:structure_block",
   "minecraft:structure_void", "minecraft:reinforced_deepslate", "minecraft:trial_spawner",
-  "minecraft:vault", "minecraft:unknown"
+  "minecraft:vault", "minecraft:unknown", "minecraft:chemistry_table", "minecraft:compound", "minecraft:element",
+  "minecraft:lab_table", "minecraft:material_reducer", "minecraft:medicine",
+  "minecraft:underwater_tnt", "minecraft:underwater_torch", "minecraft:glow_stick",
+  "minecraft:balloon", "minecraft:ice_bomb", "minecraft:latex", "minecraft:super_fertilizer",
+  "minecraft:sparkler"
 ]);
 function isSurvivalObtainableItem(itemId) {
   if (typeof itemId !== "string" || !itemId.startsWith("minecraft:")) return false;
   if (NON_SURVIVAL_ITEM_IDS.has(itemId)) return false;
   const bareId = itemId.slice("minecraft:".length);
-  if (bareId.endsWith("_spawn_egg") || bareId === "spawn_egg") return false;
+  if (bareId.endsWith("_spawn_egg") || bareId === "spawn_egg" || bareId.startsWith("element_")) return false;
   return true;
 }
 function isMarketTool(itemStack) {
