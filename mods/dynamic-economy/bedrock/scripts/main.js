@@ -452,12 +452,19 @@ function showQuantityForm(player, mode, typeId, maximum) {
   const max = Math.min(CONFIG.maximumTradeQuantity, maximum);
   const form = new ModalFormData()
     .title((mode === "buy" ? "Buy " : "Sell ") + prettyName(typeId))
-    .label(priceNote)
-    .slider("Quantity", 1, max, { defaultValue: Math.min(max, 8), valueStep: 1 })
-    .submitButton(mode === "buy" ? "Review Purchase" : "Review Sale");
+    .label(priceNote);
+  const hasQuantitySlider = max > 1;
+  if (hasQuantitySlider) {
+    form.slider("Quantity", 1, max, { defaultValue: Math.min(max, 8), valueStep: 1 });
+  } else {
+    form.label("Quantity: 1");
+  }
+  form.submitButton(mode === "buy" ? "Review Purchase" : "Review Sale");
   form.show(player).then(function (response) {
     if (response.canceled || !response.formValues) return;
-    const quantity = parseQuantity(Math.round(Number(response.formValues[0])));
+    const quantity = hasQuantitySlider
+      ? parseQuantity(Math.round(Number(response.formValues[0])))
+      : 1;
     showTradeConfirmation(player, mode, typeId, quantity, score);
   }).catch(function () {
     tell(player, "The quantity form could not open. Try again.");
@@ -551,7 +558,7 @@ function showMarketPrices(player, page) {
   const actions = [];
   for (const entry of tracked.slice(safePage * CONFIG.pageSize, (safePage + 1) * CONFIG.pageSize)) {
     form.button(entry.name + "\n" + currentPriceLabel(entry.id, "buy") + "  |  score " + entry.score);
-    actions.push("item");
+    actions.push({ type: "item", id: entry.id });
   }
   if (safePage > 0) {
     form.button("Previous Page");
@@ -569,8 +576,41 @@ function showMarketPrices(player, page) {
     if (action === "previous") showMarketPrices(player, safePage - 1);
     else if (action === "next") showMarketPrices(player, safePage + 1);
     else if (action === "back") showMainMenu(player);
-    else if (action === "item") showMarketPrices(player, safePage);
+    else if (action && action.type === "item") showMarketItemDetail(player, action.id, safePage);
   }).catch(function () {});
+}
+function showMarketItemDetail(player, typeId, page) {
+  const score = getScore(getMarket(), typeId);
+  let buyPrice = "Unavailable";
+  let sellPrice = "Unavailable";
+  try { buyPrice = money(unitPriceCents(score)); } catch {}
+  try { sellPrice = money(totalSaleProceeds(score, 1).net); } catch {}
+  const form = new ActionFormData()
+    .title(prettyName(typeId))
+    .body("Current shared-market score: " + score +
+      "\nBuy price: " + buyPrice + " per item" +
+      "\nEstimated first-item sale payout after tax: " + sellPrice +
+      "\n\nPrices can move as anyone in the world trades.")
+    .button("Buy This Item")
+    .button("Sell This Item")
+    .button("Back to Prices")
+    .button("Market Home");
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    if (response.selection === 0) showQuantityForm(player, "buy", typeId, CONFIG.maximumTradeQuantity);
+    else if (response.selection === 1) {
+      const count = countTradableItem(inventoryOf(player), typeId);
+      if (count < 1) {
+        tell(player, "You don't have any plain, undamaged " + prettyName(typeId) + " to sell.");
+        showMarketItemDetail(player, typeId, page);
+      } else {
+        showQuantityForm(player, "sell", typeId, Math.min(CONFIG.maximumTradeQuantity, count));
+      }
+    } else if (response.selection === 2) showMarketPrices(player, page);
+    else if (response.selection === 3) showMainMenu(player);
+  }).catch(function () {
+    tell(player, "The item details could not open. Try again.");
+  });
 }
 function requestMenu(player) {
   const tick = system.currentTick;
