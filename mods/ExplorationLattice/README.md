@@ -27,6 +27,6 @@ A 9 x 9 chunk area represents up to 81 chunks. Each loaded chunk is scanned thro
 
 - Behavior-pack version: 1.0.1
 - Script dependency: @minecraft/server 2.0.0
-- Minimum engine version declared in the manifest: 1.21.80
+- Minimum engine version declared in the manifest: 1.21.90
 
 JSON and JavaScript syntax are validated before packaging. Actual in-game behavior still needs testing in the target Bedrock version because this environment cannot launch Minecraft.
