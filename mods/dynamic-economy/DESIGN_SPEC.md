@@ -111,7 +111,9 @@ The custom block ticks every 20 game ticks. When the inventory is not actively o
 
 The crafted-item owner ID and name travel with the non-stackable item. The placed block's owner record is stored as world dynamic data under `diceyinked:economy:sell_barrel_owner:<dimension-and-position>`. Breaking the barrel attempts to drop a new owner-tagged Sell Barrel item and removes the old block-location owner record.
 
-Barrels from an older add-on version have no saved owner data. The first player to open or close one after upgrading claims the legacy barrel; this is a compatibility fallback, not a secure recovery of an unknown original owner. A successful automated build can validate the JSON and required hooks, but it cannot confirm the custom crafting event, custom component ticks, container open/close pause, owner metadata persistence, or hopper transfers in Minecraft itself. These behaviors need an in-game test on the target Bedrock version before being relied on.
+Barrels from an older add-on version have no saved owner data. They are **not automatically claimed by whoever opens them**, because that would let a passerby take another player's machine. An ownerless legacy barrel will not sell contents; an operator should break and replace it with a properly owner-tagged barrel. A barrel created by command or another untagged path is assigned to the player who places it. A player disconnect event clears any stale open-container tracking so hoppers can resume processing after someone leaves while the container was open.
+
+A successful automated build can validate JSON and required hooks, but it cannot confirm the custom crafting event, custom component ticks, container open/close pause, owner metadata persistence, break/drop behavior, or hopper transfers in Minecraft itself. These behaviors need an in-game test on the target Bedrock version before being relied on.
 
 ## 7. Operator tool and permissions
 
@@ -183,6 +185,7 @@ For Java, use the target platform's stable server-side APIs and native item/bloc
 - Preserve the owner-tagged Sell Barrel item on block break so the owner identity follows the item when picked up and re-placed.
 - Make each Sell Barrel item non-stackable, and delegate its normal item drop to the runtime so owner metadata can survive.
 - Add static checks for the owner, tick, and item metadata requirements.
+- Do not auto-claim ownerless legacy barrels when opened; notify players that an operator must replace them. Clear stale open-container entries when a player disconnects.
 - Did not redesign the regular market UI. Economy graph and Oversaturated browsing remain planned UI work.
 - Did not change the market formula, sales tax, balance format, or starting balance.
 
