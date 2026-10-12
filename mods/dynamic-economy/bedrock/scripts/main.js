@@ -2,7 +2,7 @@ import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@min
 import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString, ObservableBoolean, ObservableNumber } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.20: compatible one-screen section selector and live item search.
+ * Dynamic Economy v0.3.21: horizontal market tabs and a three-column item tile grid when supported.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -659,6 +659,8 @@ function getSellableInventory(player) {
 function showMainMenu(player, workspaceOptions) {
   const seed = workspaceOptions && typeof workspaceOptions === "object" ? workspaceOptions : {};
   const tabs = ["buy", "sell", "economy"];
+  // Nine listings form a compact 3 x 3 tile grid on CustomForm builds that support multiButtonRow.
+  const workspacePageSize = 9;
   const state = {
     tab: tabs.includes(seed.tab) ? seed.tab : "buy",
     pages: {
@@ -677,20 +679,35 @@ function showMainMenu(player, workspaceOptions) {
   const statusLabels = Object.fromEntries(tabs.map(tab => [tab, new ObservableString("")]));
   const previousVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
   const nextVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
-  const rows = Object.fromEntries(tabs.map(tab => [tab, Array.from({ length: CONFIG.pageSize }, () => ({
+  const rows = Object.fromEntries(tabs.map(tab => [tab, Array.from({ length: workspacePageSize }, () => ({
     entry: null, label: new ObservableString(""), visible: new ObservableBoolean(false)
   }))]));
 
   const form = new CustomForm(player, "Dynamic Economy");
   form.closeButton()
     .header("GLOBAL MARKET")
-    .label("Balance: " + money(getBalance(player)) + "   |   Sales tax: " + taxPercentLabel())
-    .dropdown("MARKET SECTION", activeTab, [
+    .label("Balance: " + money(getBalance(player)) + "   |   Sales tax: " + taxPercentLabel());
+
+  const hasMultiButtonRow = typeof form.multiButtonRow === "function";
+  const tabLabels = Object.fromEntries(tabs.map(tab => [
+    tab,
+    new ObservableString((state.tab === tab ? "● " : "") + tab.toUpperCase())
+  ]));
+  if (hasMultiButtonRow) {
+    // This is the actual horizontal navigation row, not a dropdown or a screen change.
+    form.multiButtonRow(tabs.map(tab => ({
+      label: tabLabels[tab],
+      onClick: function () { setTab(tab); }
+    })));
+  } else {
+    // Bedrock builds before multiButtonRow remain loadable, but cannot display horizontal tab rows.
+    form.dropdown("MARKET SECTION", activeTab, [
       { label: "BUY", value: 0 },
       { label: "SELL", value: 1 },
       { label: "ECONOMY", value: 2 }
-    ])
-    .divider();
+    ]);
+  }
+  form.divider();
 
   function captureWorkspace(tab) {
     return {
@@ -738,10 +755,10 @@ function showMainMenu(player, workspaceOptions) {
       previousVisible[tab].setData(false); nextVisible[tab].setData(false);
       return;
     }
-    const maxPage = Math.max(0, Math.ceil(matches.length / CONFIG.pageSize) - 1);
+    const maxPage = Math.max(0, Math.ceil(matches.length / workspacePageSize) - 1);
     state.pages[tab] = Math.max(0, Math.min(state.pages[tab], maxPage));
-    const startIndex = state.pages[tab] * CONFIG.pageSize;
-    const pageItems = matches.slice(startIndex, startIndex + CONFIG.pageSize);
+    const startIndex = state.pages[tab] * workspacePageSize;
+    const pageItems = matches.slice(startIndex, startIndex + workspacePageSize);
     rows[tab].forEach(function (row, index) {
       const entry = pageItems[index] || null;
       row.entry = entry;
@@ -760,44 +777,84 @@ function showMainMenu(player, workspaceOptions) {
     previousVisible[tab].setData(state.pages[tab] > 0);
     nextVisible[tab].setData(state.pages[tab] < maxPage);
   }
+  function selectWorkspaceItem(tab, row) {
+    const selected = row.entry;
+    if (!selected) return;
+    const returnState = captureWorkspace(tab);
+    try { form.close(); } catch {}
+    system.run(function () {
+      if (tab === "buy") {
+        showQuantityForm(player, "buy", selected.id, CONFIG.maximumTradeQuantity, returnState);
+      } else if (tab === "sell") {
+        const count = countTradableItem(inventoryOf(player), selected.id);
+        if (count < 1) {
+          tell(player, "You no longer have any eligible " + prettyName(selected.id) + " to sell.");
+          showMainMenu(player, returnState);
+        } else showQuantityForm(player, "sell", selected.id, count, returnState);
+      } else {
+        showItemPriceHistory(player, selected.id, state.pages.economy, false, returnState);
+      }
+    });
+  }
+  function itemButtonData(tab, row) {
+    return {
+      label: row.label,
+      onClick: function () { selectWorkspaceItem(tab, row); },
+      options: { visible: row.visible }
+    };
+  }
   function addTabContent(tab, description) {
     form.textField("Search by item name or ID", queries[tab], { description: description, visible: visible[tab] });
     form.label(statusLabels[tab], { visible: visible[tab] });
-    for (const row of rows[tab]) {
-      form.button(row.label, function () {
-        const selected = row.entry;
-        if (!selected) return;
-        const returnState = captureWorkspace(tab);
-        try { form.close(); } catch {}
-        system.run(function () {
-          if (tab === "buy") {
-            showQuantityForm(player, "buy", selected.id, CONFIG.maximumTradeQuantity, returnState);
-          } else if (tab === "sell") {
-            const count = countTradableItem(inventoryOf(player), selected.id);
-            if (count < 1) {
-              tell(player, "You no longer have any eligible " + prettyName(selected.id) + " to sell.");
-              showMainMenu(player, returnState);
-            } else showQuantityForm(player, "sell", selected.id, count, returnState);
-          } else {
-            showItemPriceHistory(player, selected.id, state.pages.economy, false, returnState);
-          }
+    if (hasMultiButtonRow) {
+      // Each multiButtonRow creates three equal-width item tiles. The page has three rows.
+      for (let offset = 0; offset < rows[tab].length; offset += 3) {
+        form.multiButtonRow(rows[tab].slice(offset, offset + 3).map(row => itemButtonData(tab, row)), {
+          visible: visible[tab]
         });
-      }, { visible: row.visible });
+      }
+      form.multiButtonRow([
+        {
+          label: "‹ Previous",
+          onClick: function () {
+            state.pages[tab] = Math.max(0, state.pages[tab] - 1);
+            renderTab(tab);
+          },
+          options: { visible: previousVisible[tab] }
+        },
+        {
+          label: "Next ›",
+          onClick: function () {
+            state.pages[tab] += 1;
+            renderTab(tab);
+          },
+          options: { visible: nextVisible[tab] }
+        }
+      ], { visible: visible[tab] });
+    } else {
+      // Legacy API fallback: regular controls work, but this API cannot create side-by-side tiles.
+      for (const row of rows[tab]) {
+        form.button(row.label, itemButtonData(tab, row).onClick, { visible: row.visible });
+      }
+      form.button("‹ Previous", function () {
+        state.pages[tab] = Math.max(0, state.pages[tab] - 1);
+        renderTab(tab);
+      }, { visible: previousVisible[tab] });
+      form.button("Next ›", function () {
+        state.pages[tab] += 1;
+        renderTab(tab);
+      }, { visible: nextVisible[tab] });
     }
-    form.button("‹ Previous", function () {
-      state.pages[tab] = Math.max(0, state.pages[tab] - 1);
-      renderTab(tab);
-    }, { visible: previousVisible[tab] });
-    form.button("Next ›", function () {
-      state.pages[tab] += 1;
-      renderTab(tab);
-    }, { visible: nextVisible[tab] });
   }
   function setTab(tab) {
+    if (!tabs.includes(tab)) return;
     state.tab = tab;
     tabs.forEach(function (name) {
       visible[name].setData(name === tab);
+      tabLabels[name].setData((name === tab ? "● " : "") + name.toUpperCase());
     });
+    const selectedIndex = tabs.indexOf(tab);
+    if (activeTab.getData() !== selectedIndex) activeTab.setData(selectedIndex);
     renderTab(tab);
   }
 
@@ -809,8 +866,8 @@ function showMainMenu(player, workspaceOptions) {
     renderTab(tab);
   }));
   const tabSubscription = activeTab.subscribe(function () {
-    const selectedIndex = activeTab.getData();
-    setTab(tabs[selectedIndex] || "buy");
+    const selectedTab = tabs[activeTab.getData()] || "buy";
+    if (selectedTab !== state.tab) setTab(selectedTab);
   });
   tabs.forEach(renderTab);
   form.show().then(function () {
