@@ -1,16 +1,21 @@
 # Dynamic Economy for Minecraft Bedrock
 
-This folder contains the editable Bedrock Script API prototype and downloadable releases.
+## Version 0.3.0: form-based market
 
-## Direct install
+This release replaces the chat-command prototype with actual in-game forms. Hold a regular wooden stick and use/right-click to open the market. On touch devices, use the interact/use control while holding the stick.
 
-**Dynamic Economy 0.2.0:**  
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.2.0.mcpack
+The menu contains **Buy Items**, **Sell Items**, **Market Prices**, and **My Balance**. Buy and sell screens use searchable, paginated item lists. Each trade opens a quantity slider, shows a price quote, then asks for confirmation. The shared world market price rises with purchases and falls with sales. Sales have a 10% tax.
 
-On iPhone or iPad, tap the direct link. If it opens a preview instead of Minecraft, use Share and choose Minecraft.
+New players start with **$100.00**. That starter amount is used only if the player has no saved economy balance yet; existing saved balances are preserved.
 
-## Source and builds
+To protect customized gear, the sell menu lists only plain items with no custom name, lore, enchantments, or durability damage. The menu will not intentionally sell named or enchanted items.
 
-The editable source at the root of this folder is the 0.1.0 prototype. The 0.2.0 downloadable is a separately packaged newer iteration, so the root source files are not yet a byte-for-byte source match for that release.
+## Install on iPhone/iPad
 
-GitHub Actions packages the editable root source into a versioned `.mcpack` on changes, making that prototype reproducibly buildable in the repository. Do not treat the 0.2.0 package as runtime-tested yet; its archive structure and JavaScript syntax were checked, but it has not been launched in Minecraft in this session.
+Import the `.mcpack` using the direct link below. If the file opens in a preview, use Share and choose Minecraft.
+
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.0.mcpack
+
+## Source and testing note
+
+The editable source is `scripts/main.js`. GitHub Actions checks the JavaScript syntax, validates the manifest, and packages a versioned `.mcpack`. The package still needs an actual in-game test in the target Bedrock version; a successful archive/syntax check is not proof that every interaction event fires identically on every device.
