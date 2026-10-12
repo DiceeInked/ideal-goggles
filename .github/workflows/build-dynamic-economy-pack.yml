@@ -80,11 +80,11 @@ jobs:
           assert components.get("minecraft:destructible_by_explosion", {}).get("explosion_resistance") == 2.5, "Sell Barrel explosion resistance should match wood"
           assert components.get("minecraft:tick") == {"interval_range": [20, 20], "looping": True}, "Sell Barrel must tick regularly to process hopper input"
           assert components.get("diceyinked:sell_barrel_runtime") == {}, "Sell Barrel must register its runtime ownership/tick component"
+          loot_path = components.get("minecraft:loot")
+          assert loot_path and (bp / loot_path).is_file(), f"Missing Sell Barrel loot table: {loot_path}"
           assert json.loads((bp / loot_path).read_text()).get("pools") == [], "Sell Barrel's owner-tagged item drop is handled by its script component"
           container = components.get("minecraft:block_entity", {}).get("container", {})
           assert 1 <= container.get("slot_count", 0) <= 54, "Sell Barrel container slot count must be between 1 and 54"
-          loot_path = components.get("minecraft:loot")
-          assert loot_path and (bp / loot_path).is_file(), f"Missing Sell Barrel loot table: {loot_path}"
           recipe = json.loads((bp / "recipes/sell_barrel.json").read_text())["minecraft:recipe_shaped"]
           assert recipe.get("description", {}).get("identifier") == "diceyinked:sell_barrel_recipe", "Recipe identifier must be unique and separate from the block ID"
           assert recipe.get("result", {}).get("item") == "diceyinked:sell_barrel", "Recipe output mismatch"
