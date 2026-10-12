@@ -1,8 +1,8 @@
-import { world, system, ItemStack, ItemTypes } from "@minecraft/server";
+import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraft/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.15: form-driven Bedrock UI and shared market.
+ * Dynamic Economy v0.3.16: trade history, operator tools, and named Sell Barrels.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -37,6 +37,7 @@ const COLOR_ITEM_SUFFIXES = [
 ];
 
 const SELL_BARREL_ID = "diceyinked:sell_barrel";
+const OPERATOR_TOOL_ID = "minecraft:blaze_rod";
 const MARKET_TOOL_IDS = new Set([
   "minecraft:stick",
   "minecraft:wooden_sword",
@@ -80,6 +81,10 @@ const MARKET_SCORE_PREFIX = CONFIG.namespace + ":score:";
 const BALANCE_PREFIX = CONFIG.namespace + ":balance:";
 const TAX_REMAINDER_KEY = CONFIG.namespace + ":sales_tax_remainder";
 const TAX_REMAINDER_DENOMINATOR = 10000; // Remainder units are 1/10,000 of a cent.
+const HISTORY_TRANSACTION_PREFIX = CONFIG.namespace + ":history:tx:";
+const HISTORY_SERIES_PREFIX = CONFIG.namespace + ":history:series:";
+const HISTORY_NEXT_TRANSACTION_KEY = CONFIG.namespace + ":history:next_tx";
+const HISTORY_SERIES_CHUNK_SIZE = 32;
 const openCooldown = new Map();
 let cachedMarket;
 
@@ -346,6 +351,82 @@ function totalSaleProceeds(startScore, quantity, startingTaxRemainder) {
     taxRemainderAfter: remainderAfter
   };
 }
+
+function reserveHistoryTransactionId() {
+  const previous = world.getDynamicProperty(HISTORY_NEXT_TRANSACTION_KEY);
+  const next = Number.isSafeInteger(previous) && previous >= 0 ? previous + 1 : 1;
+  if (!Number.isSafeInteger(next)) throw new Error("Trade history has reached its safe record limit.");
+  world.setDynamicProperty(HISTORY_NEXT_TRANSACTION_KEY, next);
+  return next;
+}
+
+// One summary per transaction; unit-price points are stored in compact chunks.
+function persistTradeHistory(player, action, itemId, quantity, scoreBefore, amounts, balanceAfter, source) {
+  const transactionId = reserveHistoryTransactionId();
+  const tick = system.currentTick;
+  const direction = action === "buy" ? 1 : -1;
+  const scoreAfter = scoreBefore + direction * quantity * CONFIG.scoreChangePerItem;
+
+  for (let offset = 0, chunkIndex = 0; offset < quantity; offset += HISTORY_SERIES_CHUNK_SIZE, chunkIndex++) {
+    const points = [];
+    const end = Math.min(quantity, offset + HISTORY_SERIES_CHUNK_SIZE);
+    for (let zeroIndex = offset; zeroIndex < end; zeroIndex++) {
+      const unitIndex = zeroIndex + 1;
+      const pointScore = scoreBefore + direction * unitIndex * CONFIG.scoreChangePerItem;
+      let priceCents = null;
+      try { priceCents = unitPriceCents(pointScore); } catch {}
+      points.push({ unitIndex: unitIndex, score: pointScore, priceCents: priceCents, tick: tick });
+    }
+    const seriesChunk = {
+      transactionId: transactionId, itemId: itemId, action: action,
+      playerName: player.name, tick: tick, points: points
+    };
+    world.setDynamicProperty(HISTORY_SERIES_PREFIX + transactionId + ":" + chunkIndex, JSON.stringify(seriesChunk));
+  }
+
+  const record = {
+    id: transactionId, tick: tick, action: action, source: source,
+    playerId: player.id, playerName: player.name, itemId: itemId, quantity: quantity,
+    scoreBefore: scoreBefore, scoreAfter: scoreAfter,
+    grossCents: amounts.grossCents, taxCents: amounts.taxCents,
+    netCents: amounts.netCents, balanceAfterCents: balanceAfter
+  };
+  // Summary written last; incomplete series chunks are ignored by future graph views.
+  world.setDynamicProperty(HISTORY_TRANSACTION_PREFIX + transactionId, JSON.stringify(record));
+}
+
+function recordTradeHistorySafely(player, action, itemId, quantity, scoreBefore, amounts, balanceAfter, source) {
+  try {
+    persistTradeHistory(player, action, itemId, quantity, scoreBefore, amounts, balanceAfter, source);
+  } catch (error) {
+    console.warn("[Dynamic Economy] Trade completed but history could not be saved: " + error);
+    tell(player, "Your trade completed, but its history record could not be saved. Please tell a world operator.");
+  }
+}
+
+function getRecentTradeRecords(limit) {
+  const records = [];
+  for (const propertyId of world.getDynamicPropertyIds()) {
+    if (!propertyId.startsWith(HISTORY_TRANSACTION_PREFIX)) continue;
+    const raw = world.getDynamicProperty(propertyId);
+    if (typeof raw !== "string") continue;
+    try {
+      const record = JSON.parse(raw);
+      if (record && Number.isSafeInteger(record.id) && typeof record.action === "string" &&
+          typeof record.itemId === "string" && Number.isSafeInteger(record.quantity)) records.push(record);
+    } catch {
+      console.warn("[Dynamic Economy] Skipping malformed trade-history record: " + propertyId);
+    }
+  }
+  records.sort(function (a, b) { return b.id - a.id; });
+  return records.slice(0, Number.isSafeInteger(limit) && limit > 0 ? limit : 10);
+}
+
+function isEconomyOperator(player) {
+  try { return player.playerPermissionLevel === PlayerPermissionLevel.Operator; }
+  catch { return false; }
+}
+
 function parseQuantity(value,maximum){
  const max=Number.isSafeInteger(maximum)&&maximum>=1?maximum:CONFIG.maximumTradeQuantity;
  if(!Number.isSafeInteger(value)||value<1||value>max)throw new Error("Choose a quantity from 1 to "+max+".");return value;
@@ -375,6 +456,8 @@ function buy(player, rawItemId, rawQuantity) {
     try { setBalance(player, balance); } catch {}
     throw error;
   }
+  recordTradeHistorySafely(player, "buy", typeId, quantity, score,
+    { grossCents: cost, taxCents: 0, netCents: cost }, balance - cost, "market");
   tell(player, "Bought " + quantity + " " + prettyName(typeId) + " for " + money(cost) +
     ". Balance: " + money(balance - cost) + ".");
 }
@@ -426,6 +509,9 @@ function sell(player, rawItemId, rawQuantity, sourceContainer, silent, includeCu
     try { setTaxRemainder(quote.taxRemainderBefore); } catch {}
     throw error;
   }
+  recordTradeHistorySafely(player, "sell", typeId, quantity, score,
+    { grossCents: quote.gross, taxCents: quote.tax, netCents: quote.net },
+    balance + quote.net, sourceContainer ? "sell_barrel" : "market");
   if (!silent) {
     tell(player, "Sold " + quantity + " " + prettyName(typeId) + ". Gross: " + money(quote.gross) +
       ", sales tax: " + money(quote.tax) + ", paid: " + money(quote.net) +
@@ -736,13 +822,156 @@ function processClosedSellBarrel(dimension, location, player) {
     tell(player, "The Sell Barrel could not finish selling its contents: " + detail);
   }
 }
-function requestMenu(player) {
+
+function showOperatorMenu(player) {
+  if (!isEconomyOperator(player)) {
+    tell(player, "The Blaze Rod is reserved for world operators.");
+    return;
+  }
+  const form = new ActionFormData()
+    .title("Economy Operator")
+    .body("Operator tools\n\nReview saved trades or inspect the current rules. The price curve remains unchanged.")
+    .button("Recent Trade Records")
+    .button("Current Economy Rules")
+    .button("Back to Market");
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    if (response.selection === 0) showRecentTradeRecords(player, 0);
+    else if (response.selection === 1) showOperatorRules(player);
+    else if (response.selection === 2) showMainMenu(player);
+  }).catch(function (error) {
+    console.warn("[Dynamic Economy] Could not show operator menu: " + error);
+    tell(player, "The operator menu could not open. Try using the Blaze Rod again.");
+  });
+}
+
+function showRecentTradeRecords(player, page) {
+  if (!isEconomyOperator(player)) {
+    tell(player, "Only world operators can view economy records.");
+    return;
+  }
+  const pageSize = 5;
+  const records = getRecentTradeRecords(100);
+  if (!records.length) {
+    new MessageFormData().title("Recent Trade Records")
+      .body("No recorded trades yet. Successful purchases and sales will appear here.")
+      .button1("Operator Menu").button2("Close")
+      .show(player).then(function (r) {
+        if (!r.canceled && r.selection === 0) showOperatorMenu(player);
+      }).catch(function () {});
+    return;
+  }
+  const maxPage = Math.max(0, Math.ceil(records.length / pageSize) - 1);
+  const safePage = Math.max(0, Math.min(Number.isSafeInteger(page) ? page : 0, maxPage));
+  const form = new ActionFormData()
+    .title("Recent Trade Records")
+    .body("Newest first. Showing saved transactions " + (safePage * pageSize + 1) + "–" +
+      Math.min(records.length, (safePage + 1) * pageSize) + " of " + records.length + ".\nSelect a trade for details.");
+  const actions = [];
+  for (const record of records.slice(safePage * pageSize, (safePage + 1) * pageSize)) {
+    const verb = record.action === "buy" ? "BUY" : "SELL";
+    const amount = record.action === "buy" ? record.grossCents : record.netCents;
+    form.button(verb + " " + record.quantity + " x " + prettyName(record.itemId) +
+      "\n" + money(Number.isSafeInteger(amount) ? amount : 0) + "  |  " + String(record.playerName || "Unknown"));
+    actions.push(record);
+  }
+  if (safePage > 0) { form.button("Previous Page"); actions.push("previous"); }
+  if (safePage < maxPage) { form.button("Next Page"); actions.push("next"); }
+  form.button("Back to Operator Menu"); actions.push("back");
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    const selected = actions[response.selection];
+    if (selected === "previous") showRecentTradeRecords(player, safePage - 1);
+    else if (selected === "next") showRecentTradeRecords(player, safePage + 1);
+    else if (selected === "back") showOperatorMenu(player);
+    else if (selected && typeof selected === "object") showTradeRecordDetail(player, selected, safePage);
+  }).catch(function (error) {
+    console.warn("[Dynamic Economy] Could not show trade records: " + error);
+    tell(player, "Trade records could not open.");
+  });
+}
+
+function showTradeRecordDetail(player, record, page) {
+  if (!isEconomyOperator(player)) {
+    tell(player, "Only world operators can view economy records.");
+    return;
+  }
+  const verb = record.action === "buy" ? "Purchase" : "Sale";
+  const body = "Transaction #" + record.id + "  |  " + verb +
+    "\nPlayer: " + String(record.playerName || "Unknown") +
+    "\nItem: " + prettyName(record.itemId) +
+    "\nQuantity: " + record.quantity +
+    "\nScore: " + record.scoreBefore + " -> " + record.scoreAfter +
+    "\nGross: " + money(Number.isSafeInteger(record.grossCents) ? record.grossCents : 0) +
+    "\nSales tax: " + money(Number.isSafeInteger(record.taxCents) ? record.taxCents : 0) +
+    "\nNet: " + money(Number.isSafeInteger(record.netCents) ? record.netCents : 0) +
+    "\nBalance after trade: " + money(Number.isSafeInteger(record.balanceAfterCents) ? record.balanceAfterCents : 0) +
+    "\nSource: " + String(record.source || "market") +
+    "\nWorld tick: " + record.tick;
+  new MessageFormData().title("Trade Record #" + record.id).body(body)
+    .button1("Back to Records").button2("Operator Menu")
+    .show(player).then(function (response) {
+      if (response.canceled || response.selection === 1) showOperatorMenu(player);
+      else showRecentTradeRecords(player, page);
+    }).catch(function () { showRecentTradeRecords(player, page); });
+}
+
+function showOperatorRules(player) {
+  if (!isEconomyOperator(player)) {
+    tell(player, "Only world operators can inspect economy rules.");
+    return;
+  }
+  const body = "Current rules (informational):\n" +
+    "Starting balance for new players: " + money(CONFIG.startingBalanceCents) + "\n" +
+    "Sales tax: " + taxPercentLabel() + "\n" +
+    "Growth multiplier: " + CONFIG.growthFactor + " per score point\n" +
+    "Score change: " + CONFIG.scoreChangePerItem + " point per item\n" +
+    "Minimum price: " + money(CONFIG.minimumPriceCents) + " per item\n" +
+    "Custom quantity limit: " + CONFIG.maximumTradeQuantity + " items\n\n" +
+    "The price rules are intentionally unchanged. Editable settings will be added after the desired controls are defined.";
+  new MessageFormData().title("Current Economy Rules").body(body)
+    .button1("Operator Menu").button2("Close")
+    .show(player).then(function (response) {
+      if (!response.canceled && response.selection === 0) showOperatorMenu(player);
+    }).catch(function () {});
+}
+
+function handleEconomyToolUse(player, itemStack) {
+  if (!player || !itemStack) return;
+  if (itemStack.typeId === OPERATOR_TOOL_ID) {
+    if (!isEconomyOperator(player)) {
+      tell(player, "The Blaze Rod is reserved for world operators.");
+      return;
+    }
+    requestMenu(player, "operator");
+    return;
+  }
+  if (isMarketTool(itemStack)) requestMenu(player, "market");
+}
+
+function nameCraftedSellBarrel(event) {
+  try {
+    const player = event && event.player;
+    const crafted = event && event.itemStack;
+    if (!player || !crafted || crafted.typeId !== SELL_BARREL_ID) return;
+    const personalizedName = player.name + "'s Sell Barrel";
+    crafted.nameTag = personalizedName;
+    tell(player, "Crafted " + personalizedName + ".");
+  } catch (error) {
+    console.warn("[Dynamic Economy] Could not personalize crafted Sell Barrel: " + error);
+    try {
+      if (event && event.player) tell(event.player, "Your Sell Barrel was crafted, but its personalized name could not be applied.");
+    } catch {}
+  }
+}
+
+function requestMenu(player, menuType) {
   const tick = system.currentTick;
   const lastTick = openCooldown.get(player.id);
   if (lastTick !== undefined && tick - lastTick < 8) return;
   openCooldown.set(player.id, tick);
   system.run(function () {
-    try { showMainMenu(player); }
+    try { if (menuType === "operator") showOperatorMenu(player); else showMainMenu(player); }
     catch (error) {
       console.warn("[Dynamic Economy] Market menu error: " + error);
       tell(player, "The market menu couldn't open. Try using the stick again.");
@@ -753,17 +982,24 @@ function requestMenu(player) {
 // Air-use listener, plus block/entity interaction listeners for touch and controller input.
 world.beforeEvents.itemUse.subscribe(function (event) {
   // Defer form work until after the restricted before-event callback finishes.
-  if (isMarketTool(event.itemStack)) requestMenu(event.source);
+  handleEconomyToolUse(event.source, event.itemStack);
 });
 world.afterEvents.playerInteractWithBlock.subscribe(function (event) {
   if (event.isFirstEvent === false) return;
   const held = event.beforeItemStack || event.itemStack;
-  if (isMarketTool(held)) requestMenu(event.player);
+  handleEconomyToolUse(event.player, held);
 });
 world.afterEvents.playerInteractWithEntity.subscribe(function (event) {
   const held = event.beforeItemStack || event.itemStack;
-  if (held && held.typeId === "minecraft:stick") requestMenu(event.player);
+  handleEconomyToolUse(event.player, held);
 });
+
+// The craft event is still marked pre-release in API docs; skip safely if unavailable.
+try {
+  world.afterEvents.playerCraftRecipe.subscribe(nameCraftedSellBarrel);
+} catch (error) {
+  console.warn("[Dynamic Economy] Craft-name listener is unavailable on this game build: " + error);
+}
 
 world.afterEvents.playerSpawn.subscribe(function (event) {
   if (!event.initialSpawn) return;
