@@ -119,7 +119,7 @@ world.beforeEvents.playerPlaceBlock.subscribe((event) => {
 world.afterEvents.entitySpawn.subscribe((event) => {
   try {
     const entity = event.entity;
-    if (isLobbyDimension(entity.dimension) && entity.matches({ families: ["mob"] })) {
+    if (isLobbyDimension(entity.dimension) && entity.matches({ families: ["mob"], excludeFamilies: ["armor_stand"] })) {
       entity.remove();
     }
   } catch (error) {
