@@ -166,7 +166,7 @@ jobs:
                           assert "scripts/main.js" in pack.namelist(), "Behavior pack is missing scripts/main.js"
               bp = packs["DynamicEconomy_Bedrock_0.3.19.mcpack"]
               rp = packs["SellBarrel_Resources_1.0.3.mcpack"]
-              assert bp["header"]["version"] == [0, 3, 18], "Behavior pack version mismatch"
+              assert bp["header"]["version"] == [0, 3, 19], "Behavior pack version mismatch"
               assert rp["header"]["version"] == [1, 0, 3], "Resource pack version mismatch"
               assert any(d.get("uuid") == rp["header"]["uuid"] and d.get("version") == rp["header"]["version"] for d in bp.get("dependencies", [])), "Behavior pack dependency doesn't match the bundled resource pack"
           print("Verified .mcaddon contains valid behavior/resource .mcpack archives with matching manifest dependencies.")
