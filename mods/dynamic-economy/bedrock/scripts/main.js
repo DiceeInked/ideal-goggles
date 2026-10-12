@@ -1,5 +1,5 @@
-import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraftimport { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString } from "@minecraft/server-ui";/server";
-import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
+import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraft/server";
+import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString } from "@minecraft/server-ui";
 
 /*
  * Dynamic Economy v0.3.17: owner-paid hopper-compatible Sell Barrels.
@@ -672,9 +672,13 @@ function showMainMenu(player) {
       try { form.close(); } catch {}
       system.run(function () { showSellMenu(player, "", 0); });
     })
-    .button("ECONOMY / PRICE HISTORY", function () {
+    .button("ECONOMY", function () {
       try { form.close(); } catch {}
       system.run(function () { showMarketPrices(player, 0); });
+    })
+    .button("PRICE / TRADE HISTORY", function () {
+      try { form.close(); } catch {}
+      system.run(function () { showTradeHistoryPage(player, 0); });
     })
     .button("OVERSATURATED ITEMS", function () {
       try { form.close(); } catch {}
@@ -881,16 +885,133 @@ function showMarketPrices(player, page, oversaturatedOnly) {
     else if (action && action.type === "item") showMarketItemDetail(player, action.id, safePage);
   }).catch(function () {});
 }
-function showMarketItemDetail(player,typeId,page){
- const score=getScore(getMarket(),typeId);let buyPrice="Unavailable",sellPrice="Unavailable";try{buyPrice=money(unitPriceCents(score));}catch{}try{sellPrice=money(totalSaleProceeds(score,1).net);}catch{}
- const form=new ActionFormData().title(prettyName(typeId)).body("Current shared-market score: "+score+"\nBuy price: "+buyPrice+" per item\nEstimated first-item sale payout after tax: "+sellPrice+"\n\nPrices can move as anyone in the world trades.").button("Buy This Item").button("Sell This Item").button("Back");
- form.show(player).then(function(r){if(r.canceled||r.selection===undefined){showMarketPrices(player,page);return;}
-  if(r.selection===0)showQuantityForm(player,"buy",typeId,CONFIG.maximumTradeQuantity,{type:"marketDetail",id:typeId,page:page});
-  else if(r.selection===1){const count=countTradableItem(inventoryOf(player),typeId);if(count<1){tell(player,"You don't have any plain, undamaged "+prettyName(typeId)+" to sell.");showMarketItemDetail(player,typeId,page);}else showQuantityForm(player,"sell",typeId,count,{type:"marketDetail",id:typeId,page:page});}
-  else if(r.selection===2)showMarketPrices(player,page);
- }).catch(function(){tell(player,"The item details could not open. Try again.");showMarketPrices(player,page);});
+function showMarketItemDetail(player, typeId, page, oversaturatedOnly) {
+  const score = getScore(getMarket(), typeId);
+  let buyPrice = "Unavailable", sellPrice = "Unavailable";
+  try { buyPrice = money(unitPriceCents(score)); } catch {}
+  try { sellPrice = money(totalSaleProceeds(score, 1).net); } catch {}
+  const form = new ActionFormData()
+    .title(prettyName(typeId))
+    .body("Current shared-market score: " + score +
+      "\\nBuy price: " + buyPrice + " per item" +
+      "\\nEstimated first-item sale payout after tax: " + sellPrice +
+      "\\n\\nPrices can move as anyone in the world trades.")
+    .button("Buy This Item")
+    .button("Sell This Item")
+    .button("Price History Graph")
+    .button("Back");
+  form.show(player).then(function (r) {
+    if (r.canceled || r.selection === undefined) {
+      showMarketPrices(player, page, oversaturatedOnly);
+      return;
+    }
+    if (r.selection === 0) showQuantityForm(player, "buy", typeId, CONFIG.maximumTradeQuantity, { type: "marketDetail", id: typeId, page: page });
+    else if (r.selection === 1) {
+      const count = countTradableItem(inventoryOf(player), typeId);
+      if (count < 1) {
+        tell(player, "You don't have any plain, undamaged " + prettyName(typeId) + " to sell.");
+        showMarketItemDetail(player, typeId, page, oversaturatedOnly);
+      } else showQuantityForm(player, "sell", typeId, count, { type: "marketDetail", id: typeId, page: page });
+    } else if (r.selection === 2) showItemPriceHistory(player, typeId, page, oversaturatedOnly);
+    else if (r.selection === 3) showMarketPrices(player, page, oversaturatedOnly);
+  }).catch(function () {
+    tell(player, "The item details could not open. Try again.");
+    showMarketPrices(player, page, oversaturatedOnly);
+  });
 }
 
+function showTradeHistoryPage(player, page) {
+  const records = getRecentTradeRecords(70);
+  const pageSize = 6;
+  const maxPage = Math.max(0, Math.ceil(records.length / pageSize) - 1);
+  const safePage = Math.max(0, Math.min(Number.isSafeInteger(page) ? page : 0, maxPage));
+  const visible = records.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  const form = new ActionFormData()
+    .title("Trade History")
+    .body(records.length
+      ? "Recent completed trades across the shared market. Select a trade to view that item's price graph.\\nPage " + (safePage + 1) + " of " + (maxPage + 1)
+      : "No trade history has been recorded yet. Graphs appear after the first successful trades.");
+  const actions = [];
+  for (const record of visible) {
+    const actionLabel = record.action === "buy" ? "BOUGHT" : "SOLD";
+    const amount = Number.isSafeInteger(record.netCents) ? money(record.netCents) : "Unknown";
+    form.button(actionLabel + " " + record.quantity + " x " + prettyName(record.itemId) +
+      "\\n" + record.playerName + " | " + amount + " | tick " + record.tick);
+    actions.push({ type: "record", itemId: record.itemId });
+  }
+  if (safePage > 0) { form.button("Previous Page"); actions.push({ type: "previous" }); }
+  if (safePage < maxPage) { form.button("Next Page"); actions.push({ type: "next" }); }
+  form.button("Back to Market"); actions.push({ type: "back" });
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    const action = actions[response.selection];
+    if (!action) return;
+    if (action.type === "record") showItemPriceHistory(player, action.itemId, safePage, false);
+    else if (action.type === "previous") showTradeHistoryPage(player, safePage - 1);
+    else if (action.type === "next") showTradeHistoryPage(player, safePage + 1);
+    else if (action.type === "back") showMainMenu(player);
+  }).catch(function (error) {
+    console.warn("[Dynamic Economy] Could not open trade history: " + error);
+    tell(player, "Trade history could not open. Try again.");
+  });
+}
+
+function showItemPriceHistory(player, typeId, returnPage, oversaturatedOnly) {
+  const records = getRecentTradeRecords(100).filter(function (record) { return record.itemId === typeId; }).reverse();
+  const points = [];
+  for (const record of records) {
+    const chunks = Math.ceil(record.quantity / HISTORY_SERIES_CHUNK_SIZE);
+    for (let chunkIndex = 0; chunkIndex < chunks; chunkIndex++) {
+      const raw = world.getDynamicProperty(HISTORY_SERIES_PREFIX + record.id + ":" + chunkIndex);
+      if (typeof raw !== "string") continue;
+      try {
+        const chunk = JSON.parse(raw);
+        if (!chunk || chunk.itemId !== typeId || !Array.isArray(chunk.points)) continue;
+        for (const point of chunk.points) {
+          if (Number.isSafeInteger(point.priceCents) && point.priceCents > 0) {
+            points.push({ priceCents: point.priceCents, score: point.score, action: chunk.action, tick: point.tick });
+          }
+        }
+      } catch (error) {
+        console.warn("[Dynamic Economy] Skipping malformed price-history chunk: " + error);
+      }
+    }
+  }
+  const visible = points.slice(-32);
+  const prices = visible.map(function (point) { return point.priceCents; });
+  const min = prices.length ? Math.min.apply(null, prices) : 0;
+  const max = prices.length ? Math.max.apply(null, prices) : 0;
+  const bars = visible.map(function (point) {
+    const level = max === min ? 4 : Math.max(1, Math.min(8, Math.round(((point.priceCents - min) / (max - min)) * 7) + 1));
+    return "▁▂▃▄▅▆▇█"[level - 1];
+  }).join("");
+  let body = "Item: " + prettyName(typeId) + "\\nCurrent price: " + currentPriceLabel(typeId, "buy");
+  if (!visible.length) {
+    body += "\\n\\nNo saved price points for this item yet. New successful trades will add graph data.";
+  } else {
+    body += "\\n\\nRecent price trend (oldest → newest):\\n" + bars +
+      "\\nLow: " + money(min) + "   High: " + money(max) +
+      "\\nPoints shown: " + visible.length +
+      "\\n\\nEach bar represents a saved per-item price after a trade. The graph uses only saved trades, not estimated prices between trades.";
+    const recent = visible.slice(-5).reverse();
+    body += "\\n\\nLatest points:";
+    for (const point of recent) body += "\\n" + (point.action === "buy" ? "Buy" : "Sell") +
+      " · " + money(point.priceCents) + " · score " + point.score;
+  }
+  const form = new ActionFormData().title("Price History").body(body)
+    .button("Back to " + prettyName(typeId))
+    .button("Trade History Pages")
+    .button("Market Home");
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    if (response.selection === 0) showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
+    else if (response.selection === 1) showTradeHistoryPage(player, 0);
+    else if (response.selection === 2) showMainMenu(player);
+  }).catch(function () {
+    tell(player, "Price history could not open. Try again.");
+    showMarketItemDetail(player, typeId, returnPage, oversaturatedOnly);
+  });
+}
 
 function processClosedSellBarrel(dimension, location) {
   const key = barrelLocationId(dimension, location);
