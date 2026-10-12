@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Exploration Lattice v1.0.4",
+    "name": "Exploration Lattice v1.0.5",
     "description": "Progressively carves explored terrain into a world-origin-aligned 3D block lattice.",
     "uuid": "83cfcf91-27a0-45ce-9b57-1d5cf0f28c11",
     "version": [
       1,
       0,
-      4
+      5
     ],
     "min_engine_version": [
       1,
@@ -23,7 +23,7 @@
       "version": [
         1,
         0,
-        4
+        5
       ],
       "entry": "scripts/main.js"
     }
