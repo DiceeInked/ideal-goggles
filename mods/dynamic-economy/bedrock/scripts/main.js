@@ -922,14 +922,9 @@ function processClosedSellBarrel(dimension, location) {
     processingBarrels.delete(key);
   }
 }
-function claimUnownedSellBarrel(dimension, location, player) {
+function warnUnownedSellBarrel(dimension, location, player) {
   if (!player || readBarrelOwner(dimension, location)) return;
-  try {
-    writeBarrelOwner(dimension, location, { id: player.id, name: player.name });
-    tell(player, "This older Sell Barrel had no saved owner, so it is now assigned to you.");
-  } catch (error) {
-    console.warn("[Dynamic Economy] Could not claim older Sell Barrel: " + error);
-  }
+  tell(player, "This Sell Barrel has no saved owner, so it cannot sell items yet. Ask an operator to replace it with an owner-tagged Sell Barrel.");
 }
 function assignOwnerBeforePlacement(event) {
   const player = event && event.player;
@@ -983,7 +978,7 @@ function handleSellBarrelOpened(event) {
     if (!player) return;
     const location = event.block.location;
     addOpenBarrelUser(event.dimension, location, player);
-    claimUnownedSellBarrel(event.dimension, location, player);
+    warnUnownedSellBarrel(event.dimension, location, player);
   } catch (error) {
     console.warn("[Dynamic Economy] Sell Barrel open event failed: " + error);
   }
@@ -995,7 +990,7 @@ function handleSellBarrelClosed(event) {
     const location = event.block.location;
     if (player) {
       removeOpenBarrelUser(event.dimension, location, player);
-      claimUnownedSellBarrel(event.dimension, location, player);
+      warnUnownedSellBarrel(event.dimension, location, player);
     }
     system.runTimeout(function () { processClosedSellBarrel(event.dimension, location); }, 1);
   } catch (error) {
@@ -1209,6 +1204,14 @@ system.beforeEvents.startup.subscribe(function (startupEvent) {
 world.afterEvents.playerPlaceBlock.subscribe(placeOwnerFallback);
 world.afterEvents.blockContainerOpened.subscribe(handleSellBarrelOpened);
 world.afterEvents.blockContainerClosed.subscribe(handleSellBarrelClosed);
+world.afterEvents.playerLeave.subscribe(function (event) {
+  const playerId = event && event.playerId;
+  if (typeof playerId !== "string") return;
+  for (const [key, players] of openBarrelUsers.entries()) {
+    players.delete(playerId);
+    if (!players.size) openBarrelUsers.delete(key);
+  }
+});
 
 world.afterEvents.worldLoad.subscribe(function () {
   try {
