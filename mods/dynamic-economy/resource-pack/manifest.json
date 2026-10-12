@@ -2,7 +2,7 @@
   "format_version": 2,
   "header": {
     "name": "Sell Barrel Resources v1.0.3",
-    "description": "Inverted vanilla barrel textures and Sell Barrel name localization.",
+    "description": "Sell Barrel-only textures and display-name localization; vanilla barrel textures remain unchanged.",
     "uuid": "b88ee4c9-ae4b-4d31-8bcf-a1d77aa5c137",
     "version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        2
+        3
       ]
     }
   ]
