@@ -22,26 +22,32 @@ system.beforeEvents.startup.subscribe((event) => {
 
 world.afterEvents.worldLoad.subscribe(() => {
   try {
-    const lobby = world.getDimension(VOID_DIMENSION_ID);
-    buildSpawnPlatform(lobby);
+    world.getDimension(VOID_DIMENSION_ID);
     dimensionReady = true;
+    system.runTimeout(tryBuildSpawnPlatform, 20);
     world.sendMessage("§b[Spam Start] §fVoid lobby is ready.");
   } catch (error) {
     console.warn(`[Spam Start] Could not initialize the void lobby: ${error}`);
   }
 });
 
-function buildSpawnPlatform(dimension) {
-  if (platformBuilt) return;
-
-  // A small safe starting platform. Moderators can replace it after joining.
-  for (let x = -3; x <= 3; x++) {
-    for (let z = -3; z <= 3; z++) {
-      dimension.getBlock({ x, y: PLATFORM_Y, z })?.setType("minecraft:stone");
+function tryBuildSpawnPlatform() {
+  if (platformBuilt || !dimensionReady) return;
+  try {
+    const dimension = world.getDimension(VOID_DIMENSION_ID);
+    // A small safe starting platform. Moderators can replace it after joining.
+    for (let x = -3; x <= 3; x++) {
+      for (let z = -3; z <= 3; z++) {
+        const block = dimension.getBlock({ x, y: PLATFORM_Y, z });
+        if (!block) throw new Error("Lobby chunk is not ready yet.");
+        block.setType("minecraft:stone");
+      }
     }
+    platformBuilt = true;
+  } catch {
+    // The void chunk may not be loaded until a player is teleported there.
+    system.runTimeout(tryBuildSpawnPlatform, 20);
   }
-
-  platformBuilt = true;
 }
 
 function isLobbyDimension(dimension) {
@@ -59,6 +65,7 @@ function teleportToLobby(player) {
       dimension: world.getDimension(VOID_DIMENSION_ID),
       checkForBlocks: false,
     });
+    system.runTimeout(tryBuildSpawnPlatform, 5);
   } catch (error) {
     console.warn(`[Spam Start] Lobby teleport failed for ${player.name}: ${error}`);
   }
@@ -98,7 +105,7 @@ system.runInterval(() => {
 
 // Only moderators can edit blocks inside the lobby.
 world.beforeEvents.playerBreakBlock.subscribe((event) => {
-  if (!isLobbyDimension(event.block.dimension)) return;
+  if (!isLobbyDimension(event.dimension)) return;
   if (!event.player.hasTag(MODERATOR_TAG)) event.cancel = true;
 });
 
@@ -107,10 +114,17 @@ world.beforeEvents.playerPlaceBlock.subscribe((event) => {
   if (!event.player.hasTag(MODERATOR_TAG)) event.cancel = true;
 });
 
-// The void generator creates no natural terrain. Suppress entity spawning here as
-// an additional guard against any spawn source that might otherwise create mobs.
-world.beforeEvents.entitySpawn.subscribe((event) => {
-  if (isLobbyDimension(event.dimension)) event.cancel = true;
+// Entity spawning is an after-event in the Script API. Remove entities in the
+// mob family from the lobby while leaving players and decorative entities alone.
+world.afterEvents.entitySpawn.subscribe((event) => {
+  try {
+    const entity = event.entity;
+    if (isLobbyDimension(entity.dimension) && entity.matches({ families: ["mob"] })) {
+      entity.remove();
+    }
+  } catch (error) {
+    console.warn(`[Spam Start] Could not suppress a lobby mob: ${error}`);
+  }
 });
 
 world.afterEvents.scriptEventReceive.subscribe((event) => {

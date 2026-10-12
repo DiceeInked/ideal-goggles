@@ -7,7 +7,7 @@ A Minecraft Bedrock behavior-pack prototype for version 26.52. Spam Start regist
 - Registers `spam_start:void` through the experimental Custom Dimension API.
 - Sends players to `(0, 64, 0)` in the lobby on each join.
 - Creates a small starting platform at Y=63 so the spawn point is safe.
-- Blocks entity spawning in the lobby.
+- Removes entities in the mob family from the lobby while leaving players and decorative entities alone.
 - Restricts lobby block placement and breaking to players tagged as moderators.
 - Tracks each player's latest known Overworld position using persistent player dynamic properties.
 - Adds `/function spam_start` as a command-block-friendly return mechanism.
@@ -55,7 +55,7 @@ function spam_start
 
 The function tags the nearest player and sends a script event. Spam Start returns the tagged player to their latest saved Overworld location. If they have not yet had a position recorded, it uses the world's default spawn.
 
-For reliable button behavior, place the command block close enough that the player pressing the button is the nearest player to the command block.
+For reliable button behavior, place the command block close enough that the player pressing the button is the nearest player to it.
 
 Players may also run `/function spam_start` directly if they have command permission.
 

@@ -9,7 +9,7 @@ Spam Start is a Minecraft Bedrock Edition add-on for version 26.52 that sends pl
 - Register a custom void dimension named `spam_start:void` through the experimental Custom Dimension Script API.
 - On each player's initial spawn after joining a session, teleport them to the lobby at (0, 64, 0).
 - Build a small, safe starting platform at Y=63. Moderators can reshape or replace it.
-- Suppress entity spawning in the lobby.
+- Remove entities in the `mob` family from the lobby. This is an after-spawn cleanup because the Script API exposes entity spawn as an after-event.
 - Only players tagged `spam_start_moderator` can place or break blocks in the lobby. Operators can assign the tag with `/tag <player> add spam_start_moderator` and remove it with `/tag <player> remove spam_start_moderator`.
 - Do not change the global daylight cycle or weather settings.
 - Track each player's latest known Overworld position while they are in the Overworld.
