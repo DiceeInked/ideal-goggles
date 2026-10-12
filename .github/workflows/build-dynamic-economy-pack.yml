@@ -99,6 +99,10 @@ jobs:
               data = texture.read_bytes()
               assert data.startswith(b"\x89PNG\r\n\x1a\n") and struct.unpack(">II", data[16:24]) == (16, 16), f"Invalid or missing inverted barrel texture: {texture}"
           assert "tile.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel localization"
+          block_sounds = json.loads((rp / "blocks.json").read_text())
+          assert block_sounds.get("diceyinked:sell_barrel", {}).get("sound") == "wood", "Sell Barrel should use vanilla wood block sounds"
+          sound_textures = block_sounds.get("diceyinked:sell_barrel", {}).get("textures", {})
+          assert sound_textures == {"up": "barrel_top", "down": "barrel_bottom", "side": "barrel_side"}, "Sell Barrel block texture aliases must match terrain_texture.json"
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
@@ -111,7 +115,7 @@ jobs:
             OUT="$GITHUB_WORKSPACE/$OUT_REL"
             if [ -f "$SRC/scripts/main.js" ]; then cp "$SRC/scripts/main.js" "$RUNNER_TEMP/$PREFIX.mjs"; node --check "$RUNNER_TEMP/$PREFIX.mjs"; fi
             rm -f "$OUT"
-            (cd "$SRC"; zip -q -X "$OUT" manifest.json; for ENTRY in scripts blocks items item_catalog recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
+            (cd "$SRC"; zip -q -X "$OUT" manifest.json; if [ -f blocks.json ]; then zip -q -X "$OUT" blocks.json; fi; for ENTRY in scripts blocks items item_catalog recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
@@ -120,7 +124,7 @@ jobs:
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
           for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
-          for ENTRY in manifest.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
+          for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
           MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.12.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
