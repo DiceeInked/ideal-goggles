@@ -1,0 +1,61 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:block": {
+    "description": {
+      "identifier": "diceyinked:sell_barrel",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:geometry": {
+        "identifier": "minecraft:geometry.full_block"
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "barrel_side",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "barrel_top",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "barrel_bottom",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:item_visual": {
+        "geometry": {
+          "identifier": "minecraft:geometry.full_block"
+        },
+        "material_instances": {
+          "*": {
+            "texture": "barrel_side",
+            "render_method": "opaque"
+          },
+          "up": {
+            "texture": "barrel_top",
+            "render_method": "opaque"
+          },
+          "down": {
+            "texture": "barrel_bottom",
+            "render_method": "opaque"
+          }
+        }
+      },
+      "minecraft:collision_box": true,
+      "minecraft:selection_box": true,
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2.5
+      },
+      "minecraft:destructible_by_explosion": true,
+      "minecraft:block_entity": {
+        "container": {
+          "slot_count": 27
+        }
+      },
+      "minecraft:loot": "loot_tables/blocks/sell_barrel.json"
+    }
+  }
+}

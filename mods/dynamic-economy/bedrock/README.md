@@ -1,25 +1,24 @@
 # Dynamic Economy for Minecraft Bedrock
 
-## Version 0.3.4: menu navigation, color categories, and faster trading
+## Version 0.3.5: back navigation and Sell Barrel
 
-Hold a regular wooden stick and use/right-click to open the market. On touch devices, use the interact/use control while holding the stick.
+All ActionForm menu pages except the first/main menu have a bottom **Back** button labelled exactly **Back**, and Back navigates to the previous menu context. Bedrock search and quantity slider forms only permit a single built-in submit button, so cancelling those input forms returns to their parent menu.
 
-The market has **Buy Items**, **Sell Items**, **Market Prices**, and **My Balance**. Buy and sell lists are searchable and paginated. After a trade, the menu returns to the list or item-details page you were using rather than sending you all the way back to the market home screen.
+Buy items sort from highest price to lowest, then alphabetically for ties. Sell items sort by quantity owned, highest to lowest, then alphabetically. Buy sliders start at 1; sell sliders start at their maximum up to 64. **Sell All** sells the full quantity of a matching plain item in your inventory, even above 64.
 
-The buy menu sorts live prices from highest to lowest. Items with the same current price are sorted alphabetically. Buy quantity sliders start at **1**. The sell flow offers **Choose Quantity** and **Sell All**; the sell quantity slider starts at the maximum you can sell, up to **64** items.
+### Sell Barrel
+Craft it using the normal barrel layout with a stick in the center slot: 6 planks at the corners and left/right middle, wooden slabs at top-middle and bottom-middle, and a stick in the exact center. Place it and put items inside. Closing it sells plain, undamaged, unenchanted, unnamed vanilla items at the shared market price with 10% sales tax. Renamed, enchanted, damaged, or non-vanilla items remain inside.
 
-Buy and sell lists include a **Browse by Color** category for all 16 dye colors. Colored categories include matching wool, beds, carpet, banners, concrete and concrete powder, terracotta, stained glass, candles, shulker boxes, dye, and other supported matching colored item types.
+The Sell Barrel requires both packs. The combined `.mcaddon` bundles the behavior and resource packs:
+https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.5.mcaddon
 
-The shared world market price rises with purchases and falls with sales. Sales have a 10% tax. New players start with **$100.00**; existing saved balances are preserved.
+Behavior pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.5.mcpack
+Resource pack: https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.0.mcpack
 
-To protect customized gear, the sell menu lists only plain items with no custom name, lore, enchantments, or durability damage.
+After importing, enable Dynamic Economy under Behavior Packs and Sell Barrel Resources under Resource Packs. Back up the world before replacing packs.
 
-## Install on iPhone/iPad
+### Existing world data
+This version preserves the current economy header UUID, script module UUID, market property key, and per-player balance keys. Replacing the pack in the same world should preserve existing market data and balances. Do not delete the world or switch to a pack with a different UUID.
 
-Import the `.mcpack` using the direct link below. If the file opens in a preview, use Share and choose Minecraft.
-
-https://raw.githubusercontent.com/DiceeInked/ideal-goggles/feature/bedrock-dynamic-economy/mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.4.mcpack
-
-## Source and testing note
-
-The editable source is `scripts/main.js`. GitHub Actions checks JavaScript syntax, validates the manifest, and packages a versioned `.mcpack`. The pack still needs an in-game test in Minecraft itself; a successful build is not proof that every form interaction works identically on every device.
+### Testing
+GitHub Actions validates JSON, checks JavaScript syntax, and packages releases. Minecraft itself is not available for runtime testing here, so custom block inventory, close-event timing, texture mapping, and persistence still need in-game verification.

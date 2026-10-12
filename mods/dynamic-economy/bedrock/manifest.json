@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.4",
+    "name": "Dynamic Economy v0.3.5",
     "description": "A form-based global market. Use a wooden stick to open buy and sell menus.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      4
+      5
     ],
     "min_engine_version": [
       1,
@@ -23,7 +23,7 @@
       "version": [
         0,
         3,
-        4
+        5
       ],
       "entry": "scripts/main.js"
     }

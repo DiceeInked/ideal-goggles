@@ -1,73 +1,69 @@
 name: Build Bedrock Add-on Packs
-
 on:
   push:
-    branches:
-      - feature/bedrock-dynamic-economy
+    branches: [feature/bedrock-dynamic-economy]
     paths:
       - "mods/dynamic-economy/bedrock/**"
+      - "mods/dynamic-economy/resource-pack/**"
       - "mods/recovery-compass/bedrock/**"
       - ".github/workflows/build-dynamic-economy-pack.yml"
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Validate source and package .mcpack
+      - name: Validate sources and package .mcpack / .mcaddon
         shell: bash
         run: |
           set -euo pipefail
-          set -euo pipefail
-
-          package_pack() {
-            SRC="$1"
-            PREFIX="$2"
-            OUTDIR="$SRC/releases"
-            mkdir -p "$OUTDIR"
-            VERSION="$(python3 - "$SRC/manifest.json" <<'PY'
-          import json, sys
+          python3 - <<'PY'
+          import json
           from pathlib import Path
-          manifest = json.loads(Path(sys.argv[1]).read_text())
-          assert manifest.get("format_version") == 2, "Unexpected manifest format"
-          assert any(m.get("type") == "script" for m in manifest.get("modules", [])), "Script module missing"
-          version = ".".join(str(x) for x in manifest["header"]["version"])
-          print(version)
+          for folder in (Path("mods/dynamic-economy/bedrock"), Path("mods/dynamic-economy/resource-pack"), Path("mods/recovery-compass/bedrock")):
+              manifest_path = folder / "manifest.json"
+              manifest = json.loads(manifest_path.read_text())
+              assert manifest.get("format_version") == 2, f"Bad manifest format: {manifest_path}"
+              assert manifest.get("header", {}).get("uuid"), f"Missing header UUID: {manifest_path}"
+              assert manifest.get("modules"), f"Missing module: {manifest_path}"
+              for p in folder.rglob("*.json"):
+                  if "releases" not in p.parts: json.loads(p.read_text())
+              if any(m.get("type") == "script" for m in manifest["modules"]):
+                  assert (folder / "scripts" / "main.js").is_file(), f"Missing main.js: {folder}"
+          print("All pack manifests and JSON files parsed.")
           PY
-          )"
-            OUT="$OUTDIR/${PREFIX}_${VERSION}.mcpack"
-            cp "$SRC/scripts/main.js" "$RUNNER_TEMP/${PREFIX}.mjs"
-            node --check "$RUNNER_TEMP/${PREFIX}.mjs"
+          package_pack() {
+            SRC="$1"; PREFIX="$2"; OUT_REL="$3"
+            mkdir -p "$(dirname "$OUT_REL")"
+            OUT="$GITHUB_WORKSPACE/$OUT_REL"
+            if [ -f "$SRC/scripts/main.js" ]; then cp "$SRC/scripts/main.js" "$RUNNER_TEMP/$PREFIX.mjs"; node --check "$RUNNER_TEMP/$PREFIX.mjs"; fi
             rm -f "$OUT"
-            (
-              cd "$SRC"
-              zip -q -X "$GITHUB_WORKSPACE/$OUT" manifest.json scripts/main.js
-              if [ -f pack_icon.png ]; then
-                zip -q -X -u "$GITHUB_WORKSPACE/$OUT" pack_icon.png
-              fi
-            )
+            (cd "$SRC"; zip -q -X "$OUT" manifest.json; for ENTRY in scripts blocks recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
             unzip -t "$OUT"
-            echo "Built $OUT"
+            echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock"
-          package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock"
-
-      - name: Commit generated pack when changed
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.5.mcpack"
+          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.0.mcpack"
+          package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
+          STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
+          for ENTRY in manifest.json scripts blocks recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
+          for ENTRY in manifest.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.5.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
+          unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
+      - name: Commit generated packs when changed
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add mods/dynamic-economy/bedrock/releases/*.mcpack mods/recovery-compass/bedrock/releases/*.mcpack
-          if git diff --cached --quiet; then
-            echo "No generated pack changes to commit."
-            exit 0
-          fi
-          git commit -m "Build Dynamic Economy Bedrock pack from source"
+          git add mods/dynamic-economy/bedrock/releases/*.mcpack
+          git add mods/dynamic-economy/bedrock/releases/*.mcaddon
+          git add mods/dynamic-economy/resource-pack/releases/*.mcpack
+          git add mods/recovery-compass/bedrock/releases/*.mcpack
+          if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
+          git commit -m "Build updated Dynamic Economy and Sell Barrel packs"
           git push
