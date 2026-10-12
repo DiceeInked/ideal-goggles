@@ -6,7 +6,7 @@ const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
 const CHUNKS_RADIUS = 4; // Radius 4 means up to 9 x 9 chunks per player.
 const RESCAN_INTERVAL_TICKS = 20;
-const BLOCK_BUDGET_PER_TICK = 4096; // Higher throughput; fluid-neighbor checks are only done for blocks that would actually be removed.
+const BLOCK_BUDGET_PER_TICK = 8192; // Increased throughput; no adjacent-fluid scans or gravity-support bookkeeping.
 
 const queuedChunks = [];
 const queuedKeys = new Set();
@@ -60,23 +60,6 @@ function isWaterlogged(block) {
 
 function isGravityBlock(block) {
   return GRAVITY_BLOCKS.has(block.typeId);
-}
-
-function isNearFluid(dimension, x, y, z) {
-  const neighbors = [
-    { x: x + 1, y, z }, { x: x - 1, y, z },
-    { x, y: y + 1, z }, { x, y: y - 1, z },
-    { x, y, z: z + 1 }, { x, y, z: z - 1 }
-  ];
-  for (const location of neighbors) {
-    try {
-      const neighbor = dimension.getBlock(location);
-      if (neighbor && (neighbor.isLiquid || isWaterlogged(neighbor))) return true;
-    } catch (error) {
-      // Ignore inaccessible neighbor positions; the current block is still checked.
-    }
-  }
-  return false;
 }
 
 function scanPlayerAreas() {
@@ -162,9 +145,8 @@ function scanPlayerAreas() {
       ...candidate,
       xOffset: 0,
       zOffset: 0,
-      // Scan from top to bottom so falling blocks can protect their support.
-      y: candidate.maxYExclusive - 1,
-      protectBelow: false
+      // Scan top-down; gravity blocks themselves are preserved, without preserving supports.
+      y: candidate.maxYExclusive - 1
     });
   }
 
@@ -217,7 +199,7 @@ function processOneBlock(job) {
   const z = job.startZ + job.zOffset;
 
   try {
-    const dimension = world.getDimension(job.dimensionId);
+    const dimension = job.dimension || world.getDimension(job.dimensionId);
     const block = dimension.getBlock({ x, y, z });
 
     if (!block) {
@@ -226,24 +208,19 @@ function processOneBlock(job) {
     }
 
     const gravityBlock = isGravityBlock(block);
-    const protectedSupport = job.protectBelow === true;
     const bedrockBlock = block.typeId === "minecraft:bedrock";
     const fluidBlock = block.isLiquid || isWaterlogged(block);
     const eligibleForRemoval = !block.isAir &&
         !bedrockBlock &&
         !fluidBlock &&
         !gravityBlock &&
-        !protectedSupport &&
         !isLatticeBlock(x, y, z);
 
-    // Cheap exclusions come first. Only inspect adjacent blocks when this
-    // block would otherwise be deleted, reducing expensive API calls sharply.
-    if (eligibleForRemoval && !isNearFluid(dimension, x, y, z)) {
+    // Preserve fluids, waterlogged blocks, bedrock, and gravity blocks only.
+    // No neighboring-block checks or extra support blocks are needed.
+    if (eligibleForRemoval) {
       dimension.setBlockType({ x, y, z }, "minecraft:air");
     }
-
-    // Descending scan preserves the support under sand, gravel, anvils, etc.
-    job.protectBelow = gravityBlock;
   } catch (error) {
     releaseJobForRetry(job);
     return;
@@ -253,7 +230,6 @@ function processOneBlock(job) {
   job.y--;
   if (job.y < job.minY) {
     job.y = job.maxYExclusive - 1;
-    job.protectBelow = false;
     job.xOffset++;
 
     if (job.xOffset >= CHUNK_SIZE) {
