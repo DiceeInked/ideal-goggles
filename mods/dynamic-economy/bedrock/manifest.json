@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.15",
+    "name": "Dynamic Economy v0.3.16",
     "description": "A shared market. Use a wooden stick or any vanilla sword to open buy and sell menus.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      15
+      16
     ],
     "min_engine_version": [
       1,
@@ -23,7 +23,7 @@
       "version": [
         0,
         3,
-        15
+        16
       ],
       "entry": "scripts/main.js"
     }
@@ -31,7 +31,7 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.9.0"
+      "version": "2.10.0"
     },
     {
       "module_name": "@minecraft/server-ui",
