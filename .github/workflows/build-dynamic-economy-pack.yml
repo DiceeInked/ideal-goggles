@@ -1,4 +1,4 @@
-name: Build Dynamic Economy Bedrock Pack
+name: Build Bedrock Add-on Packs
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - feature/bedrock-dynamic-economy
     paths:
       - "mods/dynamic-economy/bedrock/**"
+      - "mods/recovery-compass/bedrock/**"
       - ".github/workflows/build-dynamic-economy-pack.yml"
   workflow_dispatch:
 
@@ -23,38 +24,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SRC="mods/dynamic-economy/bedrock"
-          OUTDIR="$SRC/releases"
-          mkdir -p "$OUTDIR"
+          set -euo pipefail
 
-          python3 - <<'PY'
-          import json
+          package_pack() {
+            SRC="$1"
+            PREFIX="$2"
+            OUTDIR="$SRC/releases"
+            mkdir -p "$OUTDIR"
+            VERSION="$(python3 - "$SRC/manifest.json" <<'PY'
+          import json, sys
           from pathlib import Path
-          root = Path("mods/dynamic-economy/bedrock")
-          manifest = json.loads((root / "manifest.json").read_text())
+          manifest = json.loads(Path(sys.argv[1]).read_text())
           assert manifest.get("format_version") == 2, "Unexpected manifest format"
           assert any(m.get("type") == "script" for m in manifest.get("modules", [])), "Script module missing"
-          assert (root / "scripts" / "main.js").is_file(), "scripts/main.js missing"
           version = ".".join(str(x) for x in manifest["header"]["version"])
-          print(f"Pack version: {version}")
-          (Path("/tmp/dynamic-economy-version.txt")).write_text(version)
+          print(version)
           PY
-
-          VERSION="$(cat /tmp/dynamic-economy-version.txt)"
-          OUT="$OUTDIR/DynamicEconomy_Bedrock_${VERSION}.mcpack"
-          cp "mods/dynamic-economy/bedrock/scripts/main.js" "$RUNNER_TEMP/main.mjs"
-          node --check "$RUNNER_TEMP/main.mjs"
-
-          rm -f "$OUT"
-          (
-            cd "$SRC"
-            zip -q -X "$GITHUB_WORKSPACE/$OUT" manifest.json scripts/main.js
-            if [ -f pack_icon.png ]; then
-              zip -q -X -u "$GITHUB_WORKSPACE/$OUT" pack_icon.png
-            fi
-          )
-          unzip -t "$OUT"
-          echo "Built $OUT"
+          )"
+            OUT="$OUTDIR/${PREFIX}_${VERSION}.mcpack"
+            cp "$SRC/scripts/main.js" "$RUNNER_TEMP/${PREFIX}.mjs"
+            node --check "$RUNNER_TEMP/${PREFIX}.mjs"
+            rm -f "$OUT"
+            (
+              cd "$SRC"
+              zip -q -X "$GITHUB_WORKSPACE/$OUT" manifest.json scripts/main.js
+              if [ -f pack_icon.png ]; then
+                zip -q -X -u "$GITHUB_WORKSPACE/$OUT" pack_icon.png
+              fi
+            )
+            unzip -t "$OUT"
+            echo "Built $OUT"
+          }
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock"
+          package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock"
 
       - name: Commit generated pack when changed
         shell: bash
@@ -62,7 +64,7 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add mods/dynamic-economy/bedrock/releases/*.mcpack
+          git add mods/dynamic-economy/bedrock/releases/*.mcpack mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then
             echo "No generated pack changes to commit."
             exit 0

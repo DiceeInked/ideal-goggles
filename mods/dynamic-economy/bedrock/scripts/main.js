@@ -18,6 +18,24 @@ const CONFIG = Object.freeze({
   pageSize: 7,
 });
 
+const DYE_COLORS = [
+  { id: "white", name: "White" }, { id: "light_gray", name: "Light Gray" },
+  { id: "gray", name: "Gray" }, { id: "black", name: "Black" },
+  { id: "brown", name: "Brown" }, { id: "red", name: "Red" },
+  { id: "orange", name: "Orange" }, { id: "yellow", name: "Yellow" },
+  { id: "lime", name: "Lime" }, { id: "green", name: "Green" },
+  { id: "cyan", name: "Cyan" }, { id: "light_blue", name: "Light Blue" },
+  { id: "blue", name: "Blue" }, { id: "purple", name: "Purple" },
+  { id: "magenta", name: "Magenta" }, { id: "pink", name: "Pink" }
+];
+const COLOR_PAGE_SIZE = 8;
+const COLOR_ITEM_SUFFIXES = [
+  "_wool", "_carpet", "_bed", "_banner", "_shulker_box",
+  "_terracotta", "_glazed_terracotta", "_concrete", "_concrete_powder",
+  "_stained_glass", "_stained_glass_pane", "_candle", "_dye",
+  "_bundle", "_harness"
+];
+
 const MARKET_KEY = CONFIG.namespace + ":market";
 const BALANCE_PREFIX = CONFIG.namespace + ":balance:";
 const openCooldown = new Map();
@@ -83,6 +101,24 @@ function prettyName(itemId) {
   return itemId.replace(/^[^:]+:/, "").split("_")
     .map(function (part) { return part.length ? part[0].toUpperCase() + part.slice(1) : part; })
     .join(" ");
+}
+function colorDisplayName(colorId) {
+  const color = DYE_COLORS.find(function (entry) { return entry.id === colorId; });
+  return color ? color.name : "Colored";
+}
+function isColoredItem(itemId, colorId) {
+  const bareId = itemId.replace(/^minecraft:/, "");
+  if (bareId.indexOf(colorId + "_") !== 0) return false;
+  return COLOR_ITEM_SUFFIXES.some(function (suffix) { return bareId.endsWith(suffix); });
+}
+function returnToMenu(player, destination) {
+  const target = destination || { type: "main" };
+  if (target.type === "buy") showBuyMenu(player, target.query || "", target.page || 0, target.colorId || "");
+  else if (target.type === "sell") showSellMenu(player, target.query || "", target.page || 0, target.colorId || "");
+  else if (target.type === "marketDetail") showMarketItemDetail(player, target.id, target.page || 0);
+  else if (target.type === "marketPrices") showMarketPrices(player, target.page || 0);
+  else if (target.type === "colors") showColorMenu(player, target.mode, target.page || 0, target.returnTo);
+  else showMainMenu(player);
 }
 function safePlainStack(stack) {
   if (!stack) return false;
@@ -306,7 +342,8 @@ function showMainMenu(player) {
     tell(player, "The market menu could not open. Close other menus and try again.");
   });
 }
-function showSearchForm(player, mode, currentQuery) {
+function showSearchForm(player, mode, currentQuery, currentColorId) {
+  const colorFilter = currentColorId || "";
   const noun = mode === "buy" ? "items" : "your inventory";
   const form = new ModalFormData()
     .title("Search " + (mode === "buy" ? "Market" : "Inventory"))
@@ -318,16 +355,55 @@ function showSearchForm(player, mode, currentQuery) {
       return;
     }
     const query = String(response.formValues[0] || "").trim().toLowerCase();
-    if (mode === "buy") showBuyMenu(player, query, 0);
-    else showSellMenu(player, query, 0);
+    if (mode === "buy") showBuyMenu(player, query, 0, colorFilter);
+    else showSellMenu(player, query, 0, colorFilter);
   }).catch(function () {
     tell(player, "The search form could not open. Try again.");
   });
 }
-function showBuyMenu(player, query, page) {
+
+function showColorMenu(player, mode, page, returnTo) {
+  const maxPage = Math.ceil(DYE_COLORS.length / COLOR_PAGE_SIZE) - 1;
+  const safePage = Math.max(0, Math.min(page || 0, maxPage));
+  const form = new ActionFormData()
+    .title((mode === "buy" ? "Buy by Color" : "Sell by Color"))
+    .body("Choose a color. Matching items include wool, beds, carpet, banners, concrete, terracotta, glass, candles, shulker boxes, and dye when available.\nPage " +
+      (safePage + 1) + " of " + (maxPage + 1));
+  const actions = [];
+  for (const color of DYE_COLORS.slice(safePage * COLOR_PAGE_SIZE, (safePage + 1) * COLOR_PAGE_SIZE)) {
+    form.button(color.name + " Items");
+    actions.push({ type: "color", id: color.id });
+  }
+  if (safePage > 0) { form.button("Previous Colors"); actions.push({ type: "previous" }); }
+  if (safePage < maxPage) { form.button("More Colors"); actions.push({ type: "next" }); }
+  form.button(mode === "buy" ? "Back to Buy Items" : "Back to Sell Items");
+  actions.push({ type: "back" });
+  form.show(player).then(function (response) {
+    if (response.canceled || response.selection === undefined) return;
+    const action = actions[response.selection];
+    if (!action) return;
+    if (action.type === "color") {
+      if (mode === "buy") showBuyMenu(player, "", 0, action.id);
+      else showSellMenu(player, "", 0, action.id);
+    } else if (action.type === "previous") showColorMenu(player, mode, safePage - 1, returnTo);
+    else if (action.type === "next") showColorMenu(player, mode, safePage + 1, returnTo);
+    else if (action.type === "back") returnToMenu(player, returnTo);
+  }).catch(function () { tell(player, "The color menu could not open. Try again."); });
+}
+
+function showBuyMenu(player, query, page, colorId) {
+  const colorFilter = colorId || "";
+  const market = getMarket();
   const matches = getCatalog().filter(function (item) {
-    return !query || item.id.toLowerCase().indexOf(query) >= 0 ||
+    const matchesQuery = !query || item.id.toLowerCase().indexOf(query) >= 0 ||
       item.name.toLowerCase().indexOf(query) >= 0;
+    return matchesQuery && (!colorFilter || isColoredItem(item.id, colorFilter));
+  });
+  matches.sort(function (a, b) {
+    let priceA = 0, priceB = 0;
+    try { priceA = unitPriceCents(getScore(market, a.id)); } catch {}
+    try { priceB = unitPriceCents(getScore(market, b.id)); } catch {}
+    return priceB - priceA || a.name.localeCompare(b.name);
   });
   if (!matches.length) {
     tell(player, "No items matched that search. Try a shorter name or item ID.");
@@ -336,8 +412,9 @@ function showBuyMenu(player, query, page) {
   const safePage = Math.max(0, Math.min(page, maxPage));
   const form = new ActionFormData()
     .title("Buy Items")
-    .body((query ? "Search: " + query + "\n" : "") +
-      "Choose an item. Current prices are shown; the price rises with each unit bought.\n" +
+    .body((colorFilter ? "Color: " + colorDisplayName(colorFilter) + "\n" : "") +
+      (query ? "Search: " + query + "\n" : "") +
+      "Choose an item. Current prices are shown; the price rises with each unit bought. Items are sorted from highest price to lowest, with alphabetical order for ties.\n" +
       "Page " + (safePage + 1) + " of " + (maxPage + 1));
   const actions = [];
   const pageItems = matches.slice(safePage * CONFIG.pageSize, (safePage + 1) * CONFIG.pageSize);
@@ -359,6 +436,9 @@ function showBuyMenu(player, query, page) {
     form.button("Clear Search");
     actions.push({ type: "clear" });
   }
+  form.button("Browse by Color");
+  actions.push({ type: "colors" });
+  if (colorFilter) { form.button("All Buy Items"); actions.push({ type: "all" }); }
   form.button("Back to Market");
   actions.push({ type: "back" });
 
@@ -366,24 +446,37 @@ function showBuyMenu(player, query, page) {
     if (response.canceled || response.selection === undefined) return;
     const action = actions[response.selection];
     if (!action) return;
-    if (action.type === "item") showQuantityForm(player, "buy", action.id, CONFIG.maximumTradeQuantity);
+    if (action.type === "item") showQuantityForm(player, "buy", action.id, CONFIG.maximumTradeQuantity, {
+      type: "buy", query: query, page: safePage, colorId: colorFilter
+    });
     else if (action.type === "previous") showBuyMenu(player, query, safePage - 1);
     else if (action.type === "next") showBuyMenu(player, query, safePage + 1);
-    else if (action.type === "search") showSearchForm(player, "buy", query);
-    else if (action.type === "clear") showBuyMenu(player, "", 0);
+    else if (action.type === "search") showSearchForm(player, "buy", query, colorFilter);
+    else if (action.type === "clear") showBuyMenu(player, "", 0, colorFilter);
+    else if (action.type === "colors") showColorMenu(player, "buy", 0, {
+      type: "buy", query: query, page: safePage, colorId: colorFilter
+    });
+    else if (action.type === "all") showBuyMenu(player, query, 0, "");
     else if (action.type === "back") showMainMenu(player);
   }).catch(function () {
     tell(player, "The buy menu could not open. Close other menus and try again.");
   });
 }
-function showSellMenu(player, query, page) {
+function showSellMenu(player, query, page, colorId) {
+  const colorFilter = colorId || "";
   const matches = getSellableInventory(player).filter(function (item) {
-    return !query || item.id.toLowerCase().indexOf(query) >= 0 ||
+    const matchesQuery = !query || item.id.toLowerCase().indexOf(query) >= 0 ||
       item.name.toLowerCase().indexOf(query) >= 0;
+    return matchesQuery && (!colorFilter || isColoredItem(item.id, colorFilter));
   });
   if (!matches.length) {
-    tell(player, query ? "No sellable items matched that search." : "You don't have any plain, undamaged items to sell.");
-    if (query) showSearchForm(player, "sell", query);
+    tell(player, query
+      ? "No sellable items matched that search."
+      : colorFilter
+        ? "You don't have any sellable " + colorDisplayName(colorFilter) + " items."
+        : "You don't have any plain, undamaged items to sell.");
+    if (query) showSearchForm(player, "sell", query, colorFilter);
+    else if (colorFilter) showColorMenu(player, "sell", 0, { type: "sell", query: "", page: 0, colorId: "" });
     else showMainMenu(player);
     return;
   }
@@ -391,7 +484,8 @@ function showSellMenu(player, query, page) {
   const safePage = Math.max(0, Math.min(page, maxPage));
   const form = new ActionFormData()
     .title("Sell Items")
-    .body((query ? "Search: " + query + "\n" : "") +
+    .body((colorFilter ? "Color: " + colorDisplayName(colorFilter) + "\n" : "") +
+      (query ? "Search: " + query + "\n" : "") +
       "Only plain, undamaged items are listed, to protect renamed or enchanted gear.\n" +
       "Page " + (safePage + 1) + " of " + (maxPage + 1));
   const actions = [];
@@ -414,6 +508,9 @@ function showSellMenu(player, query, page) {
     form.button("Clear Search");
     actions.push({ type: "clear" });
   }
+  form.button("Browse by Color");
+  actions.push({ type: "colors" });
+  if (colorFilter) { form.button("All Sell Items"); actions.push({ type: "all" }); }
   form.button("Back to Market");
   actions.push({ type: "back" });
 
@@ -423,33 +520,68 @@ function showSellMenu(player, query, page) {
     if (!action) return;
     if (action.type === "item") {
       const currentCount = countTradableItem(inventoryOf(player), action.id);
-      showQuantityForm(player, "sell", action.id, Math.min(CONFIG.maximumTradeQuantity, currentCount));
+      showQuantityForm(player, "sell", action.id, Math.min(CONFIG.maximumTradeQuantity, currentCount), {
+        type: "sell", query: query, page: safePage, colorId: colorFilter
+      });
     } else if (action.type === "previous") showSellMenu(player, query, safePage - 1);
     else if (action.type === "next") showSellMenu(player, query, safePage + 1);
-    else if (action.type === "search") showSearchForm(player, "sell", query);
-    else if (action.type === "clear") showSellMenu(player, "", 0);
+    else if (action.type === "search") showSearchForm(player, "sell", query, colorFilter);
+    else if (action.type === "clear") showSellMenu(player, "", 0, colorFilter);
+    else if (action.type === "colors") showColorMenu(player, "sell", 0, {
+      type: "sell", query: query, page: safePage, colorId: colorFilter
+    });
+    else if (action.type === "all") showSellMenu(player, query, 0, "");
     else if (action.type === "back") showMainMenu(player);
   }).catch(function () {
     tell(player, "The sell menu could not open. Close other menus and try again.");
   });
 }
-function showQuantityForm(player, mode, typeId, maximum) {
+
+function showQuantityForm(player, mode, typeId, maximum, returnTo) {
   if (maximum < 1) {
     tell(player, "You don't have that item available to sell.");
-    showSellMenu(player, "", 0);
-    return;
-  }
-  const score = getScore(getMarket(), typeId);
-  let priceNote;
-  try {
-    priceNote = mode === "buy"
-      ? "Current unit price: " + money(unitPriceCents(score)) + ". The price rises per item bought."
-      : "First unit's estimated payout after tax: " + money(totalSaleProceeds(score, 1).net) + ". The price falls as you sell.";
-  } catch (error) {
-    tell(player, error instanceof Error ? error.message : "This item can't be traded right now.");
+    returnToMenu(player, returnTo);
     return;
   }
   const max = Math.min(CONFIG.maximumTradeQuantity, maximum);
+  const score = getScore(getMarket(), typeId);
+  if (mode === "sell") {
+    let priceNote;
+    try {
+      priceNote = "First item's estimated payout after tax: " + money(totalSaleProceeds(score, 1).net) + ".";
+    } catch (error) {
+      tell(player, error instanceof Error ? error.message : "This item can't be traded right now.");
+      return;
+    }
+    const form = new ActionFormData()
+      .title("Sell " + prettyName(typeId))
+      .body("You can sell up to " + max + " " + prettyName(typeId) + ".\n" + priceNote +
+        "\n\nChoose a custom quantity or sell all available items at once.")
+      .button("Choose Quantity")
+      .button("Sell All (" + max + ")")
+      .button("Back");
+    form.show(player).then(function (response) {
+      if (response.canceled || response.selection === undefined) return;
+      if (response.selection === 0) showQuantitySliderForm(player, mode, typeId, max, score, returnTo);
+      else if (response.selection === 1) showTradeConfirmation(player, "sell", typeId, max, score, returnTo);
+      else if (response.selection === 2) returnToMenu(player, returnTo);
+    }).catch(function (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.warn("[Dynamic Economy] Sell quantity choices rejected for " + typeId + ": " + detail);
+      tell(player, "Sell quantity menu error: " + detail);
+    });
+    return;
+  }
+  showQuantitySliderForm(player, mode, typeId, max, score, returnTo);
+}
+function showQuantitySliderForm(player, mode, typeId, maximum, quotedScore, returnTo) {
+  const max = Math.min(CONFIG.maximumTradeQuantity, maximum);
+  if (max < 1) {
+    tell(player, "You don't have that item available to sell.");
+    returnToMenu(player, returnTo);
+    return;
+  }
+  const score = quotedScore;
   const firstItemPrice = mode === "buy"
     ? money(unitPriceCents(score))
     : money(totalSaleProceeds(score, 1).net) + " net";
@@ -458,15 +590,14 @@ function showQuantityForm(player, mode, typeId, maximum) {
   const form = new ModalFormData()
     .title((mode === "buy" ? "Buy " : "Sell ") + prettyName(typeId));
   if (hasQuantitySlider) {
-    form.slider(quantityLabel, 1, max, { defaultValue: Math.min(max, 8), valueStep: 1 });
+    form.slider(quantityLabel, 1, max, {
+      defaultValue: mode === "buy" ? 1 : max,
+      valueStep: 1
+    });
   } else {
-    // Avoid a 1-to-1 slider, which some Bedrock clients reject when rendering forms.
     form.dropdown(quantityLabel, ["1"], { defaultValueIndex: 0 });
   }
   form.submitButton(mode === "buy" ? "Review Purchase" : "Review Sale");
-
-  // Give Bedrock a couple of ticks to finish closing the previous form before
-  // opening this one. Chained forms can otherwise be rejected on some clients.
   system.runTimeout(function () {
     try {
       form.show(player).then(function (response) {
@@ -474,7 +605,7 @@ function showQuantityForm(player, mode, typeId, maximum) {
         const quantity = hasQuantitySlider
           ? parseQuantity(Math.round(Number(response.formValues[0])))
           : parseQuantity(Number(response.formValues[0]) + 1);
-        showTradeConfirmation(player, mode, typeId, quantity, score);
+        showTradeConfirmation(player, mode, typeId, quantity, score, returnTo);
       }).catch(function (error) {
         const detail = error instanceof Error ? error.message : String(error);
         console.warn("[Dynamic Economy] Quantity form rejected for " + typeId + ": " + detail);
@@ -487,13 +618,13 @@ function showQuantityForm(player, mode, typeId, maximum) {
     }
   }, 2);
 }
-function showTradeConfirmation(player, mode, typeId, quantity, quotedScore) {
+function showTradeConfirmation(player, mode, typeId, quantity, quotedScore, returnTo) {
   const currentScore = getScore(getMarket(), typeId);
   if (currentScore !== quotedScore) {
     tell(player, "The market price changed while you were choosing. Please review the new quote.");
     const max = mode === "buy" ? CONFIG.maximumTradeQuantity :
       Math.min(CONFIG.maximumTradeQuantity, countTradableItem(inventoryOf(player), typeId));
-    showQuantityForm(player, mode, typeId, max);
+    showQuantityForm(player, mode, typeId, max, returnTo);
     return;
   }
   let body;
@@ -522,7 +653,7 @@ function showTradeConfirmation(player, mode, typeId, quantity, quotedScore) {
     if (response.selection === 1) {
       const max = mode === "buy" ? CONFIG.maximumTradeQuantity :
         Math.min(CONFIG.maximumTradeQuantity, countTradableItem(inventoryOf(player), typeId));
-      showQuantityForm(player, mode, typeId, max);
+      showQuantityForm(player, mode, typeId, max, returnTo);
       return;
     }
     if (response.selection !== 0) return;
@@ -530,19 +661,19 @@ function showTradeConfirmation(player, mode, typeId, quantity, quotedScore) {
       tell(player, "The price changed before confirmation, so no trade was made. Review the fresh quote.");
       const max = mode === "buy" ? CONFIG.maximumTradeQuantity :
         Math.min(CONFIG.maximumTradeQuantity, countTradableItem(inventoryOf(player), typeId));
-      showQuantityForm(player, mode, typeId, max);
+      showQuantityForm(player, mode, typeId, max, returnTo);
       return;
     }
     try {
       if (mode === "buy") buy(player, typeId, quantity);
       else sell(player, typeId, quantity);
       system.runTimeout(function () {
-        try { showMainMenu(player); } catch {}
+        try { returnToMenu(player, returnTo); } catch {}
       }, 5);
     } catch (error) {
       tell(player, error instanceof Error ? error.message : "Trade failed safely.");
       system.runTimeout(function () {
-        try { showMainMenu(player); } catch {}
+        try { returnToMenu(player, returnTo); } catch {}
       }, 5);
     }
   }).catch(function () {
@@ -614,14 +745,18 @@ function showMarketItemDetail(player, typeId, page) {
     .button("Market Home");
   form.show(player).then(function (response) {
     if (response.canceled || response.selection === undefined) return;
-    if (response.selection === 0) showQuantityForm(player, "buy", typeId, CONFIG.maximumTradeQuantity);
+    if (response.selection === 0) showQuantityForm(player, "buy", typeId, CONFIG.maximumTradeQuantity, {
+      type: "marketDetail", id: typeId, page: page
+    });
     else if (response.selection === 1) {
       const count = countTradableItem(inventoryOf(player), typeId);
       if (count < 1) {
         tell(player, "You don't have any plain, undamaged " + prettyName(typeId) + " to sell.");
         showMarketItemDetail(player, typeId, page);
       } else {
-        showQuantityForm(player, "sell", typeId, Math.min(CONFIG.maximumTradeQuantity, count));
+        showQuantityForm(player, "sell", typeId, Math.min(CONFIG.maximumTradeQuantity, count), {
+          type: "marketDetail", id: typeId, page: page
+        });
       }
     } else if (response.selection === 2) showMarketPrices(player, page);
     else if (response.selection === 3) showMainMenu(player);
