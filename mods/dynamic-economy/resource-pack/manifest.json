@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Sell Barrel Resources v1.0.0",
+    "name": "Sell Barrel Resources v1.0.1",
     "description": "Vanilla barrel textures and Sell Barrel name localization.",
     "uuid": "b88ee4c9-ae4b-4d31-8bcf-a1d77aa5c137",
     "version": [
       1,
       0,
-      0
+      1
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        0
+        1
       ]
     }
   ]
