@@ -87,7 +87,7 @@ jobs:
           assert recipe.get("result", {}).get("item") == "diceyinked:sell_barrel", "Recipe output mismatch"
           assert recipe.get("pattern") == ["PSP", "PAP", "PSP"], "Unexpected Sell Barrel crafting pattern"
           assert recipe.get("key", {}).get("A", {}).get("item") == "minecraft:stick", "Sell Barrel recipe must have a center stick"
-          assert recipe.get("unlock") == {"context": "AlwaysUnlocked"}, "Sell Barrel recipe must use the current AlwaysUnlocked object schema"
+          assert recipe.get("unlock") == [{"context": "AlwaysUnlocked"}], "Sell Barrel recipe must be explicitly unlocked"
           item_file = json.loads((bp / "items/sell_barrel.json").read_text())
           assert item_file.get("format_version") == "1.26.40", "Sell Barrel item must target Bedrock 1.26.40+ content format"
           item = item_file["minecraft:item"]
