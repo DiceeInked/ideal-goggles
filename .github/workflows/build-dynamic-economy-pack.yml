@@ -65,6 +65,14 @@ jobs:
           assert definition.get("description", {}).get("identifier") == "diceyinked:sell_barrel", "Unexpected Sell Barrel identifier"
           assert definition.get("description", {}).get("menu_category", {}).get("category") == "items", "Sell Barrel must appear in Creative inventory"
           components = definition.get("components", {})
+          material_textures = components.get("minecraft:material_instances", {})
+          assert material_textures.get("*", {}).get("texture") == "sell_barrel_side", "Sell Barrel must use its own side texture alias"
+          assert material_textures.get("up", {}).get("texture") == "sell_barrel_top", "Sell Barrel must use its own top texture alias"
+          assert material_textures.get("down", {}).get("texture") == "sell_barrel_bottom", "Sell Barrel must use its own bottom texture alias"
+          terrain = json.loads((rp / "textures/terrain_texture.json").read_text()).get("texture_data", {})
+          for alias in ("sell_barrel_side", "sell_barrel_top", "sell_barrel_bottom"):
+              assert alias in terrain, f"Missing dedicated Sell Barrel terrain texture alias: {alias}"
+          assert not any(alias in terrain for alias in ("barrel_side", "barrel_top", "barrel_bottom")), "Resource pack must not override vanilla barrel texture aliases"
           mining = components.get("minecraft:destructible_by_mining", {})
           assert mining.get("seconds_to_destroy") == 2.5, "Sell Barrel base mining hardness should match a wooden barrel"
           axe_speeds = mining.get("item_specific_speeds", [])
