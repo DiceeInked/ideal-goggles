@@ -27,8 +27,10 @@
       "item": "diceyinked:sell_barrel",
       "count": 1
     },
-    "unlock": {
-      "context": "AlwaysUnlocked"
-    }
+    "unlock": [
+      {
+        "context": "AlwaysUnlocked"
+      }
+    ]
   }
 }
