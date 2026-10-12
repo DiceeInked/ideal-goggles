@@ -48,7 +48,7 @@ def main():
                 "components": {
                     "minecraft:geometry": "minecraft:geometry.full_block",
                     "minecraft:material_instances": {"*": {"texture": tex, "render_method": "opaque"}},
-                    "minecraft:light_emission": 1.0,
+                    "minecraft:light_emission": 15.0,
                     "minecraft:destructible_by_mining": {"seconds_to_destroy": 1.5},
                     "minecraft:destructible_by_explosion": {"explosion_resistance": 6.0}
                 }
