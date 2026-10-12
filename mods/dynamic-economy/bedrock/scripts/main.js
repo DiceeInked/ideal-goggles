@@ -2,8 +2,8 @@ import { world, system, ItemStack, ItemTypes } from "@minecraft/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.13: form-driven Bedrock UI and shared market.
- * Use a regular stick to open the market. Market scores are stored per item,
+ * Dynamic Economy v0.3.15: form-driven Bedrock UI and shared market.
+ * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
 const CONFIG = Object.freeze({
@@ -11,7 +11,7 @@ const CONFIG = Object.freeze({
   growthFactor: 1.01,
   scoreChangePerItem: 1,
   startingBalanceCents: 10000,
-  salesTaxRate: 0.10,
+  salesTaxRate: 0.50,
   minimumPriceCents: 1,
   maximumTradeQuantity: 64,
   maximumSafeCents: Number.MAX_SAFE_INTEGER,
@@ -37,6 +37,40 @@ const COLOR_ITEM_SUFFIXES = [
 ];
 
 const SELL_BARREL_ID = "diceyinked:sell_barrel";
+const MARKET_TOOL_IDS = new Set([
+  "minecraft:stick",
+  "minecraft:wooden_sword",
+  "minecraft:stone_sword",
+  "minecraft:iron_sword",
+  "minecraft:golden_sword",
+  "minecraft:diamond_sword",
+  "minecraft:netherite_sword"
+]);
+// Bedrock's Script API exposes registered item types, but not a universal
+// "obtainable in Survival" flag. Explicitly reject known creative-only items.
+const NON_SURVIVAL_ITEM_IDS = new Set([
+  "minecraft:allow", "minecraft:barrier", "minecraft:bedrock", "minecraft:border_block",
+  "minecraft:budding_amethyst", "minecraft:camera", "minecraft:chain_command_block",
+  "minecraft:command_block", "minecraft:command_block_minecart", "minecraft:debug_stick",
+  "minecraft:deny", "minecraft:end_gateway", "minecraft:end_portal", "minecraft:end_portal_frame",
+  "minecraft:info_update", "minecraft:info_update2", "minecraft:jigsaw",
+  "minecraft:knowledge_book", "minecraft:light_block", "minecraft:mob_spawner",
+  "minecraft:moving_block", "minecraft:netherreactor", "minecraft:player_head",
+  "minecraft:repeating_command_block", "minecraft:reserved6", "minecraft:structure_block",
+  "minecraft:structure_void", "minecraft:reinforced_deepslate", "minecraft:trial_spawner",
+  "minecraft:vault", "minecraft:unknown"
+]);
+function isSurvivalObtainableItem(itemId) {
+  if (typeof itemId !== "string" || !itemId.startsWith("minecraft:")) return false;
+  if (NON_SURVIVAL_ITEM_IDS.has(itemId)) return false;
+  const bareId = itemId.slice("minecraft:".length);
+  if (bareId.endsWith("_spawn_egg") || bareId === "spawn_egg") return false;
+  return true;
+}
+function isMarketTool(itemStack) {
+  return !!itemStack && MARKET_TOOL_IDS.has(itemStack.typeId);
+}
+
 const MARKET_KEY = CONFIG.namespace + ":market"; // Legacy JSON key, migrated on world load.
 const MARKET_SCORE_PREFIX = CONFIG.namespace + ":score:";
 const BALANCE_PREFIX = CONFIG.namespace + ":balance:";
@@ -171,7 +205,7 @@ function unitPriceCents(score) {
 }
 function itemType(itemId) {
   const normalized = itemId.indexOf(":") >= 0 ? itemId : "minecraft:" + itemId;
-  if (!ItemTypes.get(normalized) || normalized === "minecraft:air") {
+  if (!ItemTypes.get(normalized) || normalized === "minecraft:air" || !isSurvivalObtainableItem(normalized)) {
     throw new Error("That item is not available in this world.");
   }
   return normalized;
@@ -413,7 +447,7 @@ function getCatalog() {
   const seen = new Set();
   for (const type of ItemTypes.getAll()) {
     const id = type.id;
-    if (typeof id !== "string" || id.indexOf("minecraft:") !== 0 || id === "minecraft:air" || seen.has(id)) continue;
+    if (typeof id !== "string" || id.indexOf("minecraft:") !== 0 || id === "minecraft:air" || !isSurvivalObtainableItem(id) || seen.has(id)) continue;
     try {
       new ItemStack(id, 1);
       unitPriceCents(getScore(getMarket(), id));
@@ -715,12 +749,12 @@ function requestMenu(player) {
 // Air-use listener, plus block/entity interaction listeners for touch and controller input.
 world.beforeEvents.itemUse.subscribe(function (event) {
   // Defer form work until after the restricted before-event callback finishes.
-  if (event.itemStack && event.itemStack.typeId === "minecraft:stick") requestMenu(event.source);
+  if (isMarketTool(event.itemStack)) requestMenu(event.source);
 });
 world.afterEvents.playerInteractWithBlock.subscribe(function (event) {
   if (event.isFirstEvent === false) return;
   const held = event.beforeItemStack || event.itemStack;
-  if (held && held.typeId === "minecraft:stick") requestMenu(event.player);
+  if (isMarketTool(held)) requestMenu(event.player);
 });
 world.afterEvents.playerInteractWithEntity.subscribe(function (event) {
   const held = event.beforeItemStack || event.itemStack;
@@ -731,7 +765,7 @@ world.afterEvents.playerSpawn.subscribe(function (event) {
   if (!event.initialSpawn) return;
   const player = event.player;
   system.runTimeout(function () {
-    tell(player, "Dynamic Economy loaded. Hold a wooden stick and use/right-click to open the market.");
+    tell(player, "Dynamic Economy loaded. Hold a wooden stick or any sword and use/right-click to open the market.");
     tell(player, "Starting balance: " + money(getBalance(player)) + ". All item prices start at $1.00.");
   }, 20);
 });
