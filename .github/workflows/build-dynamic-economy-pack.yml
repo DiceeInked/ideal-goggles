@@ -117,6 +117,9 @@ jobs:
               assert required in script, f"Missing hardening check: {required}"
           assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
           assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
+          assert "isSurvivalObtainableItem(id)" in script, "Creative-only items must be filtered out of the buy catalog"
+          assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
+          assert "isSurvivalObtainableItem(stack.typeId)" in script, "Sell Barrel contents must reject creative-only items"
           assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
           print("Validated API dependencies, custom block/catalog/recipe/texture links, legacy score migration, per-item market storage, custom-item safety, fractional tax accounting, and key menu functions.")
           print("All pack manifests and JSON files parsed.")
@@ -132,13 +135,13 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.14.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.15.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
           for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
           for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.14.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.15.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
       - name: Commit generated packs when changed
@@ -152,5 +155,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.14 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.15 and Sell Barrel packs"
           git push
