@@ -2,7 +2,7 @@ import { world, system, ItemStack, ItemTypes } from "@minecraft/server";
 import { ActionFormData, ModalFormData, MessageFormData } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.3: form-driven Bedrock UI with safer quantity-form handling.
+ * Dynamic Economy v0.3.9: form-driven Bedrock UI with safer quantity-form handling.
  * Use a regular stick to open the market. Purchases and sales update one
  * shared world market. Currency is stored as integer cents.
  */

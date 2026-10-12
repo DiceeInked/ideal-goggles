@@ -1,18 +1,18 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.8",
+    "name": "Dynamic Economy v0.3.9",
     "description": "A form-based global market. Use a wooden stick to open buy and sell menus.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      8
+      9
     ],
     "min_engine_version": [
       1,
-      21,
-      0
+      26,
+      40
     ]
   },
   "modules": [
@@ -23,7 +23,7 @@
       "version": [
         0,
         3,
-        8
+        9
       ],
       "entry": "scripts/main.js"
     }
@@ -31,11 +31,19 @@
   "dependencies": [
     {
       "module_name": "@minecraft/server",
-      "version": "2.10.0"
+      "version": "2.9.0"
     },
     {
       "module_name": "@minecraft/server-ui",
-      "version": "2.2.0"
+      "version": "2.1.0"
+    },
+    {
+      "uuid": "b88ee4c9-ae4b-4d31-8bcf-a1d77aa5c137",
+      "version": [
+        1,
+        0,
+        0
+      ]
     }
   ]
 }
