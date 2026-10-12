@@ -171,9 +171,6 @@ def build_packs() -> tuple[Path, Path, Path]:
     )
 
     texture_data: dict[str, dict[str, str]] = {}
-    for blue in range(BLOCKS_PER_CHANNEL):
-        # Creative group labels keep the inventory split into ten groups of 100.
-        pass
 
     for red in range(BLOCKS_PER_CHANNEL):
         for green in range(BLOCKS_PER_CHANNEL):
