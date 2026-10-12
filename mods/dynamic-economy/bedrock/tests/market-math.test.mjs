@@ -140,3 +140,29 @@ test("market menu tools include every vanilla sword and the original stick", () 
   for (const id of toolIds) assert.ok(source.includes('"'+id+'"'), "Missing market tool: " + id);
   assert.match(source, /salesTaxRate: 0\.50/);
 });
+
+
+test("trade history stores transaction summaries and per-unit price-series chunks", () => {
+  assert.match(source, /HISTORY_TRANSACTION_PREFIX/);
+  assert.match(source, /HISTORY_SERIES_PREFIX/);
+  assert.match(source, /HISTORY_SERIES_CHUNK_SIZE = 32/);
+  assert.match(source, /function persistTradeHistory\(/);
+  assert.match(source, /recordTradeHistorySafely\(player, "buy"/);
+  assert.match(source, /recordTradeHistorySafely\(player, "sell"/);
+  assert.match(source, /priceCents: priceCents/);
+});
+
+test("Blaze Rod opens operator tools only after a permission-level check", () => {
+  assert.ok(source.includes('const OPERATOR_TOOL_ID = "minecraft:blaze_rod"'));
+  assert.match(source, /player\.playerPermissionLevel === PlayerPermissionLevel\.Operator/);
+  assert.match(source, /function showOperatorMenu\(/);
+  assert.match(source, /function showRecentTradeRecords\(/);
+  assert.match(source, /function showTradeRecordDetail\(/);
+  assert.match(source, /function handleEconomyToolUse\(/);
+});
+
+test("crafted Sell Barrels receive the crafting player's name", () => {
+  assert.match(source, /world\.afterEvents\.playerCraftRecipe\.subscribe\(nameCraftedSellBarrel\)/);
+  assert.match(source, /function nameCraftedSellBarrel\(/);
+  assert.match(source, /player\.name \+ "'s Sell Barrel"/);
+});
