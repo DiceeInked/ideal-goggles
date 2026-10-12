@@ -1,3 +1,3 @@
-# Sell Barrel Resources v1.0.1
+# Sell Barrel Resources v1.0.2
 
-This resource pack supplies vanilla barrel texture aliases and the Sell Barrel display name. The behavior pack declares this pack as a dependency so Minecraft can resolve the block textures and name. The **Upcoming Creator Features** experiment must be enabled for the Sell Barrel's custom block inventory. Enable this resource pack alongside Dynamic Economy v0.3.11 under Behavior Packs.
+This resource pack supplies vanilla barrel texture aliases and the Sell Barrel display name. The behavior pack declares this pack as a dependency so Minecraft can resolve the block textures and name. The **Upcoming Creator Features** experiment must be enabled for the Sell Barrel's custom block inventory. Enable this resource pack alongside Dynamic Economy v0.3.13 under Behavior Packs. The side, top, and bottom images are the vanilla Bedrock barrel textures with the RGB channels inverted and alpha preserved; the pack also assigns the custom block the vanilla wood sound group.
