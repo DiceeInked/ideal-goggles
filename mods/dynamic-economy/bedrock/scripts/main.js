@@ -406,20 +406,22 @@ function recordTradeHistorySafely(player, action, itemId, quantity, scoreBefore,
 
 function getRecentTradeRecords(limit) {
   const records = [];
-  for (const propertyId of world.getDynamicPropertyIds()) {
-    if (!propertyId.startsWith(HISTORY_TRANSACTION_PREFIX)) continue;
-    const raw = world.getDynamicProperty(propertyId);
+  const maximum = Number.isSafeInteger(limit) && limit > 0 ? limit : 10;
+  const latest = world.getDynamicProperty(HISTORY_NEXT_TRANSACTION_KEY);
+  if (!Number.isSafeInteger(latest) || latest < 1) return records;
+  // Walk backwards from the persisted sequence instead of scanning every history property.
+  for (let id = latest; id >= 1 && records.length < maximum; id--) {
+    const raw = world.getDynamicProperty(HISTORY_TRANSACTION_PREFIX + id);
     if (typeof raw !== "string") continue;
     try {
       const record = JSON.parse(raw);
-      if (record && Number.isSafeInteger(record.id) && typeof record.action === "string" &&
+      if (record && record.id === id && typeof record.action === "string" &&
           typeof record.itemId === "string" && Number.isSafeInteger(record.quantity)) records.push(record);
     } catch {
-      console.warn("[Dynamic Economy] Skipping malformed trade-history record: " + propertyId);
+      console.warn("[Dynamic Economy] Skipping malformed trade-history record: " + id);
     }
   }
-  records.sort(function (a, b) { return b.id - a.id; });
-  return records.slice(0, Number.isSafeInteger(limit) && limit > 0 ? limit : 10);
+  return records;
 }
 
 function isEconomyOperator(player) {
@@ -1006,6 +1008,7 @@ world.afterEvents.playerSpawn.subscribe(function (event) {
   const player = event.player;
   system.runTimeout(function () {
     tell(player, "Dynamic Economy loaded. Hold a wooden stick or any sword and use/right-click to open the market.");
+    tell(player, "Operators: use a Blaze Rod to open economy records and operator tools.");
     tell(player, "Starting balance: " + money(getBalance(player)) + ". All item prices start at $1.00.");
   }, 20);
 });
