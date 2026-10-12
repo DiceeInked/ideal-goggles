@@ -1,7 +1,7 @@
 # Dynamic Economy: Cross-Edition Design Specification
 
 **Specification version:** 1.0  
-**Current Bedrock implementation:** Dynamic Economy v0.3.19  
+**Current Bedrock implementation:** Dynamic Economy v0.3.20  
 **Source branch:** `feature/dynamic-economy-modern-market-ui`  
 **Purpose:** This is the canonical description of what the mod does and how its rules should be recreated in another edition, such as Minecraft Java Edition. Update this file whenever behavior, balance rules, data formats, or player-facing features change.
 
@@ -72,19 +72,17 @@ If an item type cannot be created or priced safely, it is omitted from the purch
 
 ## 5. Player market menu (current Bedrock behavior)
 
-The normal market menu opens when using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. It is one persistent workspace with three horizontal tabs across the top:
+The normal market menu opens when using a wooden stick or any vanilla wooden, stone, iron, golden, diamond, or netherite sword. It is one persistent workspace with three sections, **BUY**, **SELL**, and **ECONOMY**, selected with a selector at the top.
 
-1. **BUY** — the survival-buyable catalog, sorted by price (highest first), then alphabetically.
-2. **SELL** — only plain, undamaged items in the player's inventory, sorted by quantity owned (highest first), then alphabetically.
-3. **ECONOMY** — items with recorded market activity, sorted alphabetically; selecting one opens its saved price-history graph.
+Each section has its own search field directly above its item list. Search updates the visible, paginated rows as the player types. Switching sections does not open another screen and does not discard the other sections' search text or page. There is no Back button between workspace sections. Selecting a BUY item opens quantity selection and a purchase quote; selecting a SELL item opens quantity selection and a sale quote; selecting an ECONOMY item opens its graph. Returning from a confirmation/graph restores the workspace to its previous section, search, and page.
 
-Each tab has a search field directly above its item list. Search updates the visible, paginated rows as the player types. Switching tabs does not open another screen and does not discard the other tabs' search text or page. There is no Back button in the workspace. Selecting a BUY item opens quantity selection and a purchase quote; selecting a SELL item opens quantity selection and a sale quote; selecting an ECONOMY item opens its graph. Returning from a confirmation/graph restores the workspace to its previous tab, search, and page.
+BUY lists the survival-buyable catalog, sorted by price (highest first), then alphabetically. SELL lists only plain, undamaged items in the player's inventory, sorted by quantity owned (highest first), then alphabetically. ECONOMY lists items with recorded market activity, sorted alphabetically; selecting one opens its saved price-history graph.
 
 Trade quantities use a maximum of 64 in the quantity slider, but **Sell All** in existing sale flows can still sell every eligible unit of a selected item, even when the total exceeds 64. Buy and sell confirmations show totals, and sales show gross, tax, and net amounts. The shared market price changes once per unit traded.
 
 The graph shows saved per-unit price points from completed trades only. It does not invent/interpolate values between trades. Each bulk trade contributes one ordered point per item unit, with the corresponding score and price progression.
 
-The horizontal tab row uses the pre-release `CustomForm.multiButtonRow` API from `@minecraft/server-ui` 2.2.0. The pack targets a compatible Bedrock 1.26.60+ build. Because this UI API is pre-release, enable **Upcoming Creator Features** and **Beta APIs** in the world experiments when these options are available for the target version, and validate in a copied world before using it in a primary world.
+For compatibility with the manifest-version ceiling accepted by Bedrock 1.26.52, this release uses stable `@minecraft/server-ui` 2.1.0 and its `CustomForm`/observable controls. The requested horizontal `multiButtonRow` is only available in a newer preview API, so this compatible build uses a single-screen selector instead. A true horizontal three-button row requires a game/API build that includes that pre-release method.
 
 ## 6. Sell Barrel
 

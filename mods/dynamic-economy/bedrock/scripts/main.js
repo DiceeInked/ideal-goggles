@@ -1,8 +1,8 @@
 import { world, system, ItemStack, ItemTypes, PlayerPermissionLevel } from "@minecraft/server";
-import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString, ObservableBoolean } from "@minecraft/server-ui";
+import { ActionFormData, ModalFormData, MessageFormData, CustomForm, ObservableString, ObservableBoolean, ObservableNumber } from "@minecraft/server-ui";
 
 /*
- * Dynamic Economy v0.3.19: horizontal market tabs and live item search.
+ * Dynamic Economy v0.3.20: compatible one-screen section selector and live item search.
  * Use a stick or any sword to open the market. Market scores are stored per item,
  * balances are integer cents, and sales tax carries fractional cents forward.
  */
@@ -673,7 +673,7 @@ function showMainMenu(player, workspaceOptions) {
     economy: new ObservableString(typeof seed.economyQuery === "string" ? seed.economyQuery : "", { clientWritable: true })
   };
   const visible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(state.tab === tab)]));
-  const tabLabels = Object.fromEntries(tabs.map(tab => [tab, new ObservableString(tab.toUpperCase())]));
+  const activeTab = new ObservableNumber(tabs.indexOf(state.tab), { clientWritable: true });
   const statusLabels = Object.fromEntries(tabs.map(tab => [tab, new ObservableString("")]));
   const previousVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
   const nextVisible = Object.fromEntries(tabs.map(tab => [tab, new ObservableBoolean(false)]));
@@ -685,10 +685,10 @@ function showMainMenu(player, workspaceOptions) {
   form.closeButton()
     .header("GLOBAL MARKET")
     .label("Balance: " + money(getBalance(player)) + "   |   Sales tax: " + taxPercentLabel())
-    .multiButtonRow([
-      { label: tabLabels.buy, onClick: function () { setTab("buy"); } },
-      { label: tabLabels.sell, onClick: function () { setTab("sell"); } },
-      { label: tabLabels.economy, onClick: function () { setTab("economy"); } }
+    .dropdown("MARKET SECTION", activeTab, [
+      { label: "BUY", value: 0 },
+      { label: "SELL", value: 1 },
+      { label: "ECONOMY", value: 2 }
     ])
     .divider();
 
@@ -797,7 +797,6 @@ function showMainMenu(player, workspaceOptions) {
     state.tab = tab;
     tabs.forEach(function (name) {
       visible[name].setData(name === tab);
-      tabLabels[name].setData(name === tab ? "§a§l" + name.toUpperCase() : "§7" + name.toUpperCase());
     });
     renderTab(tab);
   }
@@ -809,16 +808,19 @@ function showMainMenu(player, workspaceOptions) {
     state.pages[tab] = 0;
     renderTab(tab);
   }));
-  tabs.forEach(function (tab) {
-    tabLabels[tab].setData(tab === state.tab ? "§a§l" + tab.toUpperCase() : "§7" + tab.toUpperCase());
-    renderTab(tab);
+  const tabSubscription = activeTab.subscribe(function () {
+    const selectedIndex = activeTab.getData();
+    setTab(tabs[selectedIndex] || "buy");
   });
+  tabs.forEach(renderTab);
   form.show().then(function () {
     tabs.forEach((tab, index) => { try { queries[tab].unsubscribe(subscriptions[index]); } catch {} });
+    try { activeTab.unsubscribe(tabSubscription); } catch {}
   }).catch(function (error) {
     tabs.forEach((tab, index) => { try { queries[tab].unsubscribe(subscriptions[index]); } catch {} });
+    try { activeTab.unsubscribe(tabSubscription); } catch {}
     console.warn("[Dynamic Economy] Could not show market workspace: " + error);
-    tell(player, "The market menu could not open. Enable the required creator experiments and try again.");
+    tell(player, "The market menu could not open. Try again.");
   });
 }
 function showSearchForm(player,mode,currentQuery,currentColorId,returnTo){
