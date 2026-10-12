@@ -141,20 +141,25 @@ function inventoryOf(player) {
   if (!component || !component.container) throw new Error("Could not access your inventory.");
   return component.container;
 }
-function countTradableItem(container, typeId) {
+
+function countTradableItem(container, typeId, includeCustomized) {
   let count = 0;
   for (let slot = 0; slot < container.size; slot++) {
     const stack = container.getItem(slot);
-    if (stack && stack.typeId === typeId && safePlainStack(stack)) count += stack.amount;
+    if (stack && stack.typeId === typeId && (includeCustomized === true || safePlainStack(stack))) {
+      count += stack.amount;
+    }
   }
   return count;
 }
-function removeTradableItems(container, typeId, quantity) {
-  if (countTradableItem(container, typeId) < quantity) return false;
+
+function removeTradableItems(container, typeId, quantity, includeCustomized) {
+  if (countTradableItem(container, typeId, includeCustomized) < quantity) return false;
   let remaining = quantity;
   for (let slot = 0; slot < container.size && remaining > 0; slot++) {
     const stack = container.getItem(slot);
-    if (!stack || stack.typeId !== typeId || !safePlainStack(stack)) continue;
+    if (!stack || stack.typeId !== typeId ||
+        (includeCustomized !== true && !safePlainStack(stack))) continue;
     const take = Math.min(stack.amount, remaining);
     if (take === stack.amount) container.setItem(slot, undefined);
     else {
@@ -242,16 +247,58 @@ function buy(player, rawItemId, rawQuantity) {
   tell(player, "Bought " + quantity + " " + prettyName(typeId) + " for " + money(cost) +
     ". Balance: " + money(balance - cost) + ".");
 }
-function sell(player,rawItemId,rawQuantity,sourceContainer,silent){
- const typeId=itemType(rawItemId),inventory=sourceContainer||inventoryOf(player),available=countTradableItem(inventory,typeId);
- if(available<1)throw new Error("You don't have any plain, undamaged "+prettyName(typeId)+" to sell.");
- const quantity=parseQuantity(rawQuantity,available),market=getMarket(),score=getScore(market,typeId),quote=totalSaleProceeds(score,quantity),balance=getBalance(player);
- if(!safeInteger(balance+quote.net))throw new Error("This sale would exceed the safe balance limit.");
- if(!removeTradableItems(inventory,typeId,quantity))throw new Error("The container changed; the sale was cancelled.");
- try{setBalance(player,balance+quote.net);market[typeId]=score-quantity*CONFIG.scoreChangePerItem;setMarket(market);}
- catch(error){try{addItems(inventory,typeId,quantity);}catch{}try{setBalance(player,balance);}catch{}throw error;}
- if(!silent)tell(player,"Sold "+quantity+" "+prettyName(typeId)+". Gross: "+money(quote.gross)+", sales tax: "+money(quote.tax)+", paid: "+money(quote.net)+". Balance: "+money(balance+quote.net)+".");
- return{quantity:quantity,gross:quote.gross,tax:quote.tax,net:quote.net};
+
+function sell(player, rawItemId, rawQuantity, sourceContainer, silent, includeCustomized) {
+  const typeId = itemType(rawItemId);
+  const inventory = sourceContainer || inventoryOf(player);
+  const allowCustomized = includeCustomized === true;
+  const available = countTradableItem(inventory, typeId, allowCustomized);
+  if (available < 1) throw new Error("You don't have any sellable " + prettyName(typeId) + ".");
+  const quantity = parseQuantity(rawQuantity, available);
+  if (available < quantity) throw new Error("You don't have that many " + prettyName(typeId) + " to sell.");
+
+  // The barrel sells full type groups. Keep exact cloned stacks in case an economy-property
+  // write fails after removal, including names, lore, enchantments, and durability.
+  const rollbackStacks = allowCustomized ? [] : null;
+  if (allowCustomized) {
+    for (let slot = 0; slot < inventory.size; slot++) {
+      const stack = inventory.getItem(slot);
+      if (stack && stack.typeId === typeId) rollbackStacks.push({ slot: slot, stack: stack.clone() });
+    }
+  }
+
+  const market = getMarket();
+  const score = getScore(market, typeId);
+  const quote = totalSaleProceeds(score, quantity);
+  const balance = getBalance(player);
+  if (!safeInteger(balance + quote.net)) throw new Error("This sale would exceed the safe balance limit.");
+  if (!removeTradableItems(inventory, typeId, quantity, allowCustomized)) {
+    throw new Error("The container changed; the sale was cancelled.");
+  }
+  try {
+    setBalance(player, balance + quote.net);
+    market[typeId] = score - quantity * CONFIG.scoreChangePerItem;
+    setMarket(market);
+  } catch (error) {
+    if (rollbackStacks) {
+      for (const entry of rollbackStacks) {
+        try { inventory.setItem(entry.slot, entry.stack); }
+        catch {
+          try { inventory.addItem(entry.stack); } catch {}
+        }
+      }
+    } else {
+      try { addItems(inventory, typeId, quantity); } catch {}
+    }
+    try { setBalance(player, balance); } catch {}
+    throw error;
+  }
+  if (!silent) {
+    tell(player, "Sold " + quantity + " " + prettyName(typeId) + ". Gross: " + money(quote.gross) +
+      ", sales tax: " + money(quote.tax) + ", paid: " + money(quote.net) +
+      ". Balance: " + money(balance + quote.net) + ".");
+  }
+  return { quantity: quantity, gross: quote.gross, tax: quote.tax, net: quote.net };
 }
 function currentPriceLabel(itemId, mode) {
   try {
@@ -509,19 +556,52 @@ function showMarketItemDetail(player,typeId,page){
   else if(r.selection===2)showMarketPrices(player,page);
  }).catch(function(){tell(player,"The item details could not open. Try again.");showMarketPrices(player,page);});
 }
-function processClosedSellBarrel(dimension,location,player){
- try{
-  const block=dimension.getBlock(location);if(!block||block.typeId!==SELL_BARREL_ID)return;
-  const inv=block.getComponent("minecraft:inventory"),container=inv&&inv.container;if(!container)throw new Error("Could not access the Sell Barrel inventory.");
-  const quantities=new Map();
-  for(let slot=0;slot<container.size;slot++){const s=container.getItem(slot);if(!s||!safePlainStack(s)||s.typeId.indexOf("minecraft:")!==0)continue;quantities.set(s.typeId,(quantities.get(s.typeId)||0)+s.amount);}
-  let unitsSold=0,payout=0,failed=0;
-  for(const [id,count] of quantities.entries()){try{const result=sell(player,id,count,container,true);unitsSold+=result.quantity;payout+=result.net;}catch(e){failed++;console.warn("[Dynamic Economy] Sell Barrel left "+id+" unsold: "+e);}}
-  if(unitsSold>0)tell(player,"Sell Barrel sold "+unitsSold+" item(s) for "+money(payout)+" after tax. Balance: "+money(getBalance(player))+".");else tell(player,"Sell Barrel closed. It found no sellable plain items.");
-  if(failed>0)tell(player,failed+" item type(s) stayed in the Sell Barrel because they could not be sold safely.");
- }catch(e){const detail=e instanceof Error?e.message:String(e);console.warn("[Dynamic Economy] Sell Barrel processing failed: "+detail);tell(player,"The Sell Barrel could not finish selling its contents: "+detail);}
-}
 
+function processClosedSellBarrel(dimension, location, player) {
+  try {
+    const block = dimension.getBlock(location);
+    if (!block || block.typeId !== SELL_BARREL_ID) return;
+    const inventoryComponent = block.getComponent("minecraft:inventory");
+    const container = inventoryComponent && inventoryComponent.container;
+    if (!container) throw new Error("Could not access the Sell Barrel inventory.");
+
+    const quantities = new Map();
+    for (let slot = 0; slot < container.size; slot++) {
+      const stack = container.getItem(slot);
+      if (!stack || stack.typeId === "minecraft:air") continue;
+      quantities.set(stack.typeId, (quantities.get(stack.typeId) || 0) + stack.amount);
+    }
+
+    let unitsSold = 0;
+    let payoutCents = 0;
+    let failedTypes = 0;
+    for (const [typeId, quantity] of quantities.entries()) {
+      try {
+        // Include renamed, enchanted, damaged, and custom-property stacks. If the Script API
+        // cannot resolve an item type, sell() throws and the stack remains inside the barrel.
+        const result = sell(player, typeId, quantity, container, true, true);
+        unitsSold += result.quantity;
+        payoutCents += result.net;
+      } catch (error) {
+        failedTypes++;
+        console.warn("[Dynamic Economy] Sell Barrel left " + typeId + " unsold: " + error);
+      }
+    }
+    if (unitsSold > 0) {
+      tell(player, "Sell Barrel sold " + unitsSold + " item(s) for " + money(payoutCents) +
+        " after tax. Balance: " + money(getBalance(player)) + ".");
+    } else {
+      tell(player, "Sell Barrel closed. It found no item types the market could sell.");
+    }
+    if (failedTypes > 0) {
+      tell(player, failedTypes + " item type(s) stayed in the Sell Barrel because this game could not resolve them for trading.");
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.warn("[Dynamic Economy] Sell Barrel processing failed: " + detail);
+    tell(player, "The Sell Barrel could not finish selling its contents: " + detail);
+  }
+}
 function requestMenu(player) {
   const tick = system.currentTick;
   const lastTick = openCooldown.get(player.id);
