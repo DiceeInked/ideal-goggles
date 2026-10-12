@@ -189,3 +189,16 @@ test("Sell Barrels are ticked for hopper-fed auto-selling and avoid selling whil
   assert.match(source, /onTick: handleSellBarrelTick/);
   assert.match(source, /onBreak: sellBarrelBlockBroken/);
 });
+
+test("ownerless legacy barrels are not claimed just by opening them", () => {
+  assert.match(source, /function warnUnownedSellBarrel\(/);
+  assert.match(source, /This Sell Barrel has no saved owner, so it cannot sell items yet/);
+  assert.doesNotMatch(source, /function claimUnownedSellBarrel\(/);
+  assert.match(source, /if \(!lockOwner\) return/);
+});
+
+test("barrel placement fallback preserves a tagged item's saved owner", () => {
+  assert.match(source, /const owner = pendingBarrelOwners\.get\(key\) \|\| \{ id: event\.player\.id, name: event\.player\.name \}/);
+  assert.match(source, /world\.afterEvents\.playerLeave\.subscribe/);
+  assert.match(source, /players\.delete\(playerId\)/);
+});
