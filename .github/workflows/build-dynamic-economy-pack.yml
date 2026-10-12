@@ -53,7 +53,7 @@ jobs:
           bp_manifest = json.loads((bp / "manifest.json").read_text())
           rp_manifest = json.loads((rp / "manifest.json").read_text())
           deps = bp_manifest.get("dependencies", [])
-          required_modules = {"@minecraft/server": "2.9.0", "@minecraft/server-ui": "2.1.0"}
+          required_modules = {"@minecraft/server": "2.10.0", "@minecraft/server-ui": "2.1.0"}
           actual_modules = {d.get("module_name"): d.get("version") for d in deps if "module_name" in d}
           assert actual_modules == required_modules, f"Unexpected Script API dependencies: {actual_modules}"
           assert bp_manifest.get("header", {}).get("min_engine_version") == [1, 26, 50], "Behavior pack must target Bedrock 26.50+"
@@ -113,7 +113,7 @@ jobs:
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
-          for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)"]:
+          for required in ["MARKET_SCORE_PREFIX", "function migrateLegacyMarket()", "world.getDynamicPropertyIds()", "stack.getDynamicPropertyIds().length > 0", "function taxRateUnits()", "TAX_REMAINDER_DENOMINATOR = 10000", "taxRemainderAfter", "unitPriceCents(startScore - i * CONFIG.scoreChangePerItem)", "PlayerPermissionLevel", "HISTORY_TRANSACTION_PREFIX", "HISTORY_SERIES_PREFIX", "function persistTradeHistory(", "function showOperatorMenu(", "function showRecentTradeRecords(", "world.afterEvents.playerCraftRecipe.subscribe(nameCraftedSellBarrel)"]:
               assert required in script, f"Missing hardening check: {required}"
           assert "setMarket(market)" not in script, "Market scores should not be saved as one growing JSON property"
           assert "Math.floor(gross * CONFIG.salesTaxRate)" not in script, "Sales tax should carry fractional cents across transactions"
@@ -121,7 +121,7 @@ jobs:
           assert "isSurvivalObtainableItem(normalized)" in script, "Direct trade requests must reject creative-only items"
           assert "isSurvivalObtainableItem(stack.typeId)" in script, "Sell Barrel contents must reject creative-only items"
           assert (bp / "tests/market-math.test.mjs").is_file(), "Missing market-math regression tests"
-          print("Validated API dependencies, custom block/catalog/recipe/texture links, legacy score migration, per-item market storage, custom-item safety, fractional tax accounting, and key menu functions.")
+          print("Validated API dependencies, item naming, operator permissions, trade history, custom block/catalog/recipe/texture links, migration, survival-item guards, fractional tax accounting, and market functions.")
           print("All pack manifests and JSON files parsed.")
           PY
           node --test mods/dynamic-economy/bedrock/tests/market-math.test.mjs
@@ -135,13 +135,13 @@ jobs:
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.15.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.16.mcpack"
           package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.3.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
           for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
           for ENTRY in manifest.json blocks.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.15.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.16.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
       - name: Commit generated packs when changed
@@ -155,5 +155,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.15 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.16 and Sell Barrel packs"
           git push
