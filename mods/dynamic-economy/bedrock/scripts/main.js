@@ -939,19 +939,29 @@ function saveOwnerAfterPlacement(event) {
   const location = event.block.location;
   const key = barrelLocationId(event.dimension, location);
   const owner = pendingBarrelOwners.get(key);
-  pendingBarrelOwners.delete(key);
-  if (owner) {
-    try { writeBarrelOwner(event.dimension, location, owner); }
-    catch (error) { console.warn("[Dynamic Economy] Could not save Sell Barrel owner: " + error); }
+  if (!owner) return;
+  try {
+    writeBarrelOwner(event.dimension, location, owner);
+    pendingBarrelOwners.delete(key);
+  } catch (error) {
+    // Keep the pending copy briefly so the after-placement fallback can retry it.
+    console.warn("[Dynamic Economy] Could not save Sell Barrel owner in onPlace; will retry: " + error);
   }
 }
 function placeOwnerFallback(event) {
   try {
-    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID || !event.dimension) return;
+    if (!event || !event.block || event.block.typeId !== SELL_BARREL_ID || !event.dimension || !event.player) return;
     const location = event.block.location;
-    if (!readBarrelOwner(event.dimension, location)) {
-      writeBarrelOwner(event.dimension, location, { id: event.player.id, name: event.player.name });
+    const key = barrelLocationId(event.dimension, location);
+    if (readBarrelOwner(event.dimension, location)) {
+      pendingBarrelOwners.delete(key);
+      return;
     }
+    // Prefer captured item identity. Only use the placer as owner when no owner
+    // metadata was available from the item being placed.
+    const owner = pendingBarrelOwners.get(key) || { id: event.player.id, name: event.player.name };
+    writeBarrelOwner(event.dimension, location, owner);
+    pendingBarrelOwners.delete(key);
   } catch (error) {
     console.warn("[Dynamic Economy] Sell Barrel placement owner fallback failed: " + error);
   }
