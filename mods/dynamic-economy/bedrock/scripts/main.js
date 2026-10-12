@@ -687,7 +687,7 @@ function showMainMenu(player) {
     .header("QUICK SEARCH")
     .textField("Item name or item ID", query, { placeholder: "Example: oak log" })
     .button("Search items to buy", function () {
-      const term = String(query.get() || "").trim().toLowerCase();
+      const term = String(query.getData() || "").trim().toLowerCase();
       try { form.close(); } catch {}
       system.run(function () { showBuyMenu(player, term, 0); });
     });
