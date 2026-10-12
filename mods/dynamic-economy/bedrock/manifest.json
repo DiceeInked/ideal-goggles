@@ -1,13 +1,13 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Dynamic Economy v0.3.20",
-    "description": "A shared survival item market with a one-screen BUY, SELL, and ECONOMY selector, live item search, trade history, price graphs, and owner-paid Sell Barrels.",
+    "name": "Dynamic Economy v0.3.21",
+    "description": "A shared survival market with BUY, SELL, and ECONOMY navigation, searchable item tiles where supported, price graphs, and owner-paid Sell Barrels.",
     "uuid": "2a0b87b5-27bd-4a5b-9c3a-0f29ed0d5c11",
     "version": [
       0,
       3,
-      20
+      21
     ],
     "min_engine_version": [
       1,
