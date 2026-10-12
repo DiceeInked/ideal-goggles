@@ -227,8 +227,7 @@ function processOneBlock(job) {
 
     const gravityBlock = isGravityBlock(block);
     const protectedSupport = job.protectBelow === true;
-    const bedrockBlock = block.typeId === "minecraft:bedrock" ||
-                         block.typeId === "minecraft:deepslate";
+    const bedrockBlock = block.typeId === "minecraft:bedrock";
     const fluidBlock = block.isLiquid || isWaterlogged(block);
     const eligibleForRemoval = !block.isAir &&
         !bedrockBlock &&
