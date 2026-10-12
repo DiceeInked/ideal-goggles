@@ -6,7 +6,7 @@ const GRID_SPACING = 4;
 const CHUNK_SIZE = 16;
 const CHUNKS_RADIUS = 4; // Radius 4 means up to 9 x 9 chunks per player.
 const RESCAN_INTERVAL_TICKS = 20;
-const BLOCK_BUDGET_PER_TICK = 1024; // Four times the previous throughput; adjust down if a device lags.
+const BLOCK_BUDGET_PER_TICK = 1024; // Four times the original throughput; lower this if a device lags.
 
 const queuedChunks = [];
 const queuedKeys = new Set();
@@ -32,6 +32,51 @@ function isLatticeBlock(x, y, z) {
   return (xOnGrid && yOnGrid) ||
          (xOnGrid && zOnGrid) ||
          (yOnGrid && zOnGrid);
+}
+
+const GRAVITY_BLOCKS = new Set([
+  "minecraft:sand", "minecraft:red_sand", "minecraft:gravel",
+  "minecraft:suspicious_sand", "minecraft:suspicious_gravel",
+  "minecraft:anvil", "minecraft:chipped_anvil", "minecraft:damaged_anvil",
+  "minecraft:dragon_egg",
+  "minecraft:white_concrete_powder", "minecraft:orange_concrete_powder",
+  "minecraft:magenta_concrete_powder", "minecraft:light_blue_concrete_powder",
+  "minecraft:yellow_concrete_powder", "minecraft:lime_concrete_powder",
+  "minecraft:pink_concrete_powder", "minecraft:gray_concrete_powder",
+  "minecraft:light_gray_concrete_powder", "minecraft:cyan_concrete_powder",
+  "minecraft:purple_concrete_powder", "minecraft:blue_concrete_powder",
+  "minecraft:brown_concrete_powder", "minecraft:green_concrete_powder",
+  "minecraft:red_concrete_powder", "minecraft:black_concrete_powder"
+]);
+
+function isWaterlogged(block) {
+  try {
+    return block.permutation.getState("waterlogged") === true ||
+           block.permutation.getState("waterlogged_bit") === true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function isGravityBlock(block) {
+  return GRAVITY_BLOCKS.has(block.typeId);
+}
+
+function isNearFluid(dimension, x, y, z) {
+  const neighbors = [
+    { x: x + 1, y, z }, { x: x - 1, y, z },
+    { x, y: y + 1, z }, { x, y: y - 1, z },
+    { x, y, z: z + 1 }, { x, y, z: z - 1 }
+  ];
+  for (const location of neighbors) {
+    try {
+      const neighbor = dimension.getBlock(location);
+      if (neighbor && (neighbor.isLiquid || isWaterlogged(neighbor))) return true;
+    } catch (error) {
+      // Ignore inaccessible neighbor positions; the current block is still checked.
+    }
+  }
+  return false;
 }
 
 function scanPlayerAreas() {
@@ -117,7 +162,9 @@ function scanPlayerAreas() {
       ...candidate,
       xOffset: 0,
       zOffset: 0,
-      y: candidate.minY
+      // Scan from top to bottom so falling blocks can protect their support.
+      y: candidate.maxYExclusive - 1,
+      protectBelow: false
     });
   }
 
@@ -173,34 +220,39 @@ function processOneBlock(job) {
     const dimension = world.getDimension(job.dimensionId);
     const block = dimension.getBlock({ x, y, z });
 
-    // Undefined means the chunk is no longer loaded. Do not mark it completed.
     if (!block) {
       releaseJobForRetry(job);
       return;
     }
 
-    // Leave flowing/source fluids untouched so the lattice does not carve
-    // through water or lava. Also preserve waterlogged blocks.
-    if (!block.isAir && !block.isLiquid && !isLatticeBlock(x, y, z)) {
-      const permutation = block.permutation;
-      const waterlogged =
-        permutation.getState("waterlogged") === true ||
-        permutation.getState("waterlogged_bit") === true;
+    const gravityBlock = isGravityBlock(block);
+    const protectedSupport = job.protectBelow === true;
+    const fluidBlock = block.isLiquid || isWaterlogged(block);
+    const fluidNeighbor = !fluidBlock && isNearFluid(dimension, x, y, z);
 
-      if (!waterlogged) {
-        dimension.setBlockType({ x, y, z }, "minecraft:air");
-      }
+    // Never replace fluids, waterlogged blocks, or their immediate neighbors.
+    // Scan downward so gravity blocks can preserve their support and stacked
+    // sand/gravel/concrete powder continues protecting the column beneath it.
+    if (!block.isAir &&
+        !fluidBlock &&
+        !fluidNeighbor &&
+        !gravityBlock &&
+        !protectedSupport &&
+        !isLatticeBlock(x, y, z)) {
+      dimension.setBlockType({ x, y, z }, "minecraft:air");
     }
+
+    job.protectBelow = gravityBlock;
   } catch (error) {
-    // Avoid marking a partially edited chunk complete after an API error.
     releaseJobForRetry(job);
     return;
   }
 
-  // Advance only after the current block was processed successfully.
-  job.y++;
-  if (job.y >= job.maxYExclusive) {
-    job.y = job.minY;
+  // Descend through the column, then start the next column at the top.
+  job.y--;
+  if (job.y < job.minY) {
+    job.y = job.maxYExclusive - 1;
+    job.protectBelow = false;
     job.xOffset++;
 
     if (job.xOffset >= CHUNK_SIZE) {
