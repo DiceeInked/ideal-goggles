@@ -678,10 +678,7 @@ function showMainMenu(player) {
     })
     .button("OVERSATURATED ITEMS", function () {
       try { form.close(); } catch {}
-      system.run(function () {
-        tell(player, "Oversaturated-item filtering is not enabled yet. Showing tracked market prices.");
-        showMarketPrices(player, 0);
-      });
+      system.run(function () { showMarketPrices(player, 0, true); });
     })
     .divider()
     .header("QUICK SEARCH")
@@ -827,16 +824,23 @@ function showTradeConfirmation(player,mode,typeId,quantity,quotedScore,returnTo,
   catch(e){tell(player,e instanceof Error?e.message:"Trade failed safely.");system.runTimeout(function(){try{returnToMenu(player,returnTo);}catch{}},5);}
  }).catch(function(){tell(player,"The confirmation form could not open. No trade was made.");returnToMenu(player,returnTo);});
 }
-function showMarketPrices(player, page) {
+function showMarketPrices(player, page, oversaturatedOnly) {
   const market = getMarket();
   const tracked = Object.entries(market)
     .filter(function (entry) { return Number.isSafeInteger(entry[1]); })
     .map(function (entry) { return { id: entry[0], name: prettyName(entry[0]), score: entry[1] }; })
+    .filter(function (entry) {
+      if (!oversaturatedOnly) return true;
+      try { return unitPriceCents(entry.score) <= 10; } catch { return false; }
+    })
     .sort(function (a, b) { return a.name.localeCompare(b.name); });
+  const title = oversaturatedOnly ? "Oversaturated Items" : "Market Prices";
   if (!tracked.length) {
     new MessageFormData()
-      .title("Market Prices")
-      .body("The shared market is fresh. All items start at $1.00 per item.\n\nUse Buy Items or Sell Items to start trading.")
+      .title(title)
+      .body(oversaturatedOnly
+        ? "No tracked items are currently at or below $0.10 per item. This filter only identifies low-priced items; it does not change prices or trade rules."
+        : "The shared market is fresh. All items start at $1.00 per item.\n\nUse Buy Items or Sell Items to start trading.")
       .button1("Close")
       .button2("Back")
       .show(player)
@@ -847,9 +851,12 @@ function showMarketPrices(player, page) {
   const maxPage = Math.max(0, Math.ceil(tracked.length / CONFIG.pageSize) - 1);
   const safePage = Math.max(0, Math.min(page, maxPage));
   const form = new ActionFormData()
-    .title("Market Prices")
-    .body("Tracked items: " + tracked.length + "\nPrices are shared by every player.\nPage " +
-      (safePage + 1) + " of " + (maxPage + 1));
+    .title(title)
+    .body("Tracked items: " + tracked.length +
+      (oversaturatedOnly
+        ? "\nShowing items priced at $0.10 or less. No prices or trade permissions are changed."
+        : "\nPrices are shared by every player.") +
+      "\nPage " + (safePage + 1) + " of " + (maxPage + 1));
   const actions = [];
   for (const entry of tracked.slice(safePage * CONFIG.pageSize, (safePage + 1) * CONFIG.pageSize)) {
     form.button(entry.name + "\n" + currentPriceLabel(entry.id, "buy") + "  |  score " + entry.score);
@@ -868,8 +875,8 @@ function showMarketPrices(player, page) {
   form.show(player).then(function (response) {
     if (response.canceled || response.selection === undefined) return;
     const action = actions[response.selection];
-    if (action === "previous") showMarketPrices(player, safePage - 1);
-    else if (action === "next") showMarketPrices(player, safePage + 1);
+    if (action === "previous") showMarketPrices(player, safePage - 1, oversaturatedOnly);
+    else if (action === "next") showMarketPrices(player, safePage + 1, oversaturatedOnly);
     else if (action === "back") showMainMenu(player);
     else if (action && action.type === "item") showMarketItemDetail(player, action.id, safePage);
   }).catch(function () {});
