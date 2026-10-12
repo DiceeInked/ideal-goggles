@@ -60,6 +60,10 @@ jobs:
           assert recipe.get("unlock") == [{"context": "AlwaysUnlocked"}], "Sell Barrel recipe must be explicitly unlocked"
           item = json.loads((bp / "items/sell_barrel.json").read_text())["minecraft:item"]
           assert item.get("description", {}).get("identifier") == definition["description"]["identifier"], "Sell Barrel item identifier must match the block"
+          assert item.get("components", {}).get("minecraft:display_name", {}).get("value") == "item.diceyinked:sell_barrel.name", "Sell Barrel item must use its localized display name"
+          assert "item.diceyinked:sell_barrel.name=Sell Barrel" in (rp / "texts/en_US.lang").read_text(), "Missing Sell Barrel item display-name localization"
+          catalog = json.loads((bp / "item_catalog/crafting_item_catalog.json").read_text())["minecraft:crafting_items_catalog"]
+          assert any("diceyinked:sell_barrel" in group.get("items", []) for category in catalog.get("categories", []) for group in category.get("groups", [])), "Sell Barrel must be listed in the crafting item catalog"
           placer = item.get("components", {}).get("minecraft:block_placer", {})
           assert placer.get("block") == definition["description"]["identifier"] and placer.get("replace_block_item") is True, "Sell Barrel item must explicitly link to its block"
           assert (rp / "textures/item_texture.json").is_file() and (rp / "textures/terrain_texture.json").is_file(), "Missing Sell Barrel texture atlas definitions"
@@ -67,7 +71,7 @@ jobs:
           script = (bp / "scripts/main.js").read_text()
           for required in ["world.afterEvents.blockContainerClosed.subscribe", "function processClosedSellBarrel", "function showMainMenu", "function showBuyMenu", "function showSellMenu", "function showQuantityForm", "function showTradeConfirmation", "function totalBuyCost", "function totalSaleProceeds"]:
               assert required in script, f"Missing expected menu/market function: {required}"
-          print("Validated stable API dependencies, pack dependency, Sell Barrel definition/recipe/loot/texture/localization links, and key market/menu functions.")
+          print("Validated stable API dependencies, pack dependency, Sell Barrel item display name/catalog/recipe/loot/texture/localization links, and key market/menu functions.")
           print("All pack manifests and JSON files parsed.")
           PY
           package_pack() {
@@ -76,17 +80,17 @@ jobs:
             OUT="$GITHUB_WORKSPACE/$OUT_REL"
             if [ -f "$SRC/scripts/main.js" ]; then cp "$SRC/scripts/main.js" "$RUNNER_TEMP/$PREFIX.mjs"; node --check "$RUNNER_TEMP/$PREFIX.mjs"; fi
             rm -f "$OUT"
-            (cd "$SRC"; zip -q -X "$OUT" manifest.json; for ENTRY in scripts blocks items recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
+            (cd "$SRC"; zip -q -X "$OUT" manifest.json; for ENTRY in scripts blocks items item_catalog recipes loot_tables textures texts; do if [ -d "$ENTRY" ]; then zip -q -X -r "$OUT" "$ENTRY"; fi; done)
             unzip -t "$OUT"
             echo "Built $OUT_REL"
           }
-          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.10.mcpack"
-          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.0.mcpack"
+          package_pack "mods/dynamic-economy/bedrock" "DynamicEconomy_Bedrock" "mods/dynamic-economy/bedrock/releases/DynamicEconomy_Bedrock_0.3.11.mcpack"
+          package_pack "mods/dynamic-economy/resource-pack" "SellBarrel_Resources" "mods/dynamic-economy/resource-pack/releases/SellBarrel_Resources_1.0.1.mcpack"
           package_pack "mods/recovery-compass/bedrock" "RecoveryCompass_Bedrock" "mods/recovery-compass/bedrock/releases/RecoveryCompass_Bedrock_1.0.0.mcpack"
           STAGE="$RUNNER_TEMP/dynamic-economy-mcaddon"; rm -rf "$STAGE"; mkdir -p "$STAGE/Dynamic Economy BP" "$STAGE/Sell Barrel RP"
-          for ENTRY in manifest.json scripts blocks items recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
+          for ENTRY in manifest.json scripts blocks items item_catalog recipes loot_tables; do if [ -e "mods/dynamic-economy/bedrock/$ENTRY" ]; then cp -R "mods/dynamic-economy/bedrock/$ENTRY" "$STAGE/Dynamic Economy BP/"; fi; done
           for ENTRY in manifest.json textures texts; do if [ -e "mods/dynamic-economy/resource-pack/$ENTRY" ]; then cp -R "mods/dynamic-economy/resource-pack/$ENTRY" "$STAGE/Sell Barrel RP/"; fi; done
-          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.10.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
+          MCADDON_REL="mods/dynamic-economy/bedrock/releases/DynamicEconomy_SellBarrel_Bedrock_0.3.11.mcaddon"; rm -f "$GITHUB_WORKSPACE/$MCADDON_REL"
           (cd "$STAGE" && zip -q -X -r "$GITHUB_WORKSPACE/$MCADDON_REL" "Dynamic Economy BP" "Sell Barrel RP")
           unzip -t "$GITHUB_WORKSPACE/$MCADDON_REL"
       - name: Commit generated packs when changed
@@ -100,5 +104,5 @@ jobs:
           git add mods/dynamic-economy/resource-pack/releases/*.mcpack
           git add mods/recovery-compass/bedrock/releases/*.mcpack
           if git diff --cached --quiet; then echo "No generated pack changes to commit."; exit 0; fi
-          git commit -m "Build Dynamic Economy v0.3.10 and Sell Barrel packs"
+          git commit -m "Build Dynamic Economy v0.3.11 and Sell Barrel packs"
           git push
