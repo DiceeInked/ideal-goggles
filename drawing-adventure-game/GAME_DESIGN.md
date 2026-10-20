@@ -208,7 +208,7 @@ The white ore mechanic is intended as a scarce emergency fallback, not a renewab
 
 ### Rewards and scoring
 
-Victory is determined by filling all holes in the team's gel base or eliminating the opposing Queen. The team must win to receive end-of-match rewards; a losing team receives no rewards under the current design. For players on the winning team, the reward score is based on both opposing players killed and gels personally deposited. The exact weighting/formula is TBD. A Queen receives a small additional reward for having been randomly selected for that role. A player who becomes inked off receives no end-of-match rewards, even if their team wins; the result screen should explain the status and give a helpful tip.
+Victory is determined by filling all holes in the team's gel base or eliminating the opposing Queen. The team must win to receive end-of-match rewards; a losing team receives no rewards under the current design. For players on the winning team, the reward score is based on both opposing players killed and gels personally deposited. The exact weighting/formula is TBD. A Queen on the winning team receives a small additional reward for having been randomly selected for that role. A player who becomes inked off receives no end-of-match rewards, even if their team wins; the result screen should explain the status and give a helpful tip.
 
 ### Black ink: voluntary challenge loadout
 
