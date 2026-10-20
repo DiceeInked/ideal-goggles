@@ -117,6 +117,14 @@ The Steady is a signature early weapon and a possible branding icon. Its silhoue
 
 The grappling hook is not intended to be a long-range attack that primarily damages opponents; its main identity is movement.
 
+### Max-level custom weapon skins
+
+After a weapon combination reaches its maximum upgrade level, the player can pay an additional currency cost to unlock custom skin editing for that weapon. The player can then replace its standard appearance with artwork they draw themselves.
+
+To prevent invisible or unfairly hard-to-see weapons, the editor overlays required visibility markers on the blade and handle designs. These markers appear as 50%-transparent dots and lines. The center of every required marker must be covered by some form of artwork before the custom skin can be accepted. A design that leaves any required marker uncovered cannot be saved as a valid skin.
+
+The marker system should preserve enough visible silhouette and contrast for opponents to recognize weapon positions and actions. The precise number and placement of markers, validation rules for thin strokes, and whether the player can preview the skin in combat lighting are **TBD**. Custom skins are cosmetic and should not grant gameplay advantages.
+
 ### Securing combinations and upgrades
 
 Players can experiment with blade-and-handle combinations. Once they find a combination they like, they can **secure** it by spending a meaningful amount of shards. A secured combination can be upgraded, but its component selection becomes locked: players can no longer edit that secured combination's blade/handle pairing. To try a different pairing, they obtain additional weapons.
@@ -175,9 +183,25 @@ The intended mode is a team assault/defense game set in a mineshaft-style map, i
 
 The mode should balance reaching and destroying objectives with defending teammates and fighting opponents. Weapon abilities such as the Steady's grapple should help players traverse the mineshaft, approach objectives, and reposition.
 
-## 8. Personal spaces and social play
+## 8. Homes, props, badges, and community art
 
-Players can draw and customize their own rooms and clothing as well as their character. Multiplayer/social exploration should make it rewarding to discover other players' creations and show off personal style.
+### Player homes
+
+Every player has a personal home, and the home is their normal spawn location. Players can draw and customize the home itself, then decorate it with placeable props and badges. Homes should act as personal galleries and gathering spaces where visitors can get a sense of the player's art and accomplishments.
+
+The home system should support placing, moving, and removing decorations, while making it easy to show off purchased artwork and earned badges. Whether homes are always visitable, invite-only, or controlled by privacy settings is **TBD**.
+
+### Passionate Art Lineup (PAL)
+
+Every season and every year, the game runs the **Passionate Art Lineup (PAL)**, a community art submission event. Players submit original art pieces; selected winning art is featured for other players to purchase.
+
+When a player buys a featured piece, the creator receives coins as compensation. The buyer receives a displayable version of the artwork that can be placed in their home. Visitors can click the displayed art to open a full-screen view showing the piece, its title, and its author.
+
+PAL artwork can therefore be both a collectible and a home decoration, while also giving creators recognition and a way to earn in-game currency from their work. The number of winners, submission rules, judging or voting method, pricing, creator payout, and whether a piece remains available after its event are **TBD**.
+
+The game should clearly credit the artist and preserve attribution when artwork is displayed or opened full-screen. Submission and moderation rules should be established before public launch.
+
+Players can also draw and customize clothing and character parts, visit one another's spaces, and show off personal style. Because players can create and share arbitrary artwork, a public release will need reporting, blocking, visibility settings, and sensible controls for shared player-made content.
 
 Because players can create arbitrary artwork and share it, any public release will need reporting, blocking, visibility settings, and sensible controls for shared player-made content.
 
@@ -198,6 +222,10 @@ These are intentionally unresolved, not accidental omissions:
 11. Are the three prerequisite stones shared objectives, team-specific objectives, or another layout?
 12. How do secured combination upgrades work, and what exactly becomes permanently locked?
 13. What rewards are granted for match participation, kills, and victory?
+14. What are the exact max-level requirements and extra cost for unlocking custom weapon skins?
+15. How many mandatory visibility markers do weapon skins need, and how is marker coverage validated?
+16. What are PAL's submission, selection, pricing, and creator-payout rules?
+17. What home privacy and visitor controls should players have?
 
 ## 10. Suggested prototype order
 
@@ -207,7 +235,8 @@ These are intentionally unresolved, not accidental omissions:
 4. **Weapon assembly prototype:** Implement standardized blade/handle connection points and test two blades with two handles.
 5. **Yap and economy prototype:** Add shard pickups, tipping, one shop tier, and a simple unlock token/station interaction.
 6. **Inkoff test arena:** Test the core-stone objective and prerequisite stones before making a full procedural map.
-7. **Social and content expansion:** Add islands, seasonal variants, personal rooms, sharing, trading/gifting, and richer cave generation.
+7. **Social and content expansion:** Add islands, seasonal variants, personal homes, props and badges, sharing, trading/gifting, and richer cave generation.
+8. **Creator economy and cosmetic skins:** Prototype weapon-skin visibility validation, home art displays, and a small PAL event with clear artist attribution and creator rewards.
 
 The priority is to prove that drawing, weapon use, and gathering ink are satisfying in a tiny playable slice before building every island, weapon, shop tier, and multiplayer feature.
 
