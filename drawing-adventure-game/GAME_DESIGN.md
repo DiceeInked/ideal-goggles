@@ -3,7 +3,8 @@
 > **Status:** Early concept / living design document  
 > **Last updated:** 2026-10-20  
 > **Working title:** Not decided  
-> **Naming note:** The merchant's name is **Yap** (Y-A-P). The PvP game mode is **Inkoff**.  
+> **Naming note:** The merchant's name is **Yap** (Y-A-P). The PvP game mode is **Inkoff**.
+> **Inspiration log:** See [INSPIRATIONS.md](INSPIRATIONS.md) for the referenced games/software, the specific ideas they inspire, and research links.  
 >
 > This document consolidates the current concept. When ideas conflict, the newest design decision takes precedence. Numbers, economy formulas, and mechanics marked **TBD** are intentionally not finalized.
 
@@ -166,7 +167,7 @@ Inkoff is a team-based competitive mode using the same ink-infused modular weapo
 
 ### Teams and roles
 
-Each round has two opposing teams. Each team has one designated **Queen** and a larger group of ordinary players, currently called workers. The exact team size and how the Queen is selected are TBD.
+Each round has two opposing teams. Each team has one designated **Queen** and a larger group of ordinary players, currently called workers. One Queen is randomly selected for each team before the match starts. The exact team size is TBD.
 
 Workers:
 - Gather **gel** from stations or pickups distributed around the map.
@@ -175,7 +176,7 @@ Workers:
 - Continue to fight opposing workers. If a worker carrying gel is killed, the opponent can take the dropped gel.
 - Win economically by filling every required slot in their team's base with gel before the opposing team does.
 
-The number and placement of gel stations, how quickly gel respawns, the number of base slots, and whether a carried gel can be dropped through actions other than being killed are TBD.
+Each team's base has a set of empty holes arranged in a hexagon-style layout. Every deposited gel fills one hole; the team wins immediately when all of its holes are filled. The number of holes, number and placement of gel stations, how quickly gel respawns, and whether a carried gel can be dropped through actions other than being killed are TBD.
 
 ### Queen role and amulets
 
@@ -187,27 +188,27 @@ The handle still determines the Queen's secondary ability, but that ability is m
 
 ### Queen combat and lives
 
-Each Queen has **three lives**. If a Queen loses all three lives, the opposing team wins immediately. Queens are powerful against ordinary workers, but their Queen-specific bullet patterns do not damage the opposing Queen. Queens can fight one another using their swords in melee; this is the exception that allows direct Queen-versus-Queen combat. Friendly fire is off.
+Each Queen has **three lives**. A Queen death has a clear, obvious visual/audio indication, followed by a short delay and then a respawn at their own team's base. Each death costs one life. If a Queen loses all three lives, the opposing team wins immediately. Queens are powerful against ordinary workers, but their Queen-specific bullet patterns do not damage the opposing Queen. Queens can fight one another using their swords in melee; this is the exception that allows direct Queen-versus-Queen combat. Friendly fire is off.
 
-The exact relationship between the Queen's three lives and ordinary deaths, respawn timing, invulnerability, and whether a Queen can be temporarily unpowered is TBD. These rules should be very clear in the UI because Queen elimination is a major victory condition.
+The exact duration of the respawn delay, temporary spawn protection, and whether a Queen can ever be temporarily unpowered are TBD. The death cue and remaining-life display should be clear because Queen elimination is a major victory condition.
 
 ### Ink, match entry, and running out
 
-Ink color is locked for the duration of an Inkoff match. A player cannot switch to another normal ink color mid-match; they must wait until a later round or game to choose another. Players must have at least one ink selected and enough ink to meet the match's entry requirement before joining. The intended rule is that players should bring enough ink to participate through the expected full match, rather than knowingly entering with an inadequate supply. The exact pre-match estimate or threshold is TBD and should be transparent.
+Ink color is locked for the duration of an Inkoff match. A player cannot switch to another normal ink color mid-match; they must wait until a later round or game to choose another. Players must have at least one normal ink selected before joining. There is no separate requirement to predict or carry enough ink to finish the entire match; the earlier mention of needing enough 'ink' to finish was a dictation mix-up and referred to the team's gel goal instead. Running out of the selected combat ink is an intended resource-management possibility, with emergency white ore providing a limited way to keep contributing.
 
 Ink is a finite combat resource. Earlier estimates suggested roughly five slashes per ink charge, but this and all numerical values remain provisional. The long-term economy must avoid requiring excessive ore grinding just to supply a single match.
 
 ### Emergency white ore and being inked off
 
-White gemstones/ores appear **only during Inkoff**, and only become visible to a player once that player's ink has reached zero. They contain a small emergency amount of white ink and can be mined to continue playing briefly. Mining one switches the player's combat ink to white. White is not a normal selectable Inkoff loadout color, and leftover white ink disappears at the end of the match rather than being refunded.
+White gemstones/ores appear **only during Inkoff**, and only become visible to a player once that player's selected ink has reached zero. The purpose is to prevent teammates who run out of their chosen color from becoming spectators while the rest of their team is still playing. A white ore contains a small emergency supply and can be mined to continue contributing. Mining one switches the player's combat ink to white. White is not a normal selectable Inkoff loadout color, and any leftover white ink disappears at the end of the match rather than being refunded.
 
-If a player's ink reaches zero and they are unable or unwilling to mine a white emergency ore, they are considered **inked off**. An inked-off player receives no end-of-match rewards; the result screen should explicitly say “You're inked off” (exact wording/capitalization TBD). This is a strong consequence and should be tested carefully for fairness and clarity. The exact effects of being inked off, including whether the player is removed from combat immediately or can spectate, are TBD.
+A player who becomes **inked off** can recognize that their ink supply has run out, but the game does not show the final “You're inked off” result message until the match ends. An inked-off player receives no end-of-match rewards, and the result screen should offer a gentle tip such as “Try bringing more ink next time.” The precise trigger for the status after a player has used white emergency ink, and what their character can do after their supply is fully exhausted, still need to be defined.
 
 The white ore mechanic is intended as a scarce emergency fallback, not a renewable normal loadout or an unlimited refill loop. Its quantity, mining time, location fairness, and how it affects the match economy need testing.
 
 ### Rewards and scoring
 
-Kills contribute to score, and the team can win through either filling its gel base or eliminating the opposing Queen. The relative importance of kills in scoring, whether kills grant extra rewards independent of victory, and the end-of-match reward formula are TBD. The current inked-off rule is that a player who becomes inked off gets no end-of-match rewards. Players who finish without being inked off can receive the usual match rewards; exact participation and victory rewards are TBD.
+Victory is determined by filling all holes in the team's gel base or eliminating the opposing Queen. The team must win to receive end-of-match rewards; a losing team receives no rewards under the current design. For players on the winning team, the reward score is based on both opposing players killed and gels personally deposited. The exact weighting/formula is TBD. A Queen receives a small additional reward for having been randomly selected for that role. A player who becomes inked off receives no end-of-match rewards, even if their team wins; the result screen should explain the status and give a helpful tip.
 
 ### Black ink: voluntary challenge loadout
 
@@ -258,20 +259,18 @@ These are intentionally unresolved, not accidental omissions:
 7. What are the final seasonal color families, especially summer?
 8. How do blank shards become colored shards, and which currencies are required for unlock tokens versus actual equipment?
 9. How do tips affect Yap's shard payout, inventory, and prices?
-10. How is the Queen selected, and what are the team sizes?
-11. How many gel slots must each base fill, where do gels spawn, and how quickly do they respawn?
-12. What happens when a Queen loses a life: immediate respawn, delay, or another consequence?
-13. Can players who are inked off spectate, and what exactly happens to their character for the rest of the match?
-14. What is the entry ink requirement, and how can the game estimate whether a player has enough ink for a full match?
-15. How much ink do normal attacks consume, how many emergency white ores are available, and how long do they take to mine?
-16. What are the black-ink handicap tiers and exact stat penalties?
-17. How are kills scored, and how do kill, participation, and victory rewards combine?
-18. What are the exact max-level requirements and extra cost for unlocking custom weapon skins?
-19. How many mandatory visibility markers do weapon skins need, and how is marker coverage validated?
-20. What are PAL's submission, selection, pricing, and creator-payout rules?
-21. What home privacy and visitor controls should players have?
-22. How should server instances keep friends together while allowing strangers to encounter one another naturally?
-23. How will the increasingly 3D-looking deep-cave scenery be built and made readable alongside 2D characters?
+10. What are the team sizes, and what is the Queen respawn delay and spawn protection?
+11. How many hexagon-layout gel slots must each base fill, where do gels spawn, and how quickly do they respawn?
+12. What precisely counts as becoming inked off after regular ink and emergency white ink are exhausted, and what can that player do for the rest of the match?
+13. How much ink do normal attacks consume, how many emergency white ores are available, and how long do they take to mine?
+14. What are the black-ink handicap tiers and exact stat penalties?
+15. How should rewards be weighted between kills and gels deposited for winning players, and how large is the Queen's small role bonus?
+16. What are the exact max-level requirements and extra cost for unlocking custom weapon skins?
+17. How many mandatory visibility markers do weapon skins need, and how is marker coverage validated?
+18. What are PAL's submission, selection, pricing, and creator-payout rules?
+19. What home privacy and visitor controls should players have?
+20. How should server instances keep friends together while allowing strangers to encounter one another naturally?
+21. How will the increasingly 3D-looking deep-cave scenery be built and made readable alongside 2D characters?
 
 ## 10. Suggested prototype order
 
