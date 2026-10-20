@@ -33,14 +33,12 @@
 - Material-based recoloring and ink collection connect art creation to the game's color system and exploration.
 - Procreate is a creative-tool reference rather than a game-mechanics reference.
 
-## 3. “Freaky Animal Company” / possible match: Animal Company
+## 3. Animal Company
 
-**Type:** The exact title needs confirmation  
+**Type:** Multiplayer horror/adventure game  
 **Reference links:** [Animal Company official site](https://www.animalcompanyvr.com/) · [Animal Company on Steam](https://store.steampowered.com/app/4551040/Animal_Company/) · [Animal Company on Meta Quest](https://www.meta.com/experiences/animal-company/7190422614401072/)
 
-**Research note:** I could not verify a game with the exact title **Freaky Animal Company**. The closest likely match I found is **Animal Company**, whose official descriptions mention eerie exploration, abandoned mines, gear progression, multiplayer adventure, and character customization. That overlaps with the mining-and-equipment details described for this project, but this identification is **not confirmed**. The title can be corrected when the intended reference is certain.
-
-**Possible ideas this project draws from, if Animal Company is the intended reference**
+**Ideas this project draws from**
 - The sense of exploring dangerous or mysterious underground places.
 - Gathering resources and using progression systems to obtain or improve equipment.
 - The contrast between a social hub and stranger, more hazardous exploration areas.
@@ -118,7 +116,7 @@
 |---|---|
 | Shared-world social exploration and atmosphere | Sky: Children of the Light |
 | Drawing-first creation and editable artwork | Procreate |
-| Cave exploration, resource collection, and equipment progression | Animal Company, if this is the intended “Freaky Animal Company” reference |
+| Cave exploration, resource collection, and equipment progression | Animal Company |
 | Escalating dread and deeper-level atmosphere | DOORS |
 | Gel delivery, base filling, Queen lives, alternative victories | Killer Queen Black |
 | Temporary flying boss/transformation spectacle | Stick Fight: The Game |
@@ -130,4 +128,3 @@
 - Use original characters, names, visuals, sounds, level layouts, lore, and interface design.
 - Use sources to study high-level design principles, not to reproduce exact content.
 - If public-facing credits or a press kit are created later, list these works as inspirations in wording that accurately describes their influence. Acknowledging inspiration is not the same as permission to reuse another creator's assets.
-- Revisit the “Freaky Animal Company” entry once the exact game title is confirmed.
