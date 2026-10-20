@@ -85,7 +85,7 @@
 ## 6. Stick Fight: The Game
 
 **Type:** Physics-based 2D multiplayer fighting game  
-**Reference links:** [Official Steam page](https://store.steampowered.com/app/674940/stick_fight_the_game/) · [Official Halloween-update announcement](https://steamcommunity.com/games/674940/announcements/detail/152652736780334445) · [Community reference to Halloween boss levels](https://stickfightgame.fandom.com/wiki/Bosses)
+**Reference links:** [Official Steam page](https://store.steampowered.com/app/674940/stick_fight_the_game/) · [Official Halloween-update announcement](https://steamcommunity.com/news/posts/?appids=674940&enddate=1509731552&feed=steam_community_announcements) · [Community reference to Halloween boss levels](https://stickfightgame.fandom.com/wiki/Bosses)
 
 **What inspires this project**
 - Energetic, readable side-view combat and unexpected moments created by players interacting in one arena.
