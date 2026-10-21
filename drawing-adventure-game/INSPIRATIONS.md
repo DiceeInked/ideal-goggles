@@ -110,6 +110,21 @@
 - Its traversal is shaped by ink-consuming modular weapons, the Steady grappling hook, the Queen's flight, and an underground environment.
 - The exact Bridge server/map that informed the original thought has not been specified, so these notes keep the reference broad.
 
+## 8. PHIGHTING!
+
+**Type:** Roblox class-based third-person shooter  
+**Reference links:** [Official Roblox game page](https://www.roblox.com/games/7138009149/PHIGHTING) · [PHIGHTING! Wiki: PHIGHT! Lobby](https://phighting.fandom.com/wiki/PHIGHT%21_Lobby) · [PHIGHTING! Wiki: Traffic and the title menu](https://phighting.fandom.com/wiki/Traffic)
+
+**What inspires this project**
+- The presentation of menus and character-related interfaces as part of the game's world and personality, rather than generic detached screens.
+- The way character selection and menu presentation can give individual characters a distinct visual identity.
+- A lively, stylized interface that feels connected to the game's world, characters, and tone.
+
+**How this project makes it its own**
+- This is specifically a reference for the **menus and interface presentation**, not for copying PHIGHTING!'s combat or character designs.
+- The project's menus should reflect its own drawing, ink, and cave-exploration themes, with original layouts, animations, iconography, typography, and sound.
+- Keep the interface readable and practical on the intended platform, and make sure visual flair never obscures important choices or accessibility.
+
 ## Cross-reference: which part of the project each source informs
 
 | Project area | Main inspiration |
@@ -120,7 +135,7 @@
 | Escalating dread and deeper-level atmosphere | DOORS |
 | Gel delivery, base filling, Queen lives, alternative victories | Killer Queen Black |
 | Temporary flying boss/transformation spectacle | Stick Fight: The Game |
-| Early competitive-map and forward-pressure idea | Minecraft Bridge-style community minigames |
+| Early competitive-map and forward-pressure idea | Minecraft Bridge-style community minigames |\n| Menu presentation and character-focused interface personality | PHIGHTING! |
 
 ## Credit and originality checklist
 
