@@ -30,6 +30,7 @@
  
 - (The trick is you move (num1) clockwize from the top (num2) counterclockwize from the position and so on.
 - You also have 60 secs to answer as you see a revolver that moves one tick every 10 secs 5 times and then fires and kills you.
+- If you win twice your item will be split into three.
 
 ### Accepts:
 - 2 shards to play. :)
