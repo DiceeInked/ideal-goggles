@@ -11,5 +11,14 @@
 - One amulet part.
 
 ### Accepts:
-- Any color of ink to initially summon them (Yap gives a shard on arrival if you give him more than 10 ink).
--  Shards for buying items (you can then use the color of ink you gave to yap initially to get more).
+- Any color of ink to initially summon them.
+- Shards for buying items.
+
+
+## Trap
+> A merchant that has a bright smile with sharp teeth and a sticky note on their left eye with a target on it.
+
+### Sells:
+- His ability to take apart items, that is if you win.
+  
+
