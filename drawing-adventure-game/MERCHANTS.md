@@ -29,4 +29,7 @@
   - A button to guess the bottom barrel.
  
 - (The trick is you move (num1) clockwize from the top (num2) counterclockwize from the position and so on.
-- You also have 60 secs to answer as you see a revolver 
+- You also have 60 secs to answer as you see a revolver that moves one tick every 10 secs 5 times and then fires and kills you.
+
+### Accepts:
+- 2 shards to play. :)
