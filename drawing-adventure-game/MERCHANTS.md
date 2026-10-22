@@ -20,5 +20,13 @@
 
 ### Sells:
 - His ability to take apart items, that is if you win.
-  
-
+- You place a locked weapon in his machine, lock it down, sign a contract, and then begin.
+- You take the two parts where the weapon is locked down, look at one of them, and you spin a barrel.
+- As the barrel spins you see 5 numbers appear one after another in mysterious blue static light appear for 0.5 sec each (you also have a note pad you can write on).
+- The barrels stops, and you can then select one of 3 buttons.
+  - A button to respin (costs 10 ink).
+  - A button to guess the top barrel.
+  - A button to guess the bottom barrel.
+ 
+- (The trick is you move (num1) clockwize from the top (num2) counterclockwize from the position and so on.
+- You also have 60 secs to answer as you see a revolver 
