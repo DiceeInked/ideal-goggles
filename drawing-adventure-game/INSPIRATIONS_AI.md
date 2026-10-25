@@ -1,146 +1,82 @@
-# Inspirations and Reference Notes
+# Inspirations and References
 
-> **Last researched:** 2026-10-20  
-> **Purpose:** Keep track of the games and creative software that inspired this project, what ideas they sparked, and where to learn about the references. These notes describe inspiration, not a plan to copy another game's exact art, characters, maps, writing, interface, sounds, or branding.
+These games and tools helped spark ideas for this project. They're references for broad ideas, not things to copy. The characters, art, levels, writing, sounds, and interface should be original.
 
-## 1. Sky: Children of the Light
+## Sky: Children of the Light
+**Type:** Multiplayer social exploration  
+**Links:** [PlayStation overview](https://www.playstation.com/en-us/games/sky-children-of-the-light/) · [App Store](https://apps.apple.com/us/app/sky-children-of-the-light/id1462117269)
 
-**Type:** Multiplayer social exploration game  
-**Reference links:** [Official PlayStation overview](https://www.playstation.com/en-us/games/sky-children-of-the-light/) · [App Store listing](https://apps.apple.com/us/app/sky-children-of-the-light/id1462117269)
+**Inspiration:** Travelling alongside strangers, meeting the same players again, calm exploration, wonder, environmental storytelling, and character customization.
 
-**What inspires this project**
-- The feeling of travelling through a world alongside strangers, repeatedly crossing paths with other players.
-- Calm exploration, a sense of wonder, environmental storytelling, and a world that can grow more mysterious or unsettling.
-- Character customization and the feeling of sharing an adventure rather than only competing.
+**How this game differs:** It's a side-view 2D world built around player-drawn characters and art. Players travel through connected cave layers, collect ink, and meet others as they explore.
 
-**How this project makes it its own**
-- The world is a side-view 2D platformer with player-drawn characters and art.
-- Cave levels connect through hidden descending passages and portals, with server-managed zones designed to let players naturally encounter one another.
-- Color, ink mining, hand-drawn player creations, and the evolving cave atmosphere are central to this game's identity.
+## Procreate
+**Type:** Drawing and painting software  
+**Links:** [Procreate](https://procreate.com/procreate) · [Handbook: Layers](https://help.procreate.com/procreate/handbook/layers)
 
-## 2. Procreate
+**Inspiration:** Making drawing feel direct and rewarding, with control over details, layers, color, and revisions.
 
-**Type:** Digital drawing and painting software, not a video game  
-**Reference links:** [Official Procreate overview](https://procreate.com/procreate) · [Procreate Handbook: Layers](https://help.procreate.com/procreate/handbook/layers)
+**How this game differs:** Drawing is part of a multiplayer game. Players create character looks, clothes, and artwork, then use collected ink to recolor gray or filled areas. Custom weapon skins aren't currently planned, and the special gray “alloy” idea is still undecided.
 
-**What inspires this project**
-- Making drawing feel direct, expressive, and rewarding instead of treating art as a secondary menu.
-- Giving users control over separate elements, layers, color, and revisions.
-- Building a creative experience where beginners can experiment, while skilled artists can make detailed work.
+## Animal Company
+**Type:** Multiplayer horror/adventure  
+**Links:** [Official site](https://www.animalcompanyvr.com/) · [Steam](https://store.steampowered.com/app/4551040/Animal_Company/) · [Meta Quest](https://www.meta.com/experiences/animal-company/7190422614401072/)
 
-**How this project makes it its own**
-- Drawing is integrated into a multiplayer game: players can create character appearances, clothing, and artwork for drawing surfaces. Custom-drawn weapon skins are not part of the current plan; player-home features remain to be reconfirmed.
-- Ink-driven recoloring connects art creation to exploration: the current concept starts with black and gray drawing colors, then uses collected ink to recolor matching gray/filled areas. A special gray “alloy” recoloring mechanic is still only a candidate.
-- Procreate is a creative-tool reference rather than a game-mechanics reference.
+**Inspiration:** Exploring dangerous underground areas, gathering resources, improving equipment, and moving between a social hub and riskier places.
 
-## 3. Animal Company
+**How this game differs:** It uses a 2D cave world, ink and ore collection, weapon parts, and original merchants. Weekly cave changes have been discussed but aren't confirmed.
 
-**Type:** Multiplayer horror/adventure game  
-**Reference links:** [Animal Company official site](https://www.animalcompanyvr.com/) · [Animal Company on Steam](https://store.steampowered.com/app/4551040/Animal_Company/) · [Animal Company on Meta Quest](https://www.meta.com/experiences/animal-company/7190422614401072/)
+## DOORS
+**Type:** Roblox horror/exploration  
+**Link:** [Roblox page](https://www.roblox.com/games/6516141723/DOORS)
 
-**Ideas this project draws from**
-- The sense of exploring dangerous or mysterious underground places.
-- Gathering resources and using progression systems to obtain or improve equipment.
-- The contrast between a social hub and stranger, more hazardous exploration areas.
+**Inspiration:** Building tension through lighting, sound, uncertainty, and a gradual shift from safe to unsettling places.
 
-**How this project makes it its own**
-- The cave network is a side-view 2D platforming world with explicit portal-linked levels.
-- The main collection loop revolves around colored ink, ores, shards, and player-made equipment and art.
-- The merchant YAP and the transition from serene exploration to uncanny deeper levels are original concepts being developed for this project. Weekly cave-layout changes have been discussed but are not confirmed.
+**How this game differs:** The atmosphere changes as players descend into caves. Deeper scenery may look more 3D while the player remains 2D. The goal is to borrow the pacing, not copy rooms, creatures, names, or jump scares.
 
-## 4. DOORS
-
-**Type:** Roblox horror/exploration game  
-**Reference link:** [Official DOORS Roblox page](https://www.roblox.com/games/6516141723/DOORS)
-
-**What inspires this project**
-- Escalating tension and the feeling that a familiar place can become more dangerous and mysterious as the player proceeds.
-- Using sound, lighting, uncertainty, and environmental changes to make players curious or uneasy.
-- A gradual tonal shift from safer areas toward darker and more threatening ones.
-
-**How this project makes it its own**
-- The change in atmosphere happens as players descend deeper into an underground cave system.
-- Deeper scenery may become more volumetric or 3D-looking while the player character stays 2D, creating a deliberately uncanny contrast.
-- The intended inspiration is pacing and atmosphere, not copying DOORS' rooms, entities, names, jump scares, or exact progression.
-
-## 5. Killer Queen Black
-
+## Killer Queen Black
 **Type:** Competitive team platform game  
-**Reference links:** [Steam Community page and official updates](https://steamcommunity.com/app/663670/allnews/) · [Victory-condition reference](https://killerqueenblack.wiki/gameplay/victory-conditions/)
+**Links:** [Steam community and updates](https://steamcommunity.com/app/663670/allnews/) · [Victory conditions](https://killerqueenblack.wiki/gameplay/victory-conditions/)
 
-**What inspires this project**
-- Several victory routes competing for the team's attention, rather than a match being decided by kills alone.
-- A high-stakes Queen role with three lives, where losing the Queen repeatedly can end the match.
-- An economic objective in which workers carry collectables back to their base to fill its slots.
-- The interaction between an important team leader and a larger group carrying out supporting jobs.
+**Inspiration:** Multiple ways for a team to win, a Queen with three lives, and workers carrying items back to base to fill slots.
 
-**Specific adaptation**
-- Inkoff currently uses two victory routes: fill all the gel holes in the team's base, or eliminate the opposing Queen by taking all three of her lives.
-- Workers slash gel once to collect it, visibly carry it above their heads, and deposit it at their base. If the carrier is killed, the gel can be stolen.
-- Each Queen is randomly selected before the match, visibly loses one of three lives on death, and respawns at her own base after a short delay.
-- The snail victory condition from Killer Queen Black is intentionally **not** included in the current design.
+**How this game differs:** Inkoff has two win conditions: fill the team's base with gel or take all three of the other Queen's lives. The snail objective isn't included.
 
-## 6. Stick Fight: The Game
+## Stick Fight: The Game
+**Type:** Physics-based 2D fighting game  
+**Links:** [Steam page](https://store.steampowered.com/app/674940/stick_fight_the_game/) · [Halloween update](https://steamcommunity.com/news/posts/?appids=674940&enddate=1509731552&feed=steam_community_announcements) · [Community boss reference](https://stickfightgame.fandom.com/wiki/Bosses)
 
-**Type:** Physics-based 2D multiplayer fighting game  
-**Reference links:** [Official Steam page](https://store.steampowered.com/app/674940/stick_fight_the_game/) · [Official Halloween-update announcement](https://steamcommunity.com/news/posts/?appids=674940&enddate=1509731552&feed=steam_community_announcements) · [Community reference to Halloween boss levels](https://stickfightgame.fandom.com/wiki/Bosses)
+**Inspiration:** Readable side-view combat and a dramatic temporary transformation with flight and powerful abilities.
 
-**What inspires this project**
-- Energetic, readable side-view combat and unexpected moments created by players interacting in one arena.
-- The Halloween boss idea: a temporary transformation triggered by a collectible, with flight and a distinctive set of powerful abilities.
-- A dramatic change in how a character moves and fights, making the transformed player immediately recognizable to everyone else.
+**How this game differs:** The Queen's look and attacks are tied to the player's weapon and amulet, and the Queen has three lives. The pumpkin, attacks, art, and sounds aren't being copied.
 
-**How this project makes it its own**
-- The Queen role and amulet-driven projectile patterns provide the transformed combat identity.
-- The amulet appears at the sword-and-handle connection on a normal character's weapon, then also appears on the Queen's chest alongside wings and a crown, halo, or demon horns.
-- The Queen still participates in the larger team objective, and has three lives tied to a victory condition.
-- The intended inspiration is the transformation and spectacle, not copying Stick Fight's pumpkin, boss designs, attacks, art, or sounds.
+## Minecraft Bridge-style minigames
+**Type:** Community server minigame  
+**Links:** [Minecraft multiplayer servers](https://www.minecraft.net/en-us/servers) · [Example Bridge plugin](https://modrinth.com/plugin/the-bridge)
 
-## 7. Minecraft “The Bridge” / Bridge-style server minigames
+**Inspiration:** Compact maps where teams fight over routes and push toward an opposing side.
 
-**Type:** Community server/minigame inspiration, not a universal core Minecraft mode  
-**Reference links:** [Minecraft's official multiplayer-server overview](https://www.minecraft.net/en-us/servers) · [Example community “The Bridge” minigame implementation](https://modrinth.com/plugin/the-bridge)
+**How this game differs:** Inkoff focuses on gel delivery and Queen elimination, with movement shaped by ink-powered weapons, the grappling-hook-like Steady, flying Queens, and caves. The exact Bridge minigame that first inspired the idea hasn't been identified.
 
-**What inspires this project**
-- A compact competitive map organized around advancing through space, contesting routes, and putting pressure on an opposing side.
-- The early idea of giving Inkoff a clear objective structure in a mineshaft-style arena.
+## PHIGHTING!
+**Type:** Roblox class-based shooter  
+**Links:** [Roblox page](https://www.roblox.com/games/7138009149/PHIGHTING) · [Lobby reference](https://phighting.fandom.com/wiki/PHIGHT%21_Lobby) · [Traffic and title menu](https://phighting.fandom.com/wiki/Traffic)
 
-**How this project makes it its own**
-- Inkoff's current rules are primarily based on the gel economy and Queen-elimination ideas described above, rather than a direct recreation of a Bridge minigame.
-- Its traversal is shaped by ink-consuming modular weapons, the Steady grappling hook, the Queen's flight, and an underground environment.
-- The exact Bridge server/map that informed the original thought has not been specified, so these notes keep the reference broad.
+**Inspiration:** Menus that feel connected to the world and give characters their own visual personality.
 
-## 8. PHIGHTING!
+**How this game differs:** This is a menu and interface reference only. The game's own drawing, ink, and cave themes should guide its layouts, animation, icons, type, and sound. The visual style shouldn't get in the way of clear choices or accessibility.
 
-**Type:** Roblox class-based third-person shooter  
-**Reference links:** [Official Roblox game page](https://www.roblox.com/games/7138009149/PHIGHTING) · [PHIGHTING! Wiki: PHIGHT! Lobby](https://phighting.fandom.com/wiki/PHIGHT%21_Lobby) · [PHIGHTING! Wiki: Traffic and the title menu](https://phighting.fandom.com/wiki/Traffic)
-
-**What inspires this project**
-- The presentation of menus and character-related interfaces as part of the game's world and personality, rather than generic detached screens.
-- The way character selection and menu presentation can give individual characters a distinct visual identity.
-- A lively, stylized interface that feels connected to the game's world, characters, and tone.
-
-**How this project makes it its own**
-- This is specifically a reference for the **menus and interface presentation**, not for copying PHIGHTING!'s combat or character designs.
-- The project's menus should reflect its own drawing, ink, and cave-exploration themes, with original layouts, animations, iconography, typography, and sound.
-- Keep the interface readable and practical on the intended platform, and make sure visual flair never obscures important choices or accessibility.
-
-## Cross-reference: which part of the project each source informs
-
-| Project area | Main inspiration |
+## Quick reference
+| Area | Inspiration |
 |---|---|
-| Shared-world social exploration and atmosphere | Sky: Children of the Light |
-| Drawing-first creation and editable artwork | Procreate |
-| Cave exploration, resource collection, and equipment progression | Animal Company |
-| Escalating dread and deeper-level atmosphere | DOORS |
-| Gel delivery, base filling, Queen lives, alternative victories | Killer Queen Black |
-| Temporary flying boss/transformation spectacle | Stick Fight: The Game |
-| Early competitive-map and forward-pressure idea | Minecraft Bridge-style community minigames |
-| Menu presentation and character-focused interface personality | PHIGHTING! |
+| Social exploration and wonder | Sky: Children of the Light |
+| Drawing and editable artwork | Procreate |
+| Cave exploration and equipment progression | Animal Company |
+| Escalating tension | DOORS |
+| Gel delivery, Queen lives, multiple win conditions | Killer Queen Black |
+| Transformation and flying combat | Stick Fight: The Game |
+| Early competitive-map idea | Minecraft Bridge-style minigames |
+| Menu presentation | PHIGHTING! |
 
-## Credit and originality checklist
-
-- Keep this file as a transparent record of inspirations and research links.
-- Use original characters, names, visuals, sounds, level layouts, lore, and interface design.
-- Use sources to study high-level design principles, not to reproduce exact content.
-- If public-facing credits or a press kit are created later, list these works as inspirations in wording that accurately describes their influence. Acknowledging inspiration is not the same as permission to reuse another creator's assets.
+## Keep the game original
+Use these references to learn from broad design ideas. Create original characters, names, visuals, sounds, maps, story, and interface. Listing a game as an inspiration doesn't give permission to reuse its assets.
