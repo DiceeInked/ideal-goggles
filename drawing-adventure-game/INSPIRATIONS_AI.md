@@ -46,7 +46,7 @@
 **How this project makes it its own**
 - The cave network is a side-view 2D platforming world with explicit portal-linked levels.
 - The main collection loop revolves around colored ink, ores, shards, and player-made equipment and art.
-- The merchant Yap and the transition from serene exploration to uncanny deeper levels are original concepts being developed for this project. Weekly cave-layout changes have been discussed but are not confirmed.
+- The merchant YAP and the transition from serene exploration to uncanny deeper levels are original concepts being developed for this project. Weekly cave-layout changes have been discussed but are not confirmed.
 
 ## 4. DOORS
 
