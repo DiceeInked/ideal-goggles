@@ -19,7 +19,7 @@ Inkoff is a team-based competitive mode with two victory routes:
 The Queen is randomly selected for each team. When the Queen dies, the death is clearly signaled, there is a short delay, and the Queen respawns at their own base while losing one life. Running out of ink also costs the Queen one power/life. Exact timing and protections remain open.
 
 ## Workers and gel
-Workers gather gel from map stations or pickups. They slash a gel once to collect it; it floats above their head so possession is visible. They carry it to their own base and jump into the base to deposit it. Each deposited gel fills one hole in the team's hexagon-style base layout. If a worker carrying gel is killed, the opponent can take the dropped gel.
+The exact source and spawn rules for gel have not been finalized. A worker slashes a gel once to collect it; it floats above their head so possession is visible. They carry it to their own base and jump into the base to deposit it. Each deposited gel fills one hole in the team's hexagon-style base layout. If a worker carrying gel is killed, the opponent can take the dropped gel.
 
 ## The Queen and amulets
 The Queen can fly and uses a gun-like version of their equipped sword. The sword remains visually recognizable. The amulet determines the Queen's projectile pattern and damage behavior; it also provides passive advantages in the broader weapon system. The amulet is visible at the blade-handle connection on a normal weapon and is also displayed on the Queen's chest. The Queen's transformation includes wings and a crown, halo, or demon horns depending on the amulet's design.
@@ -39,5 +39,6 @@ Black ink is a voluntary, explicitly harder challenge loadout. Choosing it must 
 - Does a worker who runs out of ink respawn with their starting ink, or without ink?
 - Does running out of ink count as a death for score/reward purposes?
 - How much ink does every player start with, and how much does each ore provide?
+- Where and how does gel spawn, and how does it respawn after being collected?
 - Can a player mine while under threat, and how are mining actions interrupted?
 - Does the Queen lose one of their three lives immediately when ink depletion causes death? Current design notes say yes; exact sequencing is still to be defined.
