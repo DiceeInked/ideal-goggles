@@ -24,7 +24,7 @@ This folder contains the living design documentation. Files marked `_AI` were dr
 - [Homes, props, badges, and PAL](HOMES_AND_PAL_AI.md)
 
 ### Merchants and inspiration
-- [Yap](YAP_AI.md)
+- [YAP](YAP_AI.md)
 - [Trap](TRAP_AI.md)
 - [Original creator-written merchant notes](MERCHANTS.md)
 - [Inspiration log](INSPIRATIONS_AI.md)
