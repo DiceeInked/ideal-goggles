@@ -1,63 +1,52 @@
-# Weapons, Ink, and Shards _AI
+# Weapons, Ink, and Shards
 
-> AI-drafted documentation based on the creator's latest clarifications. This file supersedes older weapon/economy descriptions where they conflict.
+## Weapon parts
+Each weapon has three parts:
+- **Blade:** controls the main attack.
+- **Handle:** controls the secondary ability.
+- **Amulet:** gives passive benefits and sets the Queen's projectile pattern in Inkoff.
 
-## Weapon components
-A weapon is assembled from three components:
-- Blade: determines the weapon's main/primary attack.
-- Handle: determines the weapon's secondary ability.
-- Amulet: determines the projectile pattern used when its wielder is the Queen in Inkoff. Amulets also provide passive advantages outside that Queen projectile-pattern function.
+The amulet is a real weapon part, not just a Queen accessory.
 
-The amulet is a real third weapon component, not merely a Queen-only decoration.
+## Locking a weapon
+Players choose a blade, handle, and amulet, then spend shards to lock that combination. A locked weapon can be upgraded and used in modes such as Inkoff, but its parts can't normally be changed. Trap can try to split a locked weapon apart through his challenge.
 
-## Locking a weapon combination
-After selecting a blade, handle, and amulet, the player can pay shards to lock the assembled combination.
+Custom-drawn weapon skins with transparent marker requirements are not part of the current plan.
 
-Locking has two main effects:
-- The combination becomes eligible for use in game modes such as Inkoff.
-- The player can upgrade the locked weapon to gain additional advantages.
-
-After locking, the player cannot ordinarily edit the component combination. Trap is the exception: the player can use Trap's service to take apart or alter a locked weapon, according to Trap's challenge/service rules.
-
-The previous idea of custom-drawing weapon skins with 50%-transparent edge markers is not a confirmed feature and is removed from the current plan.
-
-## Ink as a resource
-Ink is used for combat and for artwork. Artwork consumes ink based on the amount of each color used. Ink is expected to be easy to find and common throughout the world, so its multiple uses are intentional.
+## Ink
+Ink is used for attacks, mining, and artwork. Drawing uses ink based on the amount of each color used. Ink should be common throughout the world so that players can draw without treating it like a rare premium resource.
 
 Players can carry effectively unlimited ink and shards. The stash is mainly for weapons and special artifacts.
 
-## Ink colors and affinities
-The four core colors previously discussed are red, blue, green, and yellow. The current intended identities are:
+## Ink colors
+The four colors discussed so far are red, blue, green, and yellow:
 - **Red:** healing or survivability.
 - **Blue:** increased damage.
 - **Green:** better luck or rewards.
-- **Yellow:** unresolved. Possible ideas have included extra crystals/rewards or shorter ability cooldowns, but neither is a selected final effect.
+- **Yellow:** undecided. Extra crystals or rewards and shorter cooldowns have both been suggested, but neither is final.
 
-The first three identities are still broad design goals rather than finalized numerical rules. All color effects need balancing.
+These are broad goals, not balanced stats yet.
 
 ## Shards
-Shards are the current currency name. There are no colored shards. Shards can be spent to lock weapon combinations and may be used for purchases or upgrades as described in the current economy design.
-
-The earlier item unlock-token flow has been removed from the current plan.
+Shards are the current currency. There are no colored shards, and item unlock tokens are no longer part of the plan. Shards can be used to lock weapon combinations and may be used for purchases and upgrades.
 
 ## Example weapon: The Steady
+The Steady is an early weapon idea: a mostly blade-shaped sword with a comically small handle. A line down the blade changes to match the player's ink color, with a dot as another detail.
 
-The Steady is an early signature weapon concept. Its silhouette is mostly a sword blade with a comically small handle. A line down the center of the blade changes color to match the equipped ink, with a dot as an additional design detail.
+- **Main attack:** a normal melee slash.
+- **Secondary ability:** a grappling hook that attaches to a distant point and pulls the player toward it.
+- The grapple is mainly for movement, not long-range damage. It may deal a tiny amount of damage on contact.
+- It uses more ink than a normal slash and has a short recharge.
 
-- Primary attack: a normal melee slash.
-- Secondary ability: a grappling hook that attaches at a distance and pulls the player toward the target or location.
-- The grapple is mainly for traversal and repositioning, not long-range damage. Contact may deal very little damage.
-- The grapple consumes more ink than a basic slash and has a brief recharge.
+## Ink use and cooldowns
+Attacks use ink. Earlier ideas suggested that weapon stats determine how many hits or uses a charge lasts, and that secondary abilities generally cost more ink than main attacks. When a charge runs out, the weapon briefly recharges. Exact ink use, refill rules, and upgrade effects aren't decided.
 
-## Weapon ink and cooldowns
+Weapons can also mine ores. A very slow, low-damage starter pickaxe was suggested, but it's unclear whether YAP still gives one at the Camp.
 
-Attacks consume ink. Earlier ideas proposed that weapon stats determine how many hits or uses a charge lasts, and that secondary abilities generally consume more ink than primary attacks. When a charge runs out, the weapon enters a short cooldown/recharge window. Exact consumption and refill rules remain open.
-
-Weapons can also be used for mining. A starter pickaxe was previously proposed as a very slow, low-damage beginner tool, but whether YAP still provides it at the Camp needs confirmation.
-
-## Open questions
-- Are ink charges consumed per hit, per attack, or by a continuous resource meter?
-- What exactly does each weapon upgrade improve?
-- Can a player unlock additional blade, handle, and amulet parts through YAP, exploration, or other sources, and what is the final purchase flow?
-- What is the precise relationship between an amulet's passive advantage and its Queen projectile pattern?
-- What will yellow ink do: improve cooldowns, improve crystal/reward gains, or something else?
+## Still undecided
+- Is ink spent per hit, per attack, or through a continuous meter?
+- What does each weapon upgrade improve?
+- How do players unlock or buy more blades, handles, and amulets?
+- How do an amulet's passive effect and Queen projectile pattern relate?
+- What will yellow ink do?
+- Is the starter pickaxe still planned?
