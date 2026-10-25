@@ -91,6 +91,7 @@ A 2D multiplayer drawing adventure set on a large planet. Players begin at the C
 
 ### Inkoff
 - How much ink does a player start with, and how much does each ore provide?
+- Where and how does gel spawn, and how does it respawn after being collected?
 - Does a Worker respawn with their starting ink, some ink, or none after running out?
 - Does ink-depletion death affect score or rewards?
 - How does mining work under pressure, and can attacks interrupt it?
