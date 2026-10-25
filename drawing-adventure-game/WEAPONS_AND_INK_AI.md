@@ -27,13 +27,13 @@ Ink is used for combat and for artwork. Artwork consumes ink based on the amount
 Players can carry effectively unlimited ink and shards. The stash is mainly for weapons and special artifacts.
 
 ## Ink colors and affinities
-The four core colors previously discussed are red, blue, green, and yellow. Earlier intended identities were:
-- Red: healing or survivability.
-- Blue: increased damage.
-- Green: better luck or rewards.
-- Yellow: shorter ability cooldowns.
+The four core colors previously discussed are red, blue, green, and yellow. The current intended identities are:
+- **Red:** healing or survivability.
+- **Blue:** increased damage.
+- **Green:** better luck or rewards.
+- **Yellow:** unresolved. Possible ideas have included extra crystals/rewards or shorter ability cooldowns, but neither is a selected final effect.
 
-These benefits remain subject to final balancing and should not be treated as finalized numerical rules.
+The first three identities are still broad design goals rather than finalized numerical rules. All color effects need balancing.
 
 ## Shards
 Shards are the current currency name. There are no colored shards. Shards can be spent to lock weapon combinations and may be used for purchases or upgrades as described in the current economy design.
@@ -60,3 +60,4 @@ Weapons can also be used for mining. A starter pickaxe was previously proposed a
 - What exactly does each weapon upgrade improve?
 - Can a player unlock additional blade, handle, and amulet parts through Yap, exploration, or other sources, and what is the final purchase flow?
 - What is the precise relationship between an amulet's passive advantage and its Queen projectile pattern?
+- What will yellow ink do: improve cooldowns, improve crystal/reward gains, or something else?
