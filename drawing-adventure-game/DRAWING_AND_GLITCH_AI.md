@@ -2,6 +2,17 @@
 
 > AI-drafted documentation based on the creator's latest clarifications.
 
+## Drawing editor and color interaction
+Drawing is a central game mechanic. Players can create their own character appearance and clothing, as well as draw freely on the game's drawing surfaces.
+
+The current color workflow is:
+- The editor starts with black and shades of gray as the drawing colors.
+- White is the canvas/background, not a normal drawing ink.
+- A player drags an equipped ink color onto a gray or filled region to recolor matching areas. For example, a gray circle can become red when red ink is applied.
+- The design should avoid an exploit where connecting separate areas lets a player recolor more than intended. The exact region-matching/fill algorithm still needs to be specified.
+
+A special gray “alloy” shade or shades that can be changed into any chosen ink color have been discussed, but this is only a candidate mechanic and is not confirmed.
+
 ## Ink in artwork
 The amount of ink consumed by artwork depends on how much of each color the player uses. Ink is expected to be plentiful and visibly available throughout the world, rather than a scarce premium resource for ordinary drawing.
 
