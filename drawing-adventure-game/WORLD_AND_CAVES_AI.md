@@ -29,7 +29,7 @@ This is intended to make cave layers feel continuous even though the underlying 
 ## Deeper cave layers
 As the player descends:
 - More types of mobs gain a chance to appear.
-- Merchants such as Yap and Trap gain a chance to appear.
+- Merchants such as YAP and Trap gain a chance to appear.
 - The chance of merchant appearances increases with depth.
 - Cave biomes can rarely replace the usual cave system with a cave network that has special traits.
 
