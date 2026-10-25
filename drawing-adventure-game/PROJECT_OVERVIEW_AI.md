@@ -27,6 +27,9 @@ A rare cave-biome system can occasionally replace the usual cave system with a c
 - Custom-drawn weapon skins are not currently planned and should not be treated as a confirmed feature.
 - The earlier idea of transferring ink to teammates by slashing them is rejected. Teammate slashes do not transfer ink.
 
+## Drawing and color interaction
+Drawing is a core activity rather than a side menu. The current editor concept uses black and shades of gray for drawing; white is the canvas/background rather than a normal drawing ink. A player can drag an ink color onto a gray or filled region to recolor matching areas. The exact fill algorithm remains open, and the earlier idea of special gray “alloy” regions that can become any chosen color is only a candidate, not a confirmed rule.
+
 ## Important distinctions
 - Ink and shards: players can carry effectively unlimited amounts; the stash is mainly for weapons and special artifacts.
 - Weapon locking: a player assembles a weapon from a blade, handle, and amulet, then can pay shards to lock the combination. Locking enables use in modes such as Inkoff and allows upgrades. It prevents ordinary editing of the locked combination, except for changes made through Trap's service.
@@ -34,4 +37,4 @@ A rare cave-biome system can occasionally replace the usual cave system with a c
 - Drawing: artwork ink consumption depends on how much of each color is used. Ink is expected to be common and visible throughout the world.
 
 ## Related documents
-See the individual _AI documents linked from README for world/caves, drawing/glitch, weapons/economy, Inkoff, creatures, social interactions, and the two merchants.
+Use [the decision tracker](DECISIONS_AND_OPEN_QUESTIONS_AI.md) for cross-cutting unresolved questions and superseded ideas. The detailed rules are in the individual documents linked from the folder README.
