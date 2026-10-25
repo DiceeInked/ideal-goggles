@@ -13,7 +13,7 @@ This folder contains the living design documentation. Files marked _AI were draf
 - [Yap](YAP_AI.md)
 - [Trap](TRAP_AI.md)
 - [Greetings and friendship action reference](FRIENDSHIP_ACTIONS_AI.md)
-- [Inspiration log](INSPIRATIONS.md)
+- [Inspiration log](INSPIRATIONS_AI.md)
 - [Original merchant notes](MERCHANTS.md)
 
 ## Source-of-truth rules
