@@ -1,45 +1,42 @@
-# Social Play and Friendship Progression _AI
+# Social Play and Friendship
 
-> AI-drafted overview of social progression. Detailed Passions gestures and paired-action behavior live in [FRIENDSHIP_ACTIONS_AI.md](FRIENDSHIP_ACTIONS_AI.md). Creator decisions take precedence over unresolved implementation details.
+## Meeting other players
+Players can run into one another while exploring caves, pass each other, and continue on their way. The aim is to capture the feeling of sharing a journey, inspired by Sky: Children of the Light but built around this game's 2D planet and cave system.
 
-## Natural encounters
-Players can encounter and pass one another while exploring caves. The aim is a shared-travel feeling inspired by Sky: Children of the Light, adapted to a 2D planet and cave system rather than copied directly.
-
-## Showing a player's custom skin
-A player can initiate a handshake to reveal or view another player's custom character skin. Becoming an acquaintance adds the player to the **Connection Constellation** and enables the classic handshake. The romantic special greeting is also intended to let partners see each other's custom skins rather than only the default presentation.
+## Showing custom character skins
+A player can start a handshake to reveal or view another player's custom character skin. Adding someone as an acquaintance places them in the **Connection Constellation** and unlocks the classic handshake. The special greeting for romantic partners should also show both players' custom skins.
 
 ## Friendship progression
-Friendship uses a branching tree, but exact thresholds and costs are not finalized.
+Friendship uses a branching tree, but the costs and level requirements aren't final.
 
-- **Friend:** Add someone to the friends list. A cost of one shard was suggested but remains tentative.
-- **Acquaintance:** Add them to the Connection Constellation. This stage enables the classic handshake but does not automatically grant all special abilities.
-- **Friendship abilities:** Potential unlocks include holding hands, guiding a friend through areas, chatting, piggybacking, custom greetings, and other social actions.
-- **Shared upgrades:** When one player wants to purchase or unlock a friendship-tree node, the other player must also accept before that upgrade takes effect.
-- **Optional romantic path:** A short side branch lets both players agree to become romantic partners. It is optional, not a giant second tree. Each player can have only one romantic partner at a time while still keeping many ordinary friends.
+- **Friend:** Add someone to the friends list. A cost of one shard was suggested, but isn't confirmed.
+- **Acquaintance:** Add them to the Connection Constellation and unlock the classic handshake.
+- **Friendship actions:** Possible unlocks include holding hands, guiding, chatting, piggybacking, and custom greetings.
+- **Shared upgrades:** Both players must agree before a shared friendship-tree upgrade takes effect.
+- **Romantic partners:** An optional short branch lets both players agree to become partners. Each player can have one romantic partner at a time and any number of ordinary friends.
 
-The one-partner limit and mutual acceptance are established design rules. The exact re-partnering timing after a breakup is undecided.
+Both players must accept the partner proposal. Either partner can end it after a confirmation prompt. After a breakup, related gestures and upgrades stay visible but are greyed out for that former partner. The rules for starting a new partnership are undecided.
 
 ## Passions
-**Passions** is the chosen name for the social-action/emote menu and system. It includes the gestures available to a player and supports paired actions, greetings, and flourishes. The second player confirms a paired action by approaching and pressing the relevant button; no separate decline pop-up has been specified. See [Passions gesture details](FRIENDSHIP_ACTIONS_AI.md) for the animation concepts, positioning, cancellation, and disconnect questions.
+**Passions** is the name of the social-action and emote system. For paired actions, one player starts the action and the other confirms by approaching and pressing the relevant button. There is no separate decline pop-up.
 
-Both players must accept the romantic-partner proposal/upgrade. Becoming partners immediately unlocks the ability to choose a special greeting. Either partner can end the relationship after a confirmation prompt. After a breakup, relevant gesture icons and friendship-tree upgrades remain visible but greyed out and cannot be used with that former partner.
+Becoming romantic partners unlocks the choice of a special greeting. The planned gesture order is special bow, hand-to-heart, hug, then kiss. See [Passions: gestures and paired actions](FRIENDSHIP_ACTIONS_AI.md) for the animation ideas.
 
 ## Heart Points and gifts
-**Heart Points** is a working name for a separate currency intended for friendship-related actions and unlocks. It is distinct from shards. Helping other players, including healing them or performing other beneficial actions, has been suggested as a way to earn it, but qualifying actions and reward amounts are not finalized.
+**Heart Points** is a working name for a friendship currency separate from shards. Helping other players, such as healing them, has been suggested as a way to earn it, but the eligible actions and amounts aren't decided.
 
-Heart Points were proposed for later Passions gestures, but this is not confirmed. The older idea of sending shard pieces as a daily friendship gift is no longer the preferred plan. Direct gifts require the recipient's acceptance; the replacement gift mechanic remains undecided.
+Using Heart Points for later gestures is only a proposal. Sending shard pieces as a daily gift is no longer the preferred idea. The replacement gift system is undecided, and direct gifts need the recipient's acceptance.
 
-## Proximity health effect
-Once two players' friendship has progressed far enough for the romantic-partner option to become available, both players' health gradually restores while they are near one another, even if they have not become romantic partners. A heart icon appears on their chests and beats while they are nearby. The restoration rate, proximity range, and detailed rules remain undecided.
+## Health when friends are close
+When two players reach the friendship level where the romantic-partner option unlocks, both slowly regain health while nearby, even if they don't become partners. A heart appears on each player's chest and beats while they're close.
 
-Romantic-partner status itself is not meant to affect Inkoff. **It is still undecided whether this close-friend health-regeneration effect is disabled in Inkoff or can operate there without being tied to romantic status.** It must not be silently treated as a confirmed competitive advantage.
+The healing rate and distance aren't decided. Romantic-partner status itself doesn't affect Inkoff, but it's unclear whether this close-friend healing effect works in that mode.
 
-## Open questions
-- Is Heart Points the final currency name, and which actions award it?
-- What are the final friendship thresholds, costs, and rules for each unlock?
-- Are later gestures purchased with Heart Points, unlocked through progression, or both?
-- What are the exact health-restoration rate and proximity range?
-- Does proximity-based health regeneration operate during Inkoff?
-- What happens if a player disconnects during a gesture, and which gestures can be cancelled by walking away?
-- What kind of friend-to-friend gift replaces shard pieces?
-- What are the exact Passions menu controls, and how do social actions persist across server transitions?
+## Still undecided
+- Is Heart Points the final name, and how can players earn it?
+- What are the levels and costs for friendship actions?
+- What are the health effect's range and rate, and does it work in Inkoff?
+- What happens if a player disconnects during a gesture?
+- Which gestures can be cancelled by walking away?
+- What replaces shard-piece gifts?
+- What are the final Passions controls, and how do gestures work across server changes?
