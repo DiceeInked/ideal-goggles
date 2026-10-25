@@ -86,6 +86,7 @@ A 2D multiplayer drawing adventure set on a large planet. Players begin at the C
 - What are the ink costs, use counts, recharge timing, and upgrade effects for each weapon?
 - How are additional blade, handle, and amulet parts unlocked or purchased?
 - Does YAP provide starter gear at the Camp? Is the special tonic temporary or permanent? Is tipping a current mechanic?
+- The preserved `MERCHANTS.md` mentions `TONICS`, but there is no standalone tonic design file in this folder. Define tonic effects and decide whether a separate spec is needed.
 - Does black ink increase ink use, extend recharge, reduce damage, weaken abilities, or impose another penalty? What, if anything, happens to match rewards?
 - Is a starter pickaxe part of the current opening progression?
 
