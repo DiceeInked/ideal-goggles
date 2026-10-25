@@ -51,7 +51,7 @@ Either partner can end the partnership after a confirmation prompt. The romantic
 After a breakup, the relevant gesture icons and friendship-tree upgrades remain visible but are greyed out and cannot be used with the former partner. Whether and how a player can immediately form a new partnership is not finalized.
 
 ## Proximity effect for close friends
-When two players are near each other and their friendship has progressed far enough that the romantic-partner option is available, a proximity effect can occur even if they have not chosen to become romantic partners. The creator described both players' “house” gradually restoring and a heart icon appearing on their chests and beating while they are near each other. **Confirm whether “house” meant health**, and clarify how the restoration works, before treating this as a finalized mechanic. This proximity effect is not an Inkoff advantage.
+When two players are near each other and their friendship has progressed far enough that the romantic-partner option is available, a proximity effect can occur even if they have not chosen to become romantic partners. Both players' **health gradually restores** while they are near each other, and a heart icon appears on their chests and beats at a distance. This can occur once their friendship has progressed far enough for the romantic-partner option to become available, even if they have not chosen to become romantic partners. The exact restoration rate, range, and other rules remain undecided. This proximity effect is not an Inkoff advantage.
 
 ## Consent and safety of interactions
 The second player confirms a paired gesture by approaching and pressing the relevant button. The creator clarified that the player does not separately decline a queued gesture; choosing not to approach and confirm means the paired gesture does not play. Exact controls and any additional privacy settings remain undecided.
@@ -63,7 +63,7 @@ The second player confirms a paired gesture by approaching and pressing the rele
 - Are later gestures purchased with Heart Points, unlocked by levels, or both?
 - What exactly happens if a player disconnects during a gesture?
 - Which gestures can be cancelled by walking away, and at what point?
-- What does “house” mean in the described proximity-restoration effect, and what are its exact rules?
+- What are the exact health-restoration rate, proximity range, and other rules for the close-friend proximity effect?
 - What replaces the proposed shard-piece gift mechanic?
 - What are the exact menu layout and controls?
 - How do gestures behave across server transitions?
