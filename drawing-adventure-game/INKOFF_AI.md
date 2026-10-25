@@ -27,7 +27,7 @@ The Queen can fly and uses a gun-like version of their equipped sword. The sword
 The handle continues to determine the secondary ability, with Queen-specific enhancement or modification still to be specified. Queen-specific projectiles do not damage the opposing Queen; Queens can fight each other with melee sword attacks. Friendly fire is off.
 
 ## Black ink challenge
-Black ink is a voluntary, explicitly harder challenge loadout. Choosing it must show a clear warning and impose a meaningful disadvantage. Earlier possible penalties included increased ink use, longer recharge, reduced damage, weaker abilities, and longer cooldowns. Exact penalties are not finalized. Black ink is not intended to reduce normal end-of-match currency rewards.
+Black ink is a voluntary, explicitly harder challenge loadout. Choosing it must show a clear warning and impose a meaningful disadvantage. Earlier possible penalties included increased ink use, longer recharge, reduced damage, weaker abilities, and longer cooldowns. Exact penalties are not finalized. Any effect on end-of-match rewards has not been decided.
 
 ## Removed mechanics
 - White emergency ore: removed.
