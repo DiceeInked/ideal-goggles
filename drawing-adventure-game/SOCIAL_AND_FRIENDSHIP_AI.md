@@ -3,37 +3,47 @@
 > AI-drafted documentation based on the creator's latest clarifications.
 
 ## Natural encounters
-Players can encounter other players while exploring caves. Other players may appear and pass by, helping the world feel shared rather than like a sequence of isolated solo levels. The inspiration is the social-travel feeling of Sky: Children of the Light, adapted to this game's own 2D planet and cave systems.
+Players can encounter others while exploring caves. Players may appear and pass by, creating a shared-travel feeling inspired by Sky: Children of the Light but adapted to this game's 2D planet and cave systems.
 
 ## Showing a player's custom skin
-Players can initiate a handshake to reveal/view the other player's custom character skin. Becoming an acquaintance adds that player to the **Connection Constellation** and enables the classic handshake. The exact default silhouette or concealment presentation before the handshake is not yet documented.
+Players can initiate a handshake to reveal/view another player's custom character skin. Becoming an acquaintance adds them to the **Connection Constellation** and enables the classic handshake.
 
 ## Friendship stages and unlocks
-The intended progression is a branching tree, but shard costs and exact thresholds are deliberately not finalized.
+The progression is a branching tree, but exact thresholds and Heart Point costs are not finalized.
 
-- **Friend:** Add someone to the friends list. The likely cost is one shard, but this is tentative.
-- **Acquaintance:** Add them to the Connection Constellation. This stage does not automatically grant special abilities, but enables the classic handshake.
-- **Unlockable abilities:** Players can spend shards and possibly some ink to unlock abilities such as holding hands, guiding a friend through the realms, and chatting with that friend.
-- **Friendship levels:** Between ability unlocks, players can increase their friendship level. The level affects the daily shard-piece gift system described below.
-- **Optional romantic path:** At a later point in the tree, players may continue ordinary progression or take a side branch with a single unlock labelled **“Make this a romantic partner.”** This romantic branch is intentionally not a long second tree. A player can have only one romantic partner at a time.
+- **Friend:** Add someone to the friends list. A cost of one shard was suggested, but remains tentative.
+- **Acquaintance:** Add them to the Connection Constellation. This stage enables the classic handshake but does not automatically grant special abilities.
+- **Friendship abilities:** Unlock abilities such as holding hands, guiding a friend through the realms, and chatting.
+- **Friendship levels:** Players can continue leveling up between unlocks.
+- **Optional romantic path:** A later side branch lets both players agree to become romantic partners. It is intentionally short rather than a giant second tree. A player can have only one romantic partner at a time.
 
-The name **Passions** is the chosen name for the social friendship actions/emotes system. See `FRIENDSHIP_ACTIONS_AI.md` for the action reference.
+The name **Passions** is the chosen name for the social actions/emotes system. See `FRIENDSHIP_ACTIONS_AI.md`.
 
-## Gifts and daily shard pieces
-Players can offer friends gifts that may cost shards plus some ink. The recipient must accept a gift before it is given; gifts cannot be forced onto another player.
+## Heart Points
+**Heart Points** is the working name for a separate currency intended specifically for friendship-related actions and unlocks. It is distinct from shards. Players can earn Heart Points by helping others, including healing them and performing other beneficial actions. Exact qualifying actions and reward amounts are not finalized.
 
-Friendship levels also affect a separate daily gift mechanic: friends can send each other shard pieces for free each day. Enough pieces combine into a full shard. Higher friendship levels increase how many shard pieces each player sends and receives through this daily system. Exact quantities and the conversion amount are not finalized.
+Heart Points are the proposed currency for later Passions gestures. The earlier idea of exchanging shard pieces as a daily friendship gift is no longer the preferred direction. The replacement gift mechanic is undecided.
 
-## Passions and social actions
-Potential actions include handshake, holding hands, guiding another player, piggybacking, hugs, kisses, and other greetings or emotes. Which actions are available by default, which require unlocks, and how players customize greetings remain to be specified. Players should be able to accept or decline requested interactions; exact controls and privacy options are still open questions.
+## Gifts
+Players can offer gifts, potentially using Heart Points or other friendship-focused items. The recipient must accept a direct gift before it is delivered; gifts cannot be forced onto another player.
 
-## Ink and helpful interactions
-The earlier idea that a player could slash a teammate with a weapon to transfer ink has been rejected. Slashing a teammate does not give them ink.
+## Romantic greeting and gestures
+Unlocking the romantic-partner path immediately allows the partners to add a special greeting to their greeting choices. The greeting can offer a small selection of actions. Further progression can unlock gestures to purchase with Heart Points, in this proposed order:
+1. **Special bow animation:** available immediately when the romantic path unlocks.
+2. **Hand-to-heart gesture:** unlocked later in the tree.
+3. **Hug gesture:** unlocked later in the tree.
+4. **Kiss gesture:** a later unlock after the earlier gestures.
+
+The exact costs, levels, and initial greeting options are not finalized. Romantic status does not grant combat advantages or extra Inkoff resources.
+
+## Consent and helpful interactions
+Social actions should be opt-in, with a way to accept or decline requested interactions. Players should be able to end a romantic partnership. Exact controls and privacy settings are open questions. The earlier idea that slashing a teammate transfers ink has been rejected. Healing or other beneficial actions may earn Heart Points, but slashing teammates does not transfer ink.
 
 ## Open questions
-- What are the final shard and ink costs for friendship stages, abilities, and optional gifts?
-- How many shard pieces are sent at each friendship level, and how many pieces form one shard?
-- Are friendship levels mutual, or can one player progress independently?
-- Which Passions actions are available by default, and which require progression?
+- Is Heart Points the final currency name?
+- Which helpful actions award Heart Points, and how much?
+- What are the final costs and friendship thresholds?
+- What form should friend-to-friend gifts take if shard pieces are not used?
+- Are friendship levels mutual or independently progressed?
 - What controls let players decline, disable, or customize requested social actions?
-- How do parties and friendships persist across server transitions?
+- How do friendships persist across server transitions?
