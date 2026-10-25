@@ -1,27 +1,22 @@
-# YAP _AI
-
-> AI-drafted merchant reference. The original creator-written notes remain in MERCHANTS.md.
+# YAP
 
 ## Appearance
-YAP is a merchant. The creator's original note describes him as having a plus sign over his right eye and a sticky note over his left eye with an X on it. Other older AI-written descriptions differ, so this creator-authored description should take precedence unless updated by the creator.
+The original merchant notes describe YAP with a plus sign over his right eye and a sticky note marked with an X over his left eye. Use that description if older notes disagree, unless the creator changes it.
 
-## Shop and items
-The original merchant notes say YAP sells:
-- one locked weapon with a special tonic applied to the whole weapon,
-- one blade part,
-- one handle part,
-- one amulet part.
+## Shop
+The original notes say YAP sells:
+- One locked weapon with a special tonic applied to the whole weapon.
+- One blade.
+- One handle.
+- One amulet.
 
-He accepts any ink color to summon him initially and accepts shards for purchases.
+Players can summon YAP with any ink color and buy items with shards.
 
-## Cave appearance
-YAP can appear in deeper cave layers. The chance for shopkeepers to appear increases as the player descends. The initial cave contains no shopkeepers.
+## Where he appears
+YAP can appear in deeper cave layers. Merchants become more likely the deeper players go. There are no shopkeepers in the first cave.
 
-## Relationship to weapon construction
-YAP's listed stock includes all three weapon component types: blade, handle, and amulet. The current weapon has a blade for the primary attack, a handle for the secondary ability, and an amulet for Queen projectile pattern plus passive advantages.
-
-## Open questions
-- Does YAP still provide starter gear at the Camp?
-- Does tipping him provide shards, or is that older economy detail removed?
-- Does the special tonic affect the whole weapon permanently or temporarily?
-- What are YAP's greetings, dialogue, and friendship actions? Keep these in a separate file if developed.
+## Still undecided
+- Does YAP give players starter gear at the Camp?
+- Is tipping still part of the shop?
+- Does the tonic last temporarily or permanently?
+- What are YAP's dialogue, greetings, and friendship actions?
