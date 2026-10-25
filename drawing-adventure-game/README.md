@@ -10,6 +10,7 @@ This folder contains the living design documentation. Files marked _AI were draf
 - [Inkoff competitive mode](INKOFF_AI.md)
 - [Creatures and cave encounters](CREATURES_AI.md)
 - [Social play and friendship actions](SOCIAL_AND_FRIENDSHIP_AI.md)
+- [Homes, props, badges, and PAL](HOMES_AND_PAL_AI.md)
 - [Yap](YAP_AI.md)
 - [Trap](TRAP_AI.md)
 - [Greetings and friendship action reference](FRIENDSHIP_ACTIONS_AI.md)
