@@ -3,6 +3,7 @@
 This folder holds the game's design notes. Files ending in `_AI` have been edited with AI help to improve spelling, grammar, clarity, and organization. The ideas are still the creator's unless stated otherwise. Files without `_AI` are original notes and have been left as they were.
 
 ## Start here
+- [Game summary](GAME_SUMMARY.md): a quick, hype-focused introduction to the game.
 - [Project overview](PROJECT_OVERVIEW_AI.md)
 - [Design decisions and open questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md)
 
