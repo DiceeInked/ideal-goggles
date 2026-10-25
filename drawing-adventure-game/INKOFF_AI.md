@@ -5,16 +5,18 @@
 ## Match entry and ink
 Every player starts an Inkoff match with the same amount of ink. Each player chooses an ink color they have available before or at match start. During the match, players can mine ores to obtain more ink.
 
-If a player runs out of ink, the current rule is that the player dies. There is no emergency white ore, and no teammate ink-transfer mechanic. An earlier idea that slashing a teammate would give them ink has been rejected.
+Running out of ink causes death, but the consequence depends on the player's role:
+- **Worker:** The worker immediately respawns.
+- **Queen:** The Queen loses one power/life. The Queen has three lives; losing all three means the opposing team wins by Queen elimination.
 
-Exact starting quantity, mining yield, respawn behavior after running out, and whether the death is temporary or removes the player from the rest of the match are open questions. Do not invent these details.
+There is no emergency white ore, and no teammate ink-transfer mechanic. An earlier idea that slashing a teammate would give them ink has been rejected. The exact ink amount restored on worker respawn, if any, is not specified yet.
 
 ## Teams and victory routes
 Inkoff is a team-based competitive mode with two victory routes:
-1. Gel economy: workers collect gel, carry it back to their own base, and deposit it into the base's holes. Filling all required holes wins the match.
-2. Queen elimination: each team has a Queen with three lives. Eliminating the opposing Queen by taking all three lives wins the match.
+1. **Gel economy:** Workers collect gel, carry it back to their own base, and deposit it into the base's holes. Filling all required holes wins the match.
+2. **Queen elimination:** Each team has a Queen with three lives. Eliminating the opposing Queen by taking all three lives wins the match.
 
-The Queen is randomly selected for each team. When the Queen dies, the death is clearly signaled, there is a short delay, and the Queen respawns at their own base while losing one life. Exact timing and protections remain open.
+The Queen is randomly selected for each team. When the Queen dies, the death is clearly signaled, there is a short delay, and the Queen respawns at their own base while losing one life. Running out of ink also costs the Queen one power/life. Exact timing and protections remain open.
 
 ## Workers and gel
 Workers gather gel from map stations or pickups. They slash a gel once to collect it; it floats above their head so possession is visible. They carry it to their own base and jump into the base to deposit it. Each deposited gel fills one hole in the team's hexagon-style base layout. If a worker carrying gel is killed, the opponent can take the dropped gel.
@@ -34,8 +36,8 @@ Black ink is a voluntary, explicitly harder challenge loadout. Choosing it must 
 - Old core-stone victory condition: superseded by gel delivery and Queen elimination.
 
 ## Open questions
-- When a player runs out of ink and dies, do they respawn with their starting ink, respawn without ink, or leave the match?
+- Does a worker who runs out of ink respawn with their starting ink, or without ink?
 - Does running out of ink count as a death for score/reward purposes?
 - How much ink does every player start with, and how much does each ore provide?
 - Can a player mine while under threat, and how are mining actions interrupted?
-- What happens if the Queen runs out of ink?
+- Does the Queen lose one of their three lives immediately when ink depletion causes death? Current design notes say yes; exact sequencing is still to be defined.
