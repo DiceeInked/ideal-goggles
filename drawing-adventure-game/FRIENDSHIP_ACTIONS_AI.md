@@ -1,25 +1,31 @@
-# Greetings and Friendship Actions _AI
+# Passions _AI
 
-> AI-drafted organizational file. The action system is not fully specified yet.
+> AI-drafted reference for the game's social actions and emotes. Progression costs and the complete action list are not finalized.
 
-## Intended structure
-Social actions should be documented separately from merchant dialogue and from the general social progression system.
+## Name
+**Passions** is the chosen name for the friendship actions/emotes system. It is separate from the wider friendship progression tree, though friendship progression can unlock Passions actions.
 
-The current concept allows players to initiate a handshake to reveal/view each other's custom skin. After establishing a friendship, players can spend progression points to unlock further action categories. Potential branches include friendship-related actions, romantic-themed actions, and other actions.
-
-Potential unlocked or customizable actions mentioned so far:
-- Handshake
+## Possible actions
+- Handshake, including the classic handshake that lets players reveal/view each other's custom character skin
+- Holding hands
+- Guiding a friend through the realms
+- Chatting with a friend
 - Hug
 - Kiss
 - Piggyback
-- Other greetings and friendship emotes
+- Custom greetings and other friendship emotes
 
-Players may be able to replace or mix their default greeting with a different unlocked action.
+These are potential actions from the current concept, not a claim that every action is already finalized or unlocked.
 
-## Design questions to resolve
-- Is the handshake only for revealing skins, or does it also create the friendship?
-- What are the friendship levels and progression-point costs?
+## Connection to friendship progression
+Adding someone as a friend puts them on the friends list. Becoming an acquaintance adds them to the Connection Constellation and enables the classic handshake. Additional abilities can be unlocked by spending shards and possibly ink. Friendship levels sit between some unlocks and affect the free daily shard-piece gift system.
+
+At a later stage, a player may choose a single side-branch unlock labelled “Make this a romantic partner.” This is one optional unlock, not a long parallel progression tree. A player can have only one romantic partner at a time.
+
+Gifts that cost shards and/or ink require the recipient to accept them. Social actions should also have a way to be declined; the exact interaction and privacy controls are still undecided.
+
+## Open questions
+- Which Passions actions are available from the start?
+- What are the shard/ink costs and friendship thresholds for each unlock?
 - Can players customize greetings independently for different friends?
-- How do players accept, decline, or disable requested actions?
-- Which actions are available by default and which are unlocked?
-- What is the distinction between a friendship branch and a romantic-themed branch?
+- How exactly can players decline or disable requested actions?
