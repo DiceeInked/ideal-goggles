@@ -53,11 +53,11 @@ The Steady is an early signature weapon concept. Its silhouette is mostly a swor
 
 Attacks consume ink. Earlier ideas proposed that weapon stats determine how many hits or uses a charge lasts, and that secondary abilities generally consume more ink than primary attacks. When a charge runs out, the weapon enters a short cooldown/recharge window. Exact consumption and refill rules remain open.
 
-Weapons can also be used for mining. A starter pickaxe was previously proposed as a very slow, low-damage beginner tool, but whether Yap still provides it at the Camp needs confirmation.
+Weapons can also be used for mining. A starter pickaxe was previously proposed as a very slow, low-damage beginner tool, but whether YAP still provides it at the Camp needs confirmation.
 
 ## Open questions
 - Are ink charges consumed per hit, per attack, or by a continuous resource meter?
 - What exactly does each weapon upgrade improve?
-- Can a player unlock additional blade, handle, and amulet parts through Yap, exploration, or other sources, and what is the final purchase flow?
+- Can a player unlock additional blade, handle, and amulet parts through YAP, exploration, or other sources, and what is the final purchase flow?
 - What is the precise relationship between an amulet's passive advantage and its Queen projectile pattern?
 - What will yellow ink do: improve cooldowns, improve crystal/reward gains, or something else?
