@@ -57,7 +57,7 @@ Gesture durations depend on the gesture: a bow may last around one second and a 
 Either partner can end the partnership after a confirmation prompt. The one-partner limit applies to romantic partners, not ordinary friends. After a breakup, romantic gesture icons and friendship-tree upgrades remain visible but are greyed out and cannot be used with the former partner. Whether a player can immediately form a new romantic partnership remains undecided.
 
 ## Proximity effect for close friends
-When two players are near each other and their friendship has reached the point where the romantic-partner option becomes available, a proximity effect can occur even if they have not chosen to become romantic partners. The creator described both players' “house” gradually restoring and a heart icon appearing on their chests and beating while they are near each other. **Confirm whether “house” meant health** before this is treated as finalized. The effect is not intended to grant an Inkoff advantage.
+When two players are near each other and their friendship has reached the point where the romantic-partner option becomes available, a proximity effect can occur even if they have not chosen to become romantic partners. Both players' **health gradually restores** while they are near each other, and a heart icon appears on their chests and beats at a distance. This can occur once their friendship has reached the point where the romantic-partner option becomes available, even if they have not chosen to become romantic partners. The exact restoration rate, proximity range, and other rules remain undecided. The effect is not intended to grant an Inkoff advantage.
 
 ## Inkoff and social progression
 Romantic status does not affect Inkoff or grant combat advantages. The proximity effect described above is likewise not an Inkoff advantage. The earlier idea that slashing a teammate transfers ink has been rejected. Healing or other beneficial actions may earn Heart Points, but teammate slashes do not transfer ink.
@@ -69,7 +69,7 @@ Romantic status does not affect Inkoff or grant combat advantages. The proximity
 - Does every gesture require a Heart Point purchase, or are some unlocked only by friendship progression?
 - What exactly happens if a player disconnects during a gesture?
 - Which gestures can be cancelled by walking away, and at what point?
-- Does “house” mean health in the proximity-restoration effect, and what are its exact rules?
+- What are the exact health-restoration rate, proximity range, and other rules for the close-friend proximity effect?
 - What form should friend-to-friend gifts take if shard pieces are not used?
 - What are the exact Passions menu controls and layout?
 - How do friendships and gesture interactions persist across server transitions?
