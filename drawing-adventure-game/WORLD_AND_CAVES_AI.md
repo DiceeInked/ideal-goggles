@@ -1,51 +1,36 @@
-# World, Camp, and Cave Progression _AI
-
-> AI-drafted documentation based on the creator's latest clarifications. Unknown implementation details remain open questions.
+# World, Camp, and Caves
 
 ## The planet and Camp
-The world is a large planet, not a set of daily or seasonal islands. The former island plan is scrapped.
+The game takes place on one large planet, not the old daily and seasonal islands. The Camp is the starting area, where players can talk to certain characters, access their stash, and use a small glitchy portal to reach their personal drawing board. The stash is mainly for weapons and special artifacts.
 
-The Camp is the starting area. It is a place where players can talk to certain characters and primarily access their stash, where weapons can be stored. The Camp also contains a small glitchy portal that opens the player's persistent personal drawing board.
+## Starting the cave run
+The first cave is meant to feel safe and mostly empty:
+- A few ores are available.
+- There are no enemies.
+- There are no shopkeepers.
 
-## Cave entry and early progression
-The first cave area is deliberately sparse:
-- A small number of ores can be found.
-- No enemies appear in this initial cave area.
-- No shopkeepers appear in this initial cave area.
+After exploring, players can find a passage that drops almost straight down. Before descending, they must solve a drawing puzzle: copy one shape, then quickly draw a couple more shapes as they appear. Solving it opens a long fall into the next cave layer.
 
-After exploring for a while, the player can discover a passage that descends almost perfectly straight down. At this point, the player encounters a drawing puzzle.
+## Moving between cave layers
+The fall also hides a server transition:
+1. The game disconnects the player from the current cave instance.
+2. It loads or selects the next layer's terrain.
+3. The player connects to the next instance while falling.
+4. The fall ends in the deeper cave.
 
-## Descent puzzle and server transition
-The player sees a shape and must draw it. Then a couple of additional shapes appear in quick succession and must also be drawn quickly. Solving the sequence opens the descent, causing the player to fall a long distance.
+The transition should feel like one continuous descent even though the game changes terrain and server behind the scenes.
 
-The fall is also a technical transition between cave layers:
-1. The game disconnects the player from the current cave server/instance while the descent is in progress.
-2. It loads or selects the terrain for the next cave layer.
-3. The player is connected to the server/instance for that next layer.
-4. The fall ends in the deeper cave area.
+## Deeper caves
+As players go deeper, more creature types can appear. Merchants such as YAP and Trap also become more likely to appear. Rare cave biomes may replace the regular cave network with a special layout and other traits, but those traits aren't decided yet.
 
-This is intended to make cave layers feel continuous even though the underlying terrain and server instance change.
+Exact layer counts, spawn rates, and biome chances are still open.
 
-## Deeper cave layers
-As the player descends:
-- More types of mobs gain a chance to appear.
-- Merchants such as YAP and Trap gain a chance to appear.
-- The chance of merchant appearances increases with depth.
-- Cave biomes can rarely replace the usual cave system with a cave network that has special traits.
+## Other players
+Players should naturally see and pass other players during cave exploration, rather than only meeting in a lobby or match queue. The server transition should preserve that feeling, including for friends travelling together.
 
-Exact spawn rates, layer counts, and biome probabilities are not established yet.
-
-## Cave biomes
-A cave biome is a rare variation in which the usual cave system is replaced by a special cave network with its own traits. It is not yet specified whether these traits are primarily visual, environmental, mechanical, or a combination.
-
-## Open questions
-- What determines when a cave biome replaces the ordinary cave layout?
-- Are biome traits mostly visual, or do they change ores, mobs, movement, hazards, and rewards?
-- How does the player return to the surface or reconnect with friends after a layer transition?
-- How many players should share a cave server/instance, and how should parties be kept together?
-- Does the cave terrain change weekly, or is that older detail no longer current? Do not treat this as confirmed until the creator reaffirms it.
-
-## Multiplayer traversal
-Players may join into cave exploration and be seen passing one another. The goal is a shared-travel feeling: other players appear naturally during an expedition rather than existing only in a lobby or match queue.
-
-The descent transition should preserve the illusion of a continuous fall while moving the player to a different server and terrain. Exact networking implementation remains a technical decision to prototype.
+## Still undecided
+- What makes a special cave biome appear, and how does it change the cave?
+- Are the differences visual, or do they affect ores, creatures, movement, hazards, or rewards?
+- How do players get back to the surface and stay with friends during a server transition?
+- How many players share an instance, and how are groups kept together?
+- Will cave layouts change weekly? That idea isn't confirmed.
