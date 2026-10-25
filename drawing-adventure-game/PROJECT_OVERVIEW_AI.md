@@ -12,7 +12,7 @@ A 2D multiplayer drawing adventure set on a large planet. Players explore a shar
 4. Build weapons from a blade, handle, and amulet. The blade defines the primary attack, the handle defines the secondary ability, and the amulet provides passive advantages and defines a Queen's projectile pattern in Inkoff.
 5. Encounter other players naturally during cave exploration and initiate handshakes to reveal one another's custom character skins.
 6. Compete in Inkoff, with gel delivery and Queen elimination as victory routes.
-7. Encounter strange merchants. Yap and Trap can appear in cave layers, with appearance chances increasing deeper underground.
+7. Encounter strange merchants. YAP and Trap can appear in cave layers, with appearance chances increasing deeper underground.
 
 ## World structure
 The original daily island, seasonal island, and white island plan is scrapped. The game is set on a large planet. The Camp is the starting area, a place to talk to certain characters, and the main location for accessing the player's stash, where weapons can be stored. The caves begin near the surface and descend through transitions that switch the player between server instances.
