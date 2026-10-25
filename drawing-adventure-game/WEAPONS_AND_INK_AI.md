@@ -40,6 +40,21 @@ Shards are the current currency name. There are no colored shards. Shards can be
 
 The earlier item unlock-token flow has been removed from the current plan.
 
+## Example weapon: The Steady
+
+The Steady is an early signature weapon concept. Its silhouette is mostly a sword blade with a comically small handle. A line down the center of the blade changes color to match the equipped ink, with a dot as an additional design detail.
+
+- Primary attack: a normal melee slash.
+- Secondary ability: a grappling hook that attaches at a distance and pulls the player toward the target or location.
+- The grapple is mainly for traversal and repositioning, not long-range damage. Contact may deal very little damage.
+- The grapple consumes more ink than a basic slash and has a brief recharge.
+
+## Weapon ink and cooldowns
+
+Attacks consume ink. Earlier ideas proposed that weapon stats determine how many hits or uses a charge lasts, and that secondary abilities generally consume more ink than primary attacks. When a charge runs out, the weapon enters a short cooldown/recharge window. Exact consumption and refill rules remain open.
+
+Weapons can also be used for mining. A starter pickaxe was previously proposed as a very slow, low-damage beginner tool, but whether Yap still provides it at the Camp needs confirmation.
+
 ## Open questions
 - Are ink charges consumed per hit, per attack, or by a continuous resource meter?
 - What exactly does each weapon upgrade improve?
