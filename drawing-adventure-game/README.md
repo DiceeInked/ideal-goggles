@@ -1,6 +1,6 @@
 # Drawing Adventure Game
 
-This folder contains the living design documentation. Files marked `_AI` were drafted or substantially reorganized with AI assistance. Unmarked source material is preserved and should not be assumed AI-written.
+This folder contains the living design documentation. Files ending in `_AI` were edited or prepared with AI assistance to improve grammar, spelling, clarity, organization, and consistency while preserving the creator's ideas as faithfully as possible. AI assistance does not mean every idea originated with AI. Files without the `_AI` suffix are preserved source material and should not be assumed to have been AI-edited.
 
 ## Start here
 - [Project overview](PROJECT_OVERVIEW_AI.md): the current high-level concept.
@@ -32,7 +32,7 @@ This folder contains the living design documentation. Files marked `_AI` were dr
 ## Source-of-truth rules
 - The newest decisions stated by the creator override older notes.
 - Confirmed details are documented as current rules; unresolved matters are labelled as open questions rather than guessed.
-- AI-written documentation uses the `_AI` suffix. Unmarked source material is preserved as creator-authored reference material unless the creator asks otherwise.
+- Files ending in `_AI` contain documentation edited or prepared with AI assistance. Unmarked source material is preserved as creator-authored reference material unless the creator asks otherwise.
 - The former daily/seasonal/white-island plan is scrapped. The game takes place on a large planet, with the Camp as the starting area and caves as a major exploration route.
 - The white emergency ore, colored shards, item unlock tokens, teammate ink transfer by slashing, old core-stone victory condition, and custom-drawn weapon skins are not part of the current plan.
 - The exact effect of yellow ink, weekly cave-layout changes, player homes/PAL implementation, Heart Point costs, and several balancing details are still undecided. See the decision tracker.
