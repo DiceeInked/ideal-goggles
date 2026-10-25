@@ -29,8 +29,8 @@
 - Building a creative experience where beginners can experiment, while skilled artists can make detailed work.
 
 **How this project makes it its own**
-- Drawing is integrated into a multiplayer game: players create character parts, clothing, weapon skins, home art, and other objects that appear in the shared world.
-- Material-based recoloring and ink collection connect art creation to the game's color system and exploration.
+- Drawing is integrated into a multiplayer game: players can create character appearances, clothing, and artwork for drawing surfaces. Custom-drawn weapon skins are not part of the current plan; player-home features remain to be reconfirmed.
+- Ink-driven recoloring connects art creation to exploration: the current concept starts with black and gray drawing colors, then uses collected ink to recolor matching gray/filled areas. A special gray “alloy” recoloring mechanic is still only a candidate.
 - Procreate is a creative-tool reference rather than a game-mechanics reference.
 
 ## 3. Animal Company
@@ -46,7 +46,7 @@
 **How this project makes it its own**
 - The cave network is a side-view 2D platforming world with explicit portal-linked levels.
 - The main collection loop revolves around colored ink, ores, shards, and player-made equipment and art.
-- The merchant Yap, the weekly changing cave layout, and the transition from serene exploration to uncanny deeper levels are original concepts being developed for this project.
+- The merchant Yap and the transition from serene exploration to uncanny deeper levels are original concepts being developed for this project. Weekly cave-layout changes have been discussed but are not confirmed.
 
 ## 4. DOORS
 
@@ -135,7 +135,8 @@
 | Escalating dread and deeper-level atmosphere | DOORS |
 | Gel delivery, base filling, Queen lives, alternative victories | Killer Queen Black |
 | Temporary flying boss/transformation spectacle | Stick Fight: The Game |
-| Early competitive-map and forward-pressure idea | Minecraft Bridge-style community minigames |\n| Menu presentation and character-focused interface personality | PHIGHTING! |
+| Early competitive-map and forward-pressure idea | Minecraft Bridge-style community minigames |
+| Menu presentation and character-focused interface personality | PHIGHTING! |
 
 ## Credit and originality checklist
 
