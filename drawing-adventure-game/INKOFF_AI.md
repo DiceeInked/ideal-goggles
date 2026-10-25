@@ -1,44 +1,45 @@
-# Inkoff _AI
+# Inkoff
 
-> AI-drafted documentation based on the creator's latest clarifications. The white-ore fallback and teammate ink-transfer idea are explicitly removed.
+## Ink and running out
+Everyone starts the match with the same amount of ink. Players choose an available ink color and can mine ores during the match to get more.
 
-## Match entry and ink
-Every player starts an Inkoff match with the same amount of ink. Each player chooses an ink color they have available before or at match start. During the match, players can mine ores to obtain more ink.
+Running out of ink causes death:
+- **Worker:** immediately respawns.
+- **Queen:** loses one of three lives.
 
-Running out of ink causes death, but the consequence depends on the player's role:
-- **Worker:** The worker immediately respawns.
-- **Queen:** The Queen loses one power/life. The Queen has three lives; losing all three means the opposing team wins by Queen elimination.
+A Queen losing all three lives means the team loses by Queen elimination. There's no white emergency ore, and slashing a teammate does not transfer ink. Whether a Worker respawns with ink is still undecided.
 
-There is no emergency white ore, and no teammate ink-transfer mechanic. An earlier idea that slashing a teammate would give them ink has been rejected. The exact ink amount restored on worker respawn, if any, is not specified yet.
+## How to win
+There are two ways to win:
+1. **Fill the base:** Workers collect gel and deposit it into the holes in their team's hexagon-shaped base. Fill every hole to win.
+2. **Defeat the Queen:** Take all three lives from the opposing team's Queen.
 
-## Teams and victory routes
-Inkoff is a team-based competitive mode with two victory routes:
-1. **Gel economy:** Workers collect gel, carry it back to their own base, and deposit it into the base's holes. Filling all required holes wins the match.
-2. **Queen elimination:** Each team has a Queen with three lives. Eliminating the opposing Queen by taking all three lives wins the match.
-
-The Queen is randomly selected for each team. When the Queen dies, the death is clearly signaled, there is a short delay, and the Queen respawns at their own base while losing one life. Running out of ink also costs the Queen one power/life. Exact timing and protections remain open.
+Each team gets a randomly selected Queen. When a Queen dies, the game clearly shows it, waits briefly, then respawns them at their base and removes one life. The exact timing and any protections still need work.
 
 ## Workers and gel
-The exact source and spawn rules for gel have not been finalized. A worker slashes a gel once to collect it; it floats above their head so possession is visible. They carry it to their own base and jump into the base to deposit it. Each deposited gel fills one hole in the team's hexagon-style base layout. If a worker carrying gel is killed, the opponent can take the dropped gel.
+A Worker slashes a piece of gel once to collect it. The gel floats above their head while carried, so everyone can see who has it. The Worker takes it back and jumps into their base to fill a hole. If they're killed, the dropped gel can be stolen.
 
-## The Queen and amulets
-The Queen can fly and uses a gun-like version of their equipped sword. The sword remains visually recognizable. The amulet determines the Queen's projectile pattern and damage behavior; it also provides passive advantages in the broader weapon system. The amulet is visible at the blade-handle connection on a normal weapon and is also displayed on the Queen's chest. The Queen's transformation includes wings and a crown, halo, or demon horns depending on the amulet's design.
+Gel's spawn and respawn rules aren't decided yet.
 
-The handle continues to determine the secondary ability, with Queen-specific enhancement or modification still to be specified. Queen-specific projectiles do not damage the opposing Queen; Queens can fight each other with melee sword attacks. Friendly fire is off.
+## The Queen
+The Queen can fly and uses a gun-like version of their equipped sword. The amulet sets the Queen's projectile pattern and damage behavior. It sits where the blade meets the handle on a normal weapon and also appears on the Queen's chest. The Queen's look includes wings and a crown, halo, or demon horns depending on the amulet.
 
-## Black ink challenge
-Black ink is a voluntary, explicitly harder challenge loadout. Choosing it must show a clear warning and impose a meaningful disadvantage. Earlier possible penalties included increased ink use, longer recharge, reduced damage, weaker abilities, and longer cooldowns. Exact penalties are not finalized. Any effect on end-of-match rewards has not been decided.
+The handle still controls the secondary ability, but its Queen version hasn't been worked out. Queen projectiles don't damage the opposing Queen; they can fight each other with melee sword attacks. Friendly fire is off.
 
-## Removed mechanics
-- White emergency ore: removed.
-- Teammate slashes transferring ink: rejected.
-- Colored shards and unlock tokens: removed from the current economy.
-- Old core-stone victory condition: superseded by gel delivery and Queen elimination.
+## Black ink
+Black ink is a harder, optional challenge. Players need a clear warning before choosing it, and it must come with a real disadvantage. Possible penalties include higher ink use, longer recharge, lower damage, or weaker abilities, but no penalty has been chosen. Its effect on match rewards is also undecided.
 
-## Open questions
-- Does a worker who runs out of ink respawn with their starting ink, or without ink?
-- Does running out of ink count as a death for score/reward purposes?
-- How much ink does every player start with, and how much does each ore provide?
-- Where and how does gel spawn, and how does it respawn after being collected?
-- Can a player mine while under threat, and how are mining actions interrupted?
-- Does the Queen lose one of their three lives immediately when ink depletion causes death? Current design notes say yes; exact sequencing is still to be defined.
+## Removed ideas
+- White emergency ore.
+- Giving teammates ink by slashing them.
+- Colored shards and item unlock tokens.
+- The old core-stone win condition.
+
+## Still undecided
+- How much ink players start with and how much each ore gives.
+- Whether a Worker respawns with ink after running out.
+- Whether ink-depletion death affects score or rewards.
+- Where gel appears and how it respawns.
+- Whether attacks can interrupt mining.
+- How the Queen's handle ability works.
+- Whether the close-friend health effect works in Inkoff.
