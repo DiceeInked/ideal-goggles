@@ -283,179 +283,154 @@
             dCtx.fillStyle = '#4a3b32';
             dCtx.lineWidth = 4;
 
-            let stage = 0;
-            if (t < 0.33) stage = 0;
-            else if (t < 0.66) stage = 1;
-            else if (t < 1) stage = 2;
-            else stage = 3;
+            const cycle = ((t % 1) + 1) % 1;
+            let pose = 0;
+            let phase = 0;
+            if (cycle < 0.33) { pose = 0; phase = cycle / 0.33; }
+            else if (cycle < 0.66) { pose = 1; phase = (cycle - 0.33) / 0.33; }
+            else { pose = 2; phase = (cycle - 0.66) / 0.34; }
 
-            const bodyX = 120;
-            const bodyY = 98;
-            const blushOpacity = stage === 0 ? 0.3 : stage === 1 || stage === 2 ? 0.7 : 1;
+            const x = 120;
+            const y = 118;
+            const headX = x + (pose === 2 ? 22 : 0);
+            const headY = y - 38;
+            const shyX = pose === 2 ? 8 : 0;
+            const blush = pose === 0 ? 0.45 : pose === 1 ? 0.8 : 1;
+            const smileCurve = pose === 0 ? 0.44 : pose === 1 ? 0.28 : 0.18;
+            const eyeY = pose === 0 ? -6 : -8;
+            const mouthY = pose === 0 ? 8 : pose === 1 ? 12 : 16;
 
-            if (stage === 0) {
+            dCtx.save();
+            dCtx.translate(0, Math.sin(cycle * Math.PI * 2) * 3);
+
+            if (pose === 2) {
+                dCtx.translate(8, 20);
+            }
+
+            dCtx.fillStyle = 'rgba(242, 112, 112, 0.4)';
+            if (pose !== 0) {
                 dCtx.beginPath();
-                dCtx.arc(bodyX, bodyY, 26, 0, Math.PI * 2);
+                dCtx.arc(headX - 18, headY + 12, 8, 0, Math.PI * 2);
+                dCtx.arc(headX + 18, headY + 12, 8, 0, Math.PI * 2);
+                dCtx.fill();
+            } else {
+                dCtx.beginPath();
+                dCtx.arc(headX - 15, headY + 12, 6, 0, Math.PI * 2);
+                dCtx.arc(headX + 15, headY + 12, 6, 0, Math.PI * 2);
+                dCtx.fill();
+            }
+
+            dCtx.beginPath();
+            dCtx.arc(headX, headY, 28, 0, Math.PI * 2);
+            dCtx.stroke();
+
+            dCtx.fillStyle = '#4a3b32';
+            dCtx.beginPath();
+            dCtx.ellipse(headX - 10, headY + eyeY, 4, 6, 0, 0, Math.PI * 2);
+            dCtx.ellipse(headX + 10, headY + eyeY, 4, 6, 0, 0, Math.PI * 2);
+            dCtx.fill();
+
+            dCtx.beginPath();
+            dCtx.moveTo(headX - 12, headY + 12);
+            dCtx.quadraticCurveTo(headX, headY + mouthY + 2, headX + 12, headY + 12);
+            dCtx.stroke();
+
+            if (pose === 0) {
+                dCtx.beginPath();
+                dCtx.arc(headX, headY + 8, 12, 0.2, Math.PI - 0.2);
                 dCtx.stroke();
+            }
 
-                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.5})`;
-                dCtx.beginPath(); dCtx.arc(bodyX - 14, bodyY + 8, 6, 0, Math.PI * 2); dCtx.arc(bodyX + 14, bodyY + 8, 6, 0, Math.PI * 2); dCtx.fill();
+            dCtx.beginPath();
+            dCtx.moveTo(x - 6, y + 10);
+            dCtx.lineTo(x - 22, y + 54);
+            dCtx.moveTo(x + 6, y + 10);
+            dCtx.lineTo(x + 22, y + 54);
+            dCtx.moveTo(x - 18, y + 88);
+            dCtx.lineTo(x - 24, y + 128);
+            dCtx.moveTo(x + 18, y + 88);
+            dCtx.lineTo(x + 24, y + 128);
+            dCtx.stroke();
 
-                dCtx.fillStyle = '#4a3b32';
-                dCtx.beginPath(); dCtx.arc(bodyX - 9, bodyY - 4, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 9, bodyY - 4, 2.2, 0, Math.PI * 2); dCtx.fill();
-
+            if (pose === 0) {
                 dCtx.beginPath();
-                dCtx.arc(bodyX, bodyY + 5, 11, 0.2, Math.PI - 0.2);
+                dCtx.moveTo(x - 18, y + 34);
+                dCtx.lineTo(x - 30, y + 60);
+                dCtx.moveTo(x + 18, y + 34);
+                dCtx.lineTo(x + 30, y + 60);
+                dCtx.moveTo(x - 30, y + 60);
+                dCtx.lineTo(x - 20, y + 66);
+                dCtx.moveTo(x + 30, y + 60);
+                dCtx.lineTo(x + 20, y + 66);
                 dCtx.stroke();
-
+            } else if (pose === 1) {
                 dCtx.beginPath();
-                dCtx.moveTo(bodyX - 20, bodyY + 35);
-                dCtx.lineTo(bodyX - 30, bodyY + 62);
-                dCtx.moveTo(bodyX + 20, bodyY + 35);
-                dCtx.lineTo(bodyX + 30, bodyY + 62);
-                dCtx.moveTo(bodyX - 25, bodyY + 90);
-                dCtx.lineTo(bodyX - 18, bodyY + 126);
-                dCtx.moveTo(bodyX + 25, bodyY + 90);
-                dCtx.lineTo(bodyX + 18, bodyY + 126);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 14, bodyY + 34);
-                dCtx.lineTo(bodyX - 34, bodyY + 55);
-                dCtx.moveTo(bodyX + 14, bodyY + 34);
-                dCtx.lineTo(bodyX + 34, bodyY + 55);
-                dCtx.moveTo(bodyX - 34, bodyY + 55);
-                dCtx.lineTo(bodyX - 20, bodyY + 63);
-                dCtx.moveTo(bodyX + 34, bodyY + 55);
-                dCtx.lineTo(bodyX + 20, bodyY + 63);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 20, bodyY + 33);
-                dCtx.lineTo(bodyX + 20, bodyY + 33);
-                dCtx.stroke();
-            } else if (stage === 1) {
-                dCtx.beginPath();
-                dCtx.arc(bodyX + 8, bodyY - 8, 24, 0, Math.PI * 2);
-                dCtx.stroke();
-
-                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.8})`;
-                dCtx.beginPath(); dCtx.arc(bodyX - 12, bodyY + 2, 7, 0, Math.PI * 2); dCtx.arc(bodyX + 19, bodyY + 4, 7, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.fillStyle = '#4a3b32';
-                dCtx.beginPath(); dCtx.arc(bodyX + 2, bodyY - 10, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 16, bodyY - 10, 2.2, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.beginPath();
-                dCtx.arc(bodyX + 10, bodyY + 2, 9, 0.4, Math.PI - 0.2);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 18, bodyY + 24);
-                dCtx.lineTo(bodyX - 30, bodyY + 50);
-                dCtx.moveTo(bodyX + 18, bodyY + 24);
-                dCtx.lineTo(bodyX + 36, bodyY + 52);
-                dCtx.moveTo(bodyX - 12, bodyY + 84);
-                dCtx.lineTo(bodyX - 18, bodyY + 122);
-                dCtx.moveTo(bodyX + 20, bodyY + 84);
-                dCtx.lineTo(bodyX + 26, bodyY + 122);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 8, bodyY + 35);
-                dCtx.lineTo(bodyX + 10, bodyY + 50);
-                dCtx.moveTo(bodyX + 18, bodyY + 34);
-                dCtx.lineTo(bodyX + 4, bodyY + 52);
-                dCtx.stroke();
-            } else if (stage === 2) {
-                dCtx.beginPath();
-                dCtx.arc(bodyX + 12, bodyY - 10, 24, 0, Math.PI * 2);
-                dCtx.stroke();
-
-                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.82})`;
-                dCtx.beginPath(); dCtx.arc(bodyX - 10, bodyY + 1, 7, 0, Math.PI * 2); dCtx.arc(bodyX + 20, bodyY + 2, 7, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.fillStyle = '#4a3b32';
-                dCtx.beginPath(); dCtx.arc(bodyX + 3, bodyY - 12, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 17, bodyY - 12, 2.2, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.beginPath();
-                dCtx.arc(bodyX + 12, bodyY + 1, 10, 0.1, Math.PI - 0.3);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 12, bodyY + 26);
-                dCtx.lineTo(bodyX - 28, bodyY + 50);
-                dCtx.moveTo(bodyX + 16, bodyY + 26);
-                dCtx.lineTo(bodyX + 34, bodyY + 52);
-                dCtx.moveTo(bodyX - 14, bodyY + 84);
-                dCtx.lineTo(bodyX - 17, bodyY + 122);
-                dCtx.moveTo(bodyX + 22, bodyY + 84);
-                dCtx.lineTo(bodyX + 28, bodyY + 122);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX - 4, bodyY + 38);
-                dCtx.lineTo(bodyX + 14, bodyY + 54);
-                dCtx.moveTo(bodyX + 18, bodyY + 38);
-                dCtx.lineTo(bodyX + 5, bodyY + 54);
+                dCtx.moveTo(x - 18, y + 38);
+                dCtx.lineTo(x - 28, y + 62);
+                dCtx.moveTo(x + 18, y + 38);
+                dCtx.lineTo(x + 32, y + 60);
+                dCtx.moveTo(x - 12, y + 62);
+                dCtx.lineTo(x + 4, y + 80);
+                dCtx.moveTo(x + 14, y + 62);
+                dCtx.lineTo(x + 26, y + 80);
                 dCtx.stroke();
             } else {
                 dCtx.beginPath();
-                dCtx.arc(bodyX + 28, bodyY - 18, 24, 0, Math.PI * 2);
-                dCtx.stroke();
-
-                dCtx.fillStyle = `rgba(240, 90, 90, 1)`;
-                dCtx.beginPath(); dCtx.arc(bodyX + 14, bodyY - 6, 8, 0, Math.PI * 2); dCtx.arc(bodyX + 36, bodyY - 5, 7, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.fillStyle = '#4a3b32';
-                dCtx.beginPath(); dCtx.arc(bodyX + 25, bodyY - 22, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 34, bodyY - 22, 2.2, 0, Math.PI * 2); dCtx.fill();
-
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX + 35, bodyY + 2);
-                dCtx.lineTo(bodyX + 40, bodyY + 15);
-                dCtx.lineTo(bodyX + 49, bodyY + 5);
+                dCtx.moveTo(x - 10, y + 38);
+                dCtx.lineTo(x - 28, y + 72);
+                dCtx.moveTo(x + 14, y + 36);
+                dCtx.lineTo(x + 38, y + 74);
+                dCtx.moveTo(x - 10, y + 82);
+                dCtx.lineTo(x - 18, y + 126);
+                dCtx.moveTo(x + 18, y + 82);
+                dCtx.lineTo(x + 26, y + 132);
                 dCtx.stroke();
 
                 dCtx.beginPath();
-                dCtx.moveTo(bodyX + 10, bodyY + 24);
-                dCtx.lineTo(bodyX - 5, bodyY + 52);
-                dCtx.moveTo(bodyX + 34, bodyY + 22);
-                dCtx.lineTo(bodyX + 48, bodyY + 50);
-                dCtx.moveTo(bodyX - 4, bodyY + 96);
-                dCtx.lineTo(bodyX - 12, bodyY + 130);
-                dCtx.moveTo(bodyX + 34, bodyY + 98);
-                dCtx.lineTo(bodyX + 46, bodyY + 128);
+                dCtx.moveTo(headX + 22, headY + 2);
+                dCtx.lineTo(headX + 34, headY - 14);
+                dCtx.lineTo(headX + 50, headY + 2);
                 dCtx.stroke();
 
                 dCtx.beginPath();
-                dCtx.moveTo(bodyX + 12, bodyY + 36);
-                dCtx.lineTo(bodyX + 32, bodyY + 40);
+                dCtx.moveTo(headX + 30, headY + 6);
+                dCtx.lineTo(headX + 52, headY + 18);
                 dCtx.stroke();
 
                 dCtx.beginPath();
-                dCtx.moveTo(bodyX + 32, bodyY - 6);
-                dCtx.lineTo(bodyX + 36, bodyY - 18);
-                dCtx.lineTo(bodyX + 48, bodyY - 10);
+                dCtx.moveTo(headX + 30, headY + 36);
+                dCtx.lineTo(headX + 62, headY + 28);
                 dCtx.stroke();
+            }
 
+            dCtx.strokeStyle = '#f58ca1';
+            if (pose > 0) {
                 dCtx.beginPath();
-                dCtx.arc(bodyX + 62, bodyY - 8, 9, 0, Math.PI * 2);
-                dCtx.stroke();
-                dCtx.beginPath();
-                dCtx.moveTo(bodyX + 58, bodyY - 5);
-                dCtx.lineTo(bodyX + 68, bodyY + 4);
-                dCtx.stroke();
+                dCtx.ellipse(headX - 18, headY + 12, 8, 6, 0, 0, Math.PI * 2);
+                dCtx.ellipse(headX + 18, headY + 12, 8, 6, 0, 0, Math.PI * 2);
+                dCtx.fill();
+            }
+
+            dCtx.restore();
+
+            if (pose === 0) {
+                dCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                dCtx.fillRect(42, 28, 16, 12);
+                dCtx.fillRect(180, 28, 16, 12);
             }
         }
 
         function animateEndSequence() {
+            const loopMs = 4200;
             const start = performance.now();
+
             function tick(now) {
-                const p = Math.min(1, (now - start) / 2600);
-                drawEndCharacter(p);
-                if (p < 1) {
-                    requestAnimationFrame(tick);
-                }
+                const cycle = (now - start) % loopMs;
+                const t = cycle / loopMs;
+                drawEndCharacter(t);
+                requestAnimationFrame(tick);
             }
+
             requestAnimationFrame(tick);
         }
 
