@@ -276,166 +276,20 @@
             ctx.stroke();
         }
 
-        function roundedRectPath(ctx2d, x, y, w, h, r) {
-            const radius = Math.min(r, w / 2, h / 2);
-            ctx2d.beginPath();
-            ctx2d.moveTo(x + radius, y);
-            ctx2d.lineTo(x + w - radius, y);
-            ctx2d.quadraticCurveTo(x + w, y, x + w, y + radius);
-            ctx2d.lineTo(x + w, y + h - radius);
-            ctx2d.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
-            ctx2d.lineTo(x + radius, y + h);
-            ctx2d.quadraticCurveTo(x, y + h, x, y + h - radius);
-            ctx2d.lineTo(x, y + radius);
-            ctx2d.quadraticCurveTo(x, y, x + radius, y);
-            ctx2d.closePath();
-        }
-
-        function drawEndCharacter(t) {
+        function drawEndNumber(frameIndex) {
             const w = doodleCanvas.width;
             const h = doodleCanvas.height;
             dCtx.clearRect(0, 0, w, h);
-            dCtx.lineJoin = 'round';
-            dCtx.lineCap = 'round';
-            dCtx.strokeStyle = '#4a3b32';
+            dCtx.textAlign = 'center';
+            dCtx.textBaseline = 'middle';
             dCtx.fillStyle = '#4a3b32';
-            dCtx.lineWidth = 4;
+            dCtx.font = 'bold 96px monospace';
 
-            const cycle = ((t % 1) + 1) % 1;
-            let pose = 0;
-            let phase = 0;
-            if (cycle < 0.33) { pose = 0; phase = cycle / 0.33; }
-            else if (cycle < 0.66) { pose = 1; phase = (cycle - 0.33) / 0.33; }
-            else { pose = 2; phase = (cycle - 0.66) / 0.34; }
-
-            const x = 120;
-            const y = 118;
-            const headX = x + (pose === 2 ? 22 : 0);
-            const headY = y - 38;
-            const shyX = pose === 2 ? 8 : 0;
-            const blush = pose === 0 ? 0.45 : pose === 1 ? 0.8 : 1;
-            const smileCurve = pose === 0 ? 0.44 : pose === 1 ? 0.28 : 0.18;
-            const eyeY = pose === 0 ? -6 : -8;
-            const mouthY = pose === 0 ? 8 : pose === 1 ? 12 : 16;
-
-            dCtx.save();
-            dCtx.translate(0, Math.sin(cycle * Math.PI * 2) * 3);
-
-            if (pose === 2) {
-                dCtx.translate(8, 20);
-            }
-
-            dCtx.fillStyle = 'rgba(242, 112, 112, 0.4)';
-            if (pose !== 0) {
-                dCtx.beginPath();
-                dCtx.arc(headX - 18, headY + 12, 8, 0, Math.PI * 2);
-                dCtx.arc(headX + 18, headY + 12, 8, 0, Math.PI * 2);
-                dCtx.fill();
-            } else {
-                dCtx.beginPath();
-                dCtx.arc(headX - 15, headY + 12, 6, 0, Math.PI * 2);
-                dCtx.arc(headX + 15, headY + 12, 6, 0, Math.PI * 2);
-                dCtx.fill();
-            }
-
-            dCtx.beginPath();
-            dCtx.arc(headX, headY, 28, 0, Math.PI * 2);
-            dCtx.stroke();
-
-            dCtx.fillStyle = '#4a3b32';
-            dCtx.beginPath();
-            dCtx.ellipse(headX - 10, headY + eyeY, 4, 6, 0, 0, Math.PI * 2);
-            dCtx.ellipse(headX + 10, headY + eyeY, 4, 6, 0, 0, Math.PI * 2);
-            dCtx.fill();
-
-            dCtx.beginPath();
-            dCtx.moveTo(headX - 12, headY + 12);
-            dCtx.quadraticCurveTo(headX, headY + mouthY + 2, headX + 12, headY + 12);
-            dCtx.stroke();
-
-            if (pose === 0) {
-                dCtx.beginPath();
-                dCtx.arc(headX, headY + 8, 12, 0.2, Math.PI - 0.2);
-                dCtx.stroke();
-            }
-
-            dCtx.beginPath();
-            dCtx.moveTo(x - 6, y + 10);
-            dCtx.lineTo(x - 22, y + 54);
-            dCtx.moveTo(x + 6, y + 10);
-            dCtx.lineTo(x + 22, y + 54);
-            dCtx.moveTo(x - 18, y + 88);
-            dCtx.lineTo(x - 24, y + 128);
-            dCtx.moveTo(x + 18, y + 88);
-            dCtx.lineTo(x + 24, y + 128);
-            dCtx.stroke();
-
-            if (pose === 0) {
-                dCtx.beginPath();
-                dCtx.moveTo(x - 18, y + 34);
-                dCtx.lineTo(x - 30, y + 60);
-                dCtx.moveTo(x + 18, y + 34);
-                dCtx.lineTo(x + 30, y + 60);
-                dCtx.moveTo(x - 30, y + 60);
-                dCtx.lineTo(x - 20, y + 66);
-                dCtx.moveTo(x + 30, y + 60);
-                dCtx.lineTo(x + 20, y + 66);
-                dCtx.stroke();
-            } else if (pose === 1) {
-                dCtx.beginPath();
-                dCtx.moveTo(x - 18, y + 38);
-                dCtx.lineTo(x - 28, y + 62);
-                dCtx.moveTo(x + 18, y + 38);
-                dCtx.lineTo(x + 32, y + 60);
-                dCtx.moveTo(x - 12, y + 62);
-                dCtx.lineTo(x + 4, y + 80);
-                dCtx.moveTo(x + 14, y + 62);
-                dCtx.lineTo(x + 26, y + 80);
-                dCtx.stroke();
-            } else {
-                dCtx.beginPath();
-                dCtx.moveTo(x - 10, y + 38);
-                dCtx.lineTo(x - 28, y + 72);
-                dCtx.moveTo(x + 14, y + 36);
-                dCtx.lineTo(x + 38, y + 74);
-                dCtx.moveTo(x - 10, y + 82);
-                dCtx.lineTo(x - 18, y + 126);
-                dCtx.moveTo(x + 18, y + 82);
-                dCtx.lineTo(x + 26, y + 132);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(headX + 22, headY + 2);
-                dCtx.lineTo(headX + 34, headY - 14);
-                dCtx.lineTo(headX + 50, headY + 2);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(headX + 30, headY + 6);
-                dCtx.lineTo(headX + 52, headY + 18);
-                dCtx.stroke();
-
-                dCtx.beginPath();
-                dCtx.moveTo(headX + 30, headY + 36);
-                dCtx.lineTo(headX + 62, headY + 28);
-                dCtx.stroke();
-            }
-
-            dCtx.strokeStyle = '#f58ca1';
-            if (pose > 0) {
-                dCtx.beginPath();
-                dCtx.ellipse(headX - 18, headY + 12, 8, 6, 0, 0, Math.PI * 2);
-                dCtx.ellipse(headX + 18, headY + 12, 8, 6, 0, 0, Math.PI * 2);
-                dCtx.fill();
-            }
-
-            dCtx.restore();
-
-            if (pose === 0) {
-                dCtx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-                dCtx.fillRect(42, 28, 16, 12);
-                dCtx.fillRect(180, 28, 16, 12);
-            }
+            const value = (frameIndex % END_ANIMATION_FRAMES) + 1;
+            const flash = 0.35 + (Math.sin((value / END_ANIMATION_FRAMES) * Math.PI * 2) + 1) * 0.25;
+            dCtx.globalAlpha = flash;
+            dCtx.fillText(String(value), w / 2, h / 2 + 8);
+            dCtx.globalAlpha = 1;
         }
 
         function animateEndSequence() {
@@ -444,7 +298,7 @@
             function tick(now) {
                 const elapsed = now - start;
                 const frame = Math.floor(elapsed / END_FRAME_MS) % END_ANIMATION_FRAMES;
-                drawEndCharacter(frame / END_ANIMATION_FRAMES);
+                drawEndNumber(frame);
                 requestAnimationFrame(tick);
             }
 
