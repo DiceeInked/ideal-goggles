@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Run</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #141414; font-family: monospace; }
+        canvas { display: block; image-rendering: pixelated; margin: 0 auto; background: #eadeca; }
+        #ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none; background: rgba(234,222,202,0.95); padding: 20px; border: 4px solid #4a3b32; border-radius: 8px; width: 260px; }
+        button { background: #ba2d2d; color: white; border: none; padding: 10px 20px; font-family: monospace; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 15px; }
+        button:hover { background: #962424; }
+        h2 { color: #4a3b32; margin: 0 0 10px 0; }
+        p { color: #5e5043; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <canvas id="game"></canvas>
+    <div id="ui">
+        <h2 id="ui-title">Level Complete</h2>
+        <p id="ui-info"></p>
+        <canvas id="doodle" width="120" height="120" style="background:transparent; border:none;"></canvas>
+        <br><button id="next-btn" onclick="nextLevel()">Next Level</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const ui = document.getElementById('ui');
+        const doodleCanvas = document.getElementById('doodle');
+        const dCtx = doodleCanvas.getContext('2d');
+        
+        const V_WIDTH = 360, V_HEIGHT = 640;
+        let scale = 1, gameActive = true, animationFrameId;
+        
+        function resize() {
+            scale = Math.min(window.innerWidth / V_WIDTH, window.innerHeight / V_HEIGHT);
+            canvas.width = V_WIDTH * scale;
+            canvas.height = V_HEIGHT * scale;
+            ctx.imageSmoothingEnabled = false;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const HALL_LEFT = 40, HALL_RIGHT = 320, HALL_WIDTH = HALL_RIGHT - HALL_LEFT;
+        let player, keys = {}, embarrassment, moisture, distance, currentLevel, levelProgress, levelTargetDistance = 300;
+        let crowd = [], props = [], cameraY;
+
+        function initLevel(lvl) {
+            currentLevel = lvl;
+            player = { x: 180, y: 500, r: 8, baseSpeed: 2, vx: 0, vy: 0 };
+            embarrassment = 0;
+            moisture = Math.max(0, moisture - 10) || 0; 
+            levelProgress = 0;
+            cameraY = 400;
+            crowd = [];
+            props = [];
+            for (let y = 600; y > -400; y -= 45) { spawnPropsAndCrowd(y); }
+            ui.style.display = 'none';
+            gameActive = true;
+        }
+
+        function spawnPropsAndCrowd(targetY) {
+            const count = Math.random() < 0.4 ? 4 : Math.random() < 0.8 ? 5 : 6;
+            const spacing = HALL_WIDTH / count;
+            if (Math.random() < 0.3) {
+                props.push({ type: 'door', side: Math.random() < 0.5 ? 'left' : 'right', y: targetY, w: 8, h: 40 });
+            }
+            if (Math.random() < 0.25) {
+                props.push({ type: 'trashcan', x: HALL_LEFT + 20 + Math.random() * (HALL_WIDTH - 40), y: targetY + 20, r: 10 });
+            }
+            for (let i = 0; i < count; i++) {
+                if (Math.random() > 0.15) {
+                    const waveOffset = Math.sin(targetY * 0.01) * 15;
+                    let x = HALL_LEFT + (i * spacing) + (Math.random() * 20 - 10) + waveOffset;
+                    x = Math.max(HALL_LEFT + 10, Math.min(HALL_RIGHT - 10, x));
+                    crowd.push({
+                        x: x, y: targetY + (Math.random() * 40 - 20),
+                        r: 9 + Math.random() * 3,
+                        speed: (0.4 + Math.random() * 0.4) * (1 + currentLevel * 0.1),
+                        phase: Math.random() * Math.PI * 2, seed: Math.random()
+                    });
+                }
+            }
+        }
+
+        window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        function drawDoodleCircle(cx, cy, r, color, isPlayer = false, seed = 0) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isPlayer ? 2.5 : 2;
+            ctx.beginPath();
+            const steps = 8;
+            for (let j = 0; j <= steps; j++) {
+                const angle = (j / steps) * Math.PI * 2;
+                const wave = Math.sin(angle * 3 + (isPlayer ? Date.now()*0.01 : seed*100)) * 1.2;
+                const x = cx + Math.cos(angle) * (r + wave);
+                const y = cy + Math.sin(angle) * (r + wave);
+                if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            const wobble = Math.sin((isPlayer ? player.y : cy) * 0.15 + (seed * 5)) * 2;
+            ctx.moveTo(cx - r - 1, cy + wobble);
+            ctx.lineTo(cx + r + 1, cy - wobble);
+            ctx.stroke();
+        }
+
+        function drawEmbarrassedCharacter(tick) {
+            dCtx.clearRect(0, 0, 120, 120);
+            const cx = 60, cy = 60, r = 35;
+            const wobble = Math.sin(tick * 0.1) * 2;
+            
+            let blushAlpha = Math.min(1, moisture / 100);
+            if (blushAlpha > 0) {
+                dCtx.fillStyle = `rgba(240, 52, 52, ${blushAlpha * 0.4})`;
+                dCtx.beginPath(); dCtx.arc(cx, cy, r - 2, 0, Math.PI * 2); dCtx.fill();
+            }
+
+            dCtx.strokeStyle = '#4a3b32'; dCtx.lineWidth = 3; dCtx.beginPath();
+            for (let j = 0; j <= 12; j++) {
+                const angle = (j / 12) * Math.PI * 2;
+                const wave = Math.sin(angle * 4 + tick * 0.08) * 1.5;
+                const x = cx + Math.cos(angle) * (r + wave);
+                const y = cy + Math.sin(angle) * (r + wave) + wobble;
+                if (j === 0) dCtx.moveTo(x, y); else dCtx.lineTo(x, y);
+            }
+            dCtx.stroke();
+
+            const eyeOffset = moisture > 50 ? Math.sin(tick * 0.3) * 1 : 0;
+            dCtx.fillStyle = '#4a3b32';
+            if (moisture > 65) {
+                dCtx.font = 'bold 16px monospace'; dCtx.fillText('>', cx - 18, cy - 2 + wobble); dCtx.fillText('<', cx + 6, cy - 2 + wobble);
+            } else {
+                dCtx.beginPath(); dCtx.arc(cx - 12 + eyeOffset, cy - 5 + wobble, 3, 0, Math.PI * 2);
+                dCtx.arc(cx + 12 + eyeOffset, cy - 5 + wobble, 3, 0, Math.PI * 2); dCtx.fill();
+            }
+
+            dCtx.beginPath();
+            if (moisture > 75) {
+                dCtx.lineWidth = 3; const sw = 10 + Math.sin(tick*0.2)*2; dCtx.moveTo(cx - sw/2, cy + 12 + wobble); dCtx.lineTo(cx + sw/2, cy + 12 + wobble);
+            } else if (moisture > 40) {
+                dCtx.lineWidth = 2; dCtx.arc(cx, cy + 18 + wobble, 6, Math.PI, 0, false);
+            } else {
+                dCtx.lineWidth = 2; dCtx.arc(cx, cy + 10 + wobble, 5, 0, Math.PI, false);
+            }
+            dCtx.stroke();
+
+            if (moisture > 20) {
+                dCtx.strokeStyle = 'rgba(41, 128, 185, 0.7)'; dCtx.lineWidth = 2;
+                const dropY = cy + 5 + (tick * 0.8) % 25;
+                if (dropY < cy + r - 5) {
+                    dCtx.beginPath(); dCtx.moveTo(cx - 15, dropY + wobble); dCtx.lineTo(cx - 15, dropY + 4 + wobble); dCtx.stroke();
+                }
+                const dropY2 = cy + 2 + (tick * 0.6 + 10) % 25;
+                if (dropY2 < cy + r - 5) {
+                    dCtx.beginPath(); dCtx.moveTo(cx + 16, dropY2 + wobble); dCtx.lineTo(cx + 16, dropY2 + 4 + wobble); dCtx.stroke();
+                }
+            }
+        }
+
+        let uiTick = 0;
+        function animateUI() {
+            if (gameActive) return;
+            uiTick++;
+            drawEmbarrassedCharacter(uiTick);
+            requestAnimationFrame(animateUI);
+        }
+
+        function triggerLevelEnd() {
+            gameActive = false;
+            document.getElementById('ui-info').innerText = `Sweat Level: ${Math.floor(moisture)}%`;
+            ui.style.display = 'block';
+            animateUI();
+        }
+
+        function nextLevel() {
+            initLevel(currentLevel + 1);
+            loop();
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            const activeSpeed = player.baseSpeed * (1 + (embarrassment / 30));
+            player.vx = 0; player.vy = 0;
+            if (keys['arrowup'] || keys['w']) player.vy = -activeSpeed;
+            if (keys['arrowdown'] || keys['s']) player.vy = activeSpeed * 0.5;
+            if (keys['arrowleft'] || keys['a']) player.vx = -activeSpeed * 0.8;
+            if (keys['arrowright'] || keys['d']) player.vx = activeSpeed * 0.8;
+
+            player.x += player.vx; player.y += player.vy;
+            if (player.x - player.r < HALL_LEFT) player.x = HALL_LEFT + player.r;
+            if (player.x + player.r > HALL_RIGHT) player.x = HALL_RIGHT - player.r;
+
+            cameraY += (player.y - cameraY - 450) * 0.1;
+            
+            let currentDist = Math.floor(500 - player.y);
+            if (currentDist > levelProgress) {
+                distance += (currentDist - levelProgress);
+                levelProgress = currentDist;
+            }
+
+            if (levelProgress >= levelTargetDistance) {
+                triggerLevelEnd();
+                return;
+            }
+
+            if (embarrassment > 0) embarrassment -= 0.12;
+            let hit = false;
+
+            for (let i = props.length - 1; i >= 0; i--) {
+                const p = props[i];
+                if (p.type === 'trashcan') {
+                    const dx = player.x - p.x, dy = player.y - p.y, dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < player.r + p.r) {
+                        hit = true;
+Use code with caution.
+player.x += (dx / dist) * (player.r + p.r - dist);
+player.y += (dy / dist) * (player.r + p.r - dist);
+}
+}
+if (p.y > cameraY + V_HEIGHT + 100) props.splice(i, 1);
+}
+for (let i = crowd.length - 1; i >= 0; i--) {
+const p = crowd[i];
+p.y -= p.speed;
+const dx = player.x - p.x, dy = player.y - p.y, dist = Math.sqrt(dxdx + dydy), minDist = player.r + p.r;
+if (dist < minDist) {
+hit = true;
+player.x += (dx / dist) * (minDist - dist) * 0.6;
+player.y += (dy / dist) * (minDist - dist) * 0.6;
+}
+if (p.y > cameraY + V_HEIGHT + 100) crowd.splice(i, 1);
+}
+if (hit) {
+embarrassment = Math.min(100, embarrassment + 1.8);
+if (embarrassment > moisture) moisture = embarrassment;
+}
+let highestY = 1000;
+for (const p of crowd) { if (p.y < highestY) highestY = p.y; }
+if (highestY > cameraY - 200) spawnPropsAndCrowd(highestY - 50);
+ctx.save();
+ctx.scale(scale, scale);
+ctx.clearRect(0, 0, V_WIDTH, V_HEIGHT);
+ctx.translate(0, -cameraY);
+ctx.strokeStyle = '#4a3b32'; ctx.lineWidth = 4;
+ctx.beginPath();
+for (let offset = Math.floor(cameraY/40)*40 - 40; offset < cameraY + V_HEIGHT + 40; offset += 40) {
+ctx.moveTo(HALL_LEFT, offset); ctx.lineTo(HALL_LEFT, offset + 30);
+ctx.moveTo(HALL_RIGHT, offset); ctx.lineTo(HALL_RIGHT, offset + 30);
+}
+ctx.stroke();
+ctx.strokeStyle = '#ba2d2d'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+ctx.beginPath(); ctx.moveTo(HALL_LEFT, 500 - levelTargetDistance); ctx.lineTo(HALL_RIGHT, 500 - levelTargetDistance); ctx.stroke();
+ctx.setLineDash([]);
+for (const p of props) {
+ctx.strokeStyle = '#4a3b32'; ctx.lineWidth = 2;
+if (p.type === 'door') {
+ctx.fillStyle = '#c4a482';
+const x = p.side === 'left' ? HALL_LEFT - p.w : HALL_RIGHT;
+ctx.fillRect(x, p.y, p.w, p.h);
+ctx.strokeRect(x, p.y, p.w, p.h);
+} else if (p.type === 'trashcan') {
+drawDoodleCircle(p.x, p.y, p.r, '#7f8c8d', false, 0.5);
+}
+}
+for (const p of crowd) drawDoodleCircle(p.x, p.y, p.r, '#5e5043', false, p.seed);
+drawDoodleCircle(player.x, player.y, player.r, '#ba2d2d', true, 0);
+ctx.restore();
+ctx.save();
+ctx.scale(scale, scale);
+const meterW = 200, meterH = 10, mx = (V_WIDTH - meterW)/2;
+ctx.strokeStyle = '#4a3b32'; ctx.lineWidth = 2;
+ctx.strokeRect(mx, 15, meterW, meterH);
+if (moisture > 0) {
+ctx.fillStyle = '#2980b9';
+ctx.fillRect(mx + 2, 17, (meterW - 4) * (moisture / 100), meterH - 4);
+}
+ctx.strokeRect(mx, 30, meterW, meterH);
+if (embarrassment > 0) {
+ctx.fillStyle = '#ba2d2d';
+ctx.fillRect(mx + 2, 32, (meterW - 4) * (embarrassment / 100), meterH - 4);
+}
+ctx.fillStyle = '#4a3b32'; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+ctx.fillText(Lvl ${currentLevel} | Progress: ${Math.floor((levelProgress/levelTargetDistance)*100)}%, V_WIDTH / 2, 60);
+ctx.restore();
+requestAnimationFrame(loop);
+}
+distance = 0;
+moisture = 0;
+initLevel(1);
+loop();
