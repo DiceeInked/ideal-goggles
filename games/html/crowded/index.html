@@ -187,10 +187,7 @@
         function renderStats() {
             document.getElementById('ui-info').innerHTML = `
                 <div class="stats-grid">
-                    <div class="stat"><span>Level</span><strong>${currentLevel}</strong></div>
-                    <div class="stat"><span>Distance</span><strong>${Math.max(0, Math.floor(distance || 0))}</strong></div>
-                    <div class="stat"><span>Sweat</span><strong>${Math.floor(moisture)}%</strong></div>
-                    <div class="stat"><span>Embarrassment</span><strong>${Math.floor(embarrassment)}%</strong></div>
+                    <div class="stat"><span>Sweat</span><strong>Sweat: ${Math.floor(moisture)}%</strong></div>
                 </div>
             `;
         }
@@ -286,10 +283,7 @@
             dCtx.font = 'bold 96px monospace';
 
             const value = (frameIndex % END_ANIMATION_FRAMES) + 1;
-            const flash = 0.35 + (Math.sin((value / END_ANIMATION_FRAMES) * Math.PI * 2) + 1) * 0.25;
-            dCtx.globalAlpha = flash;
             dCtx.fillText(String(value), w / 2, h / 2 + 8);
-            dCtx.globalAlpha = 1;
         }
 
         function animateEndSequence() {
