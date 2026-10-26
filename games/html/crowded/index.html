@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crowd Run</title>
     <style>
+        :root {
+            --paper: #eadeca;
+            --panel: rgba(234, 222, 202, 0.96);
+            --ink: #4a3b32;
+            --ink-soft: #5e5043;
+            --red: #ba2d2d;
+            --red-dark: #962424;
+            --blue: #2980b9;
+            --pink: #f7b0b0;
+            --beige: #c4a482;
+            --dirt: #7f8c8d;
+            --shadow: rgba(74, 59, 50, 0.2);
+        }
+
+        * { box-sizing: border-box; }
+
         body, html {
             margin: 0;
             padding: 0;
@@ -21,55 +37,110 @@
         }
 
         #ui {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
+            position: fixed;
+            inset: 0;
             display: none;
-            background: rgba(234, 222, 202, 0.95);
-            padding: 20px;
-            border: 4px solid #4a3b32;
-            box-shadow: 0 0 0 8px rgba(74, 59, 50, 0.2);
-            border-radius: 8px;
+            place-items: center;
+            background: rgba(20, 20, 20, 0.2);
+            z-index: 20;
+        }
+
+        #ui-card {
+            width: min(92vw, 980px);
+            height: min(92vh, 760px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 18px 14px;
+            background: var(--panel);
+            border: 4px solid var(--ink);
+            box-shadow: 0 0 0 10px var(--shadow);
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        #ui-title {
+            color: var(--ink);
+            margin: 0 0 8px;
+            font-size: clamp(28px, 3vw, 40px);
+        }
+
+        #doodle {
+            width: min(44vmin, 260px);
+            height: auto;
+            background: transparent;
+            border: 0;
+            image-rendering: pixelated;
+        }
+
+        #ui-info {
+            width: min(80vw, 640px);
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(140px, 1fr));
+            gap: 8px 16px;
+            margin-top: 8px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.18);
+            border: 3px solid rgba(74, 59, 50, 0.6);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--ink);
+        }
+
+        .stat span {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .stat strong {
+            font-size: 18px;
         }
 
         button {
-            background: #ba2d2d;
+            background: var(--red);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 22px;
             font-family: monospace;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 4px;
-            margin-top: 15px;
+            border-radius: 8px;
+            margin-top: 16px;
+            box-shadow: 0 6px 0 rgba(150, 36, 36, 0.8);
         }
 
-        button:hover {
-            background: #962424;
+        button:hover:not(:disabled) {
+            background: var(--red-dark);
         }
 
-        h2 {
-            color: #4a3b32;
-            margin: 0 0 10px 0;
-        }
-
-        p {
-            color: #5e5043;
-            margin: 5px 0;
+        button:disabled {
+            opacity: 0.45;
+            cursor: default;
+            box-shadow: none;
         }
     </style>
 </head>
 <body>
     <canvas id="game"></canvas>
     <div id="ui">
-        <h2 id="ui-title">Level Complete</h2>
-        <p id="ui-info"></p>
-        <canvas id="doodle" width="120" height="120" style="background:transparent; border:none;"></canvas>
-        <br>
-        <button id="next-btn" onclick="nextLevel()">Next Level</button>
+        <div id="ui-card">
+            <h2 id="ui-title">Level Clear</h2>
+            <canvas id="doodle" width="240" height="240"></canvas>
+            <div id="ui-info"></div>
+            <button id="next-btn" onclick="nextLevel()" disabled>Next Level</button>
+        </div>
     </div>
 
     <script>
@@ -78,6 +149,7 @@
         const ui = document.getElementById('ui');
         const doodleCanvas = document.getElementById('doodle');
         const dCtx = doodleCanvas.getContext('2d');
+        const nextBtn = document.getElementById('next-btn');
 
         const V_WIDTH = 360, V_HEIGHT = 640;
         let scale = 1, gameActive = true, animationFrameId = null;
@@ -93,8 +165,9 @@
         resize();
 
         const HALL_LEFT = 40, HALL_RIGHT = 320, HALL_WIDTH = HALL_RIGHT - HALL_LEFT;
-        let player, keys = {}, embarrassment, moisture, distance, currentLevel, levelProgress, levelTargetDistance = 300;
+        let player, keys = {}, embarrassment, moisture, distance, currentLevel, levelProgress, levelTargetDistance = 280, exitDoor;
         let crowd = [], props = [], cameraY;
+        const LEVEL_GAP_MS = 2600;
 
         function resetLoop() {
             if (animationFrameId !== null) {
@@ -108,6 +181,17 @@
             animationFrameId = requestAnimationFrame(loop);
         }
 
+        function renderStats() {
+            document.getElementById('ui-info').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat"><span>Level</span><strong>${currentLevel}</strong></div>
+                    <div class="stat"><span>Distance</span><strong>${Math.max(0, Math.floor(distance || 0))}</strong></div>
+                    <div class="stat"><span>Sweat</span><strong>${Math.floor(moisture)}%</strong></div>
+                    <div class="stat"><span>Embarrassment</span><strong>${Math.floor(embarrassment)}%</strong></div>
+                </div>
+            `;
+        }
+
         function initLevel(lvl) {
             currentLevel = lvl;
             player = { x: 180, y: 500, r: 8, baseSpeed: 2, vx: 0, vy: 0 };
@@ -117,9 +201,20 @@
             cameraY = 400;
             crowd = [];
             props = [];
+
+            exitDoor = {
+                x: HALL_LEFT + HALL_WIDTH / 2,
+                y: 500 - levelTargetDistance - 30,
+                w: 22,
+                h: 38,
+                active: false
+            };
+            props.push({ type: 'door', x: exitDoor.x - exitDoor.w / 2, y: exitDoor.y, w: exitDoor.w, h: exitDoor.h, isExit: true, active: false });
+
             for (let y = 600; y > -400; y -= 45) {
                 spawnPropsAndCrowd(y);
             }
+
             ui.style.display = 'none';
             gameActive = true;
         }
@@ -178,97 +273,213 @@
             ctx.stroke();
         }
 
-        function drawEmbarrassedCharacter(tick) {
-            dCtx.clearRect(0, 0, 120, 120);
-            const cx = 60, cy = 60, r = 35;
-            const wobble = Math.sin(tick * 0.1) * 2;
-
-            let blushAlpha = Math.min(1, moisture / 100);
-            if (blushAlpha > 0) {
-                dCtx.fillStyle = `rgba(240, 52, 52, ${blushAlpha * 0.4})`;
-                dCtx.beginPath();
-                dCtx.arc(cx, cy, r - 2, 0, Math.PI * 2);
-                dCtx.fill();
-            }
-
+        function drawEndCharacter(t) {
+            const w = doodleCanvas.width;
+            const h = doodleCanvas.height;
+            dCtx.clearRect(0, 0, w, h);
+            dCtx.lineJoin = 'round';
+            dCtx.lineCap = 'round';
             dCtx.strokeStyle = '#4a3b32';
-            dCtx.lineWidth = 3;
-            dCtx.beginPath();
-            for (let j = 0; j <= 12; j++) {
-                const angle = (j / 12) * Math.PI * 2;
-                const wave = Math.sin(angle * 4 + tick * 0.08) * 1.5;
-                const x = cx + Math.cos(angle) * (r + wave);
-                const y = cy + Math.sin(angle) * (r + wave) + wobble;
-                if (j === 0) dCtx.moveTo(x, y); else dCtx.lineTo(x, y);
-            }
-            dCtx.stroke();
-
-            const eyeOffset = moisture > 50 ? Math.sin(tick * 0.3) * 1 : 0;
             dCtx.fillStyle = '#4a3b32';
-            if (moisture > 65) {
-                dCtx.font = 'bold 16px monospace';
-                dCtx.fillText('>', cx - 18, cy - 2 + wobble);
-                dCtx.fillText('<', cx + 6, cy - 2 + wobble);
+            dCtx.lineWidth = 4;
+
+            let stage = 0;
+            if (t < 0.33) stage = 0;
+            else if (t < 0.66) stage = 1;
+            else if (t < 1) stage = 2;
+            else stage = 3;
+
+            const bodyX = 120;
+            const bodyY = 98;
+            const blushOpacity = stage === 0 ? 0.3 : stage === 1 || stage === 2 ? 0.7 : 1;
+
+            if (stage === 0) {
+                dCtx.beginPath();
+                dCtx.arc(bodyX, bodyY, 26, 0, Math.PI * 2);
+                dCtx.stroke();
+
+                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.5})`;
+                dCtx.beginPath(); dCtx.arc(bodyX - 14, bodyY + 8, 6, 0, Math.PI * 2); dCtx.arc(bodyX + 14, bodyY + 8, 6, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.fillStyle = '#4a3b32';
+                dCtx.beginPath(); dCtx.arc(bodyX - 9, bodyY - 4, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 9, bodyY - 4, 2.2, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.beginPath();
+                dCtx.arc(bodyX, bodyY + 5, 11, 0.2, Math.PI - 0.2);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 20, bodyY + 35);
+                dCtx.lineTo(bodyX - 30, bodyY + 62);
+                dCtx.moveTo(bodyX + 20, bodyY + 35);
+                dCtx.lineTo(bodyX + 30, bodyY + 62);
+                dCtx.moveTo(bodyX - 25, bodyY + 90);
+                dCtx.lineTo(bodyX - 18, bodyY + 126);
+                dCtx.moveTo(bodyX + 25, bodyY + 90);
+                dCtx.lineTo(bodyX + 18, bodyY + 126);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 14, bodyY + 34);
+                dCtx.lineTo(bodyX - 34, bodyY + 55);
+                dCtx.moveTo(bodyX + 14, bodyY + 34);
+                dCtx.lineTo(bodyX + 34, bodyY + 55);
+                dCtx.moveTo(bodyX - 34, bodyY + 55);
+                dCtx.lineTo(bodyX - 20, bodyY + 63);
+                dCtx.moveTo(bodyX + 34, bodyY + 55);
+                dCtx.lineTo(bodyX + 20, bodyY + 63);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 20, bodyY + 33);
+                dCtx.lineTo(bodyX + 20, bodyY + 33);
+                dCtx.stroke();
+            } else if (stage === 1) {
+                dCtx.beginPath();
+                dCtx.arc(bodyX + 8, bodyY - 8, 24, 0, Math.PI * 2);
+                dCtx.stroke();
+
+                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.8})`;
+                dCtx.beginPath(); dCtx.arc(bodyX - 12, bodyY + 2, 7, 0, Math.PI * 2); dCtx.arc(bodyX + 19, bodyY + 4, 7, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.fillStyle = '#4a3b32';
+                dCtx.beginPath(); dCtx.arc(bodyX + 2, bodyY - 10, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 16, bodyY - 10, 2.2, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.beginPath();
+                dCtx.arc(bodyX + 10, bodyY + 2, 9, 0.4, Math.PI - 0.2);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 18, bodyY + 24);
+                dCtx.lineTo(bodyX - 30, bodyY + 50);
+                dCtx.moveTo(bodyX + 18, bodyY + 24);
+                dCtx.lineTo(bodyX + 36, bodyY + 52);
+                dCtx.moveTo(bodyX - 12, bodyY + 84);
+                dCtx.lineTo(bodyX - 18, bodyY + 122);
+                dCtx.moveTo(bodyX + 20, bodyY + 84);
+                dCtx.lineTo(bodyX + 26, bodyY + 122);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 8, bodyY + 35);
+                dCtx.lineTo(bodyX + 10, bodyY + 50);
+                dCtx.moveTo(bodyX + 18, bodyY + 34);
+                dCtx.lineTo(bodyX + 4, bodyY + 52);
+                dCtx.stroke();
+            } else if (stage === 2) {
+                dCtx.beginPath();
+                dCtx.arc(bodyX + 12, bodyY - 10, 24, 0, Math.PI * 2);
+                dCtx.stroke();
+
+                dCtx.fillStyle = `rgba(240, 90, 90, ${blushOpacity * 0.82})`;
+                dCtx.beginPath(); dCtx.arc(bodyX - 10, bodyY + 1, 7, 0, Math.PI * 2); dCtx.arc(bodyX + 20, bodyY + 2, 7, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.fillStyle = '#4a3b32';
+                dCtx.beginPath(); dCtx.arc(bodyX + 3, bodyY - 12, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 17, bodyY - 12, 2.2, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.beginPath();
+                dCtx.arc(bodyX + 12, bodyY + 1, 10, 0.1, Math.PI - 0.3);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 12, bodyY + 26);
+                dCtx.lineTo(bodyX - 28, bodyY + 50);
+                dCtx.moveTo(bodyX + 16, bodyY + 26);
+                dCtx.lineTo(bodyX + 34, bodyY + 52);
+                dCtx.moveTo(bodyX - 14, bodyY + 84);
+                dCtx.lineTo(bodyX - 17, bodyY + 122);
+                dCtx.moveTo(bodyX + 22, bodyY + 84);
+                dCtx.lineTo(bodyX + 28, bodyY + 122);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX - 4, bodyY + 38);
+                dCtx.lineTo(bodyX + 14, bodyY + 54);
+                dCtx.moveTo(bodyX + 18, bodyY + 38);
+                dCtx.lineTo(bodyX + 5, bodyY + 54);
+                dCtx.stroke();
             } else {
                 dCtx.beginPath();
-                dCtx.arc(cx - 12 + eyeOffset, cy - 5 + wobble, 3, 0, Math.PI * 2);
-                dCtx.arc(cx + 12 + eyeOffset, cy - 5 + wobble, 3, 0, Math.PI * 2);
-                dCtx.fill();
-            }
+                dCtx.arc(bodyX + 28, bodyY - 18, 24, 0, Math.PI * 2);
+                dCtx.stroke();
 
-            dCtx.beginPath();
-            if (moisture > 75) {
-                dCtx.lineWidth = 3;
-                const sw = 10 + Math.sin(tick * 0.2) * 2;
-                dCtx.moveTo(cx - sw / 2, cy + 12 + wobble);
-                dCtx.lineTo(cx + sw / 2, cy + 12 + wobble);
-            } else if (moisture > 40) {
-                dCtx.lineWidth = 2;
-                dCtx.arc(cx, cy + 18 + wobble, 6, Math.PI, 0, false);
-            } else {
-                dCtx.lineWidth = 2;
-                dCtx.arc(cx, cy + 10 + wobble, 5, 0, Math.PI, false);
-            }
-            dCtx.stroke();
+                dCtx.fillStyle = `rgba(240, 90, 90, 1)`;
+                dCtx.beginPath(); dCtx.arc(bodyX + 14, bodyY - 6, 8, 0, Math.PI * 2); dCtx.arc(bodyX + 36, bodyY - 5, 7, 0, Math.PI * 2); dCtx.fill();
 
-            if (moisture > 20) {
-                dCtx.strokeStyle = 'rgba(41, 128, 185, 0.7)';
-                dCtx.lineWidth = 2;
-                const dropY = cy + 5 + (tick * 0.8) % 25;
-                if (dropY < cy + r - 5) {
-                    dCtx.beginPath();
-                    dCtx.moveTo(cx - 15, dropY + wobble);
-                    dCtx.lineTo(cx - 15, dropY + 4 + wobble);
-                    dCtx.stroke();
-                }
-                const dropY2 = cy + 2 + (tick * 0.6 + 10) % 25;
-                if (dropY2 < cy + r - 5) {
-                    dCtx.beginPath();
-                    dCtx.moveTo(cx + 16, dropY2 + wobble);
-                    dCtx.lineTo(cx + 16, dropY2 + 4 + wobble);
-                    dCtx.stroke();
-                }
+                dCtx.fillStyle = '#4a3b32';
+                dCtx.beginPath(); dCtx.arc(bodyX + 25, bodyY - 22, 2.2, 0, Math.PI * 2); dCtx.arc(bodyX + 34, bodyY - 22, 2.2, 0, Math.PI * 2); dCtx.fill();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX + 35, bodyY + 2);
+                dCtx.lineTo(bodyX + 40, bodyY + 15);
+                dCtx.lineTo(bodyX + 49, bodyY + 5);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX + 10, bodyY + 24);
+                dCtx.lineTo(bodyX - 5, bodyY + 52);
+                dCtx.moveTo(bodyX + 34, bodyY + 22);
+                dCtx.lineTo(bodyX + 48, bodyY + 50);
+                dCtx.moveTo(bodyX - 4, bodyY + 96);
+                dCtx.lineTo(bodyX - 12, bodyY + 130);
+                dCtx.moveTo(bodyX + 34, bodyY + 98);
+                dCtx.lineTo(bodyX + 46, bodyY + 128);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX + 12, bodyY + 36);
+                dCtx.lineTo(bodyX + 32, bodyY + 40);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX + 32, bodyY - 6);
+                dCtx.lineTo(bodyX + 36, bodyY - 18);
+                dCtx.lineTo(bodyX + 48, bodyY - 10);
+                dCtx.stroke();
+
+                dCtx.beginPath();
+                dCtx.arc(bodyX + 62, bodyY - 8, 9, 0, Math.PI * 2);
+                dCtx.stroke();
+                dCtx.beginPath();
+                dCtx.moveTo(bodyX + 58, bodyY - 5);
+                dCtx.lineTo(bodyX + 68, bodyY + 4);
+                dCtx.stroke();
             }
         }
 
-        let uiTick = 0;
-
-        function animateUI() {
-            if (gameActive) return;
-            uiTick++;
-            drawEmbarrassedCharacter(uiTick);
-            requestAnimationFrame(animateUI);
+        function animateEndSequence() {
+            const start = performance.now();
+            function tick(now) {
+                const p = Math.min(1, (now - start) / 2600);
+                drawEndCharacter(p);
+                if (p < 1) {
+                    requestAnimationFrame(tick);
+                }
+            }
+            requestAnimationFrame(tick);
         }
 
         function triggerLevelEnd() {
             gameActive = false;
             resetLoop();
-            document.getElementById('ui-info').innerText = `Sweat Level: ${Math.floor(moisture)}%`;
-            ui.style.display = 'block';
-            animateUI();
+            nextBtn.disabled = true;
+            nextBtn.style.display = 'none';
+
+            renderStats();
+            ui.style.display = 'grid';
+            ui.style.placeItems = 'center';
+            document.getElementById('ui-title').innerText = 'Level Cleared';
+            animateEndSequence();
+
+            window.setTimeout(() => {
+                nextBtn.style.display = 'inline-block';
+                nextBtn.disabled = false;
+            }, LEVEL_GAP_MS);
         }
 
         function nextLevel() {
+            ui.style.display = 'none';
+            nextBtn.disabled = true;
             initLevel((currentLevel || 1) + 1);
             startLoop();
         }
@@ -299,9 +510,17 @@
                 levelProgress = currentDist;
             }
 
-            if (levelProgress >= levelTargetDistance) {
-                triggerLevelEnd();
-                return;
+            if (levelProgress >= levelTargetDistance * 0.78) {
+                exitDoor.active = true;
+            }
+
+            if (exitDoor && exitDoor.active) {
+                const nearDoorX = Math.abs(player.x - exitDoor.x) < (player.r + exitDoor.w / 2 + 8);
+                const nearDoorY = Math.abs(player.y - exitDoor.y) < (player.r + exitDoor.h / 2 + 8);
+                if (nearDoorX && nearDoorY) {
+                    triggerLevelEnd();
+                    return;
+                }
             }
 
             if (embarrassment > 0) embarrassment -= 0.12;
@@ -320,6 +539,14 @@
                         const ny = dist === 0 ? 0 : dy / dist;
                         player.x += nx * overlap * 0.6;
                         player.y += ny * overlap * 0.6;
+                    }
+                }
+                if (p.type === 'door' && p.isExit) {
+                    const dx = player.x - (p.x + p.w / 2);
+                    const dy = player.y - (p.y + p.h / 2);
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < player.r + 14) {
+                        exitDoor.active = true;
                     }
                 }
                 if (p.y > cameraY + V_HEIGHT + 100) props.splice(i, 1);
@@ -379,8 +606,8 @@
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
-            ctx.moveTo(HALL_LEFT, 500 - levelTargetDistance);
-            ctx.lineTo(HALL_RIGHT, 500 - levelTargetDistance);
+            ctx.moveTo(HALL_LEFT, 500 - levelTargetDistance * 0.78);
+            ctx.lineTo(HALL_RIGHT, 500 - levelTargetDistance * 0.78);
             ctx.stroke();
             ctx.setLineDash([]);
 
@@ -388,10 +615,24 @@
                 ctx.strokeStyle = '#4a3b32';
                 ctx.lineWidth = 2;
                 if (p.type === 'door') {
-                    ctx.fillStyle = '#c4a482';
-                    const x = p.side === 'left' ? HALL_LEFT - p.w : HALL_RIGHT;
-                    ctx.fillRect(x, p.y, p.w, p.h);
-                    ctx.strokeRect(x, p.y, p.w, p.h);
+                    if (p.isExit) {
+                        const x = p.x;
+                        const pulse = exitDoor.active ? 0.8 + Math.sin(Date.now() * 0.01) * 0.2 : 0.5;
+                        ctx.fillStyle = '#dcb778';
+                        ctx.fillRect(x, p.y, p.w, p.h);
+                        ctx.strokeRect(x, p.y, p.w, p.h);
+                        ctx.fillStyle = `rgba(255, 229, 147, ${pulse})`;
+                        ctx.beginPath();
+                        ctx.arc(x + p.w / 2, p.y - 10, 6 + Math.sin(Date.now() * 0.02) * 1.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#4a3b32';
+                        ctx.fillRect(x + p.w / 2 - 1, p.y + 6, 2, 12);
+                    } else {
+                        ctx.fillStyle = '#c4a482';
+                        const x = p.side === 'left' ? HALL_LEFT - p.w : HALL_RIGHT;
+                        ctx.fillRect(x, p.y, p.w, p.h);
+                        ctx.strokeRect(x, p.y, p.w, p.h);
+                    }
                 } else if (p.type === 'trashcan') {
                     drawDoodleCircle(p.x, p.y, p.r, '#7f8c8d', false, 0.5);
                 }
