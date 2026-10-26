@@ -96,6 +96,18 @@
         let player, keys = {}, embarrassment, moisture, distance, currentLevel, levelProgress, levelTargetDistance = 300;
         let crowd = [], props = [], cameraY;
 
+        function resetLoop() {
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        function startLoop() {
+            resetLoop();
+            animationFrameId = requestAnimationFrame(loop);
+        }
+
         function initLevel(lvl) {
             currentLevel = lvl;
             player = { x: 180, y: 500, r: 8, baseSpeed: 2, vx: 0, vy: 0 };
@@ -115,12 +127,15 @@
         function spawnPropsAndCrowd(targetY) {
             const count = Math.random() < 0.4 ? 4 : Math.random() < 0.8 ? 5 : 6;
             const spacing = HALL_WIDTH / count;
+
             if (Math.random() < 0.3) {
                 props.push({ type: 'door', side: Math.random() < 0.5 ? 'left' : 'right', y: targetY, w: 8, h: 40 });
             }
+
             if (Math.random() < 0.25) {
                 props.push({ type: 'trashcan', x: HALL_LEFT + 20 + Math.random() * (HALL_WIDTH - 40), y: targetY + 20, r: 10 });
             }
+
             for (let i = 0; i < count; i++) {
                 if (Math.random() > 0.15) {
                     const waveOffset = Math.sin(targetY * 0.01) * 15;
@@ -247,14 +262,15 @@
 
         function triggerLevelEnd() {
             gameActive = false;
+            resetLoop();
             document.getElementById('ui-info').innerText = `Sweat Level: ${Math.floor(moisture)}%`;
             ui.style.display = 'block';
             animateUI();
         }
 
         function nextLevel() {
-            initLevel(currentLevel + 1);
-            loop();
+            initLevel((currentLevel || 1) + 1);
+            startLoop();
         }
 
         function loop() {
@@ -279,7 +295,7 @@
 
             let currentDist = Math.floor(500 - player.y);
             if (currentDist > levelProgress) {
-                distance += (currentDist - levelProgress);
+                distance = (distance ?? 0) + (currentDist - levelProgress);
                 levelProgress = currentDist;
             }
 
@@ -300,8 +316,10 @@
                     if (dist < player.r + p.r) {
                         hit = true;
                         const overlap = (player.r + p.r - dist) || 0.1;
-                        player.x += (dx / (dist || 1)) * overlap * 0.6;
-                        player.y += (dy / (dist || 1)) * overlap * 0.6;
+                        const nx = dist === 0 ? 1 : dx / dist;
+                        const ny = dist === 0 ? 0 : dy / dist;
+                        player.x += nx * overlap * 0.6;
+                        player.y += ny * overlap * 0.6;
                     }
                 }
                 if (p.y > cameraY + V_HEIGHT + 100) props.splice(i, 1);
@@ -319,8 +337,10 @@
                 if (dist < minDist) {
                     hit = true;
                     const overlap = (minDist - dist) || 0.1;
-                    player.x += (dx / (dist || 1)) * overlap * 0.6;
-                    player.y += (dy / (dist || 1)) * overlap * 0.6;
+                    const nx = dist === 0 ? 1 : dx / dist;
+                    const ny = dist === 0 ? 0 : dy / dist;
+                    player.x += nx * overlap * 0.6;
+                    player.y += ny * overlap * 0.6;
                 }
 
                 if (p.y > cameraY + V_HEIGHT + 100) crowd.splice(i, 1);
@@ -413,7 +433,7 @@
         distance = 0;
         moisture = 0;
         initLevel(1);
-        loop();
+        startLoop();
     </script>
 </body>
 </html>
