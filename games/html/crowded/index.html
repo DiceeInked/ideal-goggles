@@ -152,7 +152,7 @@
         const nextBtn = document.getElementById('next-btn');
 
         const V_WIDTH = 360, V_HEIGHT = 640;
-        let scale = 1, gameActive = true, animationFrameId = null;
+        let scale = 1, gameActive = true, animationFrameId = null, endAnimationFrameId = null;
 
         function resize() {
             scale = Math.min(window.innerWidth / V_WIDTH, window.innerHeight / V_HEIGHT);
@@ -187,7 +187,7 @@
         function renderStats() {
             document.getElementById('ui-info').innerHTML = `
                 <div class="stats-grid">
-                    <div class="stat"><span>Sweat</span><strong>Sweat: ${Math.floor(moisture)}%</strong></div>
+                    <div class="stat"><span>Sweat</span><strong>${Math.floor(moisture)}%</strong></div>
                 </div>
             `;
         }
@@ -250,6 +250,7 @@
 
         window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        window.addEventListener('blur', () => { keys = {}; });
 
         function drawDoodleCircle(cx, cy, r, color, isPlayer = false, seed = 0) {
             ctx.strokeStyle = color;
@@ -286,17 +287,30 @@
             dCtx.fillText(String(value), w / 2, h / 2 + 8);
         }
 
+        function stopEndSequence() {
+            if (endAnimationFrameId !== null) {
+                cancelAnimationFrame(endAnimationFrameId);
+                endAnimationFrameId = null;
+            }
+        }
+
         function animateEndSequence() {
+            stopEndSequence();
             const start = performance.now();
 
             function tick(now) {
+                if (ui.style.display === 'none') {
+                    endAnimationFrameId = null;
+                    return;
+                }
+
                 const elapsed = now - start;
                 const frame = Math.floor(elapsed / END_FRAME_MS) % END_ANIMATION_FRAMES;
                 drawEndNumber(frame);
-                requestAnimationFrame(tick);
+                endAnimationFrameId = requestAnimationFrame(tick);
             }
 
-            requestAnimationFrame(tick);
+            endAnimationFrameId = requestAnimationFrame(tick);
         }
 
         function triggerLevelEnd() {
@@ -318,6 +332,7 @@
         }
 
         function nextLevel() {
+            stopEndSequence();
             ui.style.display = 'none';
             nextBtn.disabled = true;
             initLevel((currentLevel || 1) + 1);
