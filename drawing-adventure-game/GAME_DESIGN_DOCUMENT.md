@@ -784,7 +784,7 @@ The existing design notes do not specify monetization, subscriptions, paid cosme
 {DECIDE: Will there be any paid items, cosmetics, currency, DLC, or other purchases?}  
 {DECIDE: If purchases exist, how will the design avoid pay-to-win effects and protect younger players?}  
 {DECIDE: Is the world updated on a schedule, and who creates or reviews seasonal content?}  
-{DECIDE: Are weekly cave resets or PAL events part of live operations, or are those ideas dropped?}
+{DECIDE: What schedule governs PAL events, and how does the confirmed weekly cave reset interact with live operations?}
 
 ## 18. Technical and production requirements
 
@@ -849,7 +849,6 @@ Other retired rules include:
 - Giving teammates ink by slashing them.
 - The old core-stone-only Inkoff win condition.
 - Custom-drawn weapon skins using transparent marker requirements.
-- Treating weekly cave-layout changes as confirmed.
 - Treating black ink's effect on match rewards as decided.
 - The old idea that the player makes a custom weapon skin after reaching maximum level.
 - The previous island-based color-source and daily reset systems.
@@ -863,7 +862,7 @@ Work through these first if the goal is to make the design implementable.
 ### World and cave rules
 - {DECIDE: Confirm the A99–Z00 numbering scheme and define exact progression direction.}
 - {DECIDE: Rewrite the Stronghold destination rule with a clear formula and examples.}
-- {DECIDE: Confirm or reject weekly global cave resets.}
+- {DECIDE: Define the exact day/time of the global weekly cave reset and what happens to players currently in caves.}
 - {DECIDE: Define how players return to the surface and stay together across server changes.}
 - {DECIDE: Define Water Cave movement and the meaning of its A–D spawn levels.}
 
