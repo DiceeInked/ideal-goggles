@@ -1,12 +1,12 @@
 # Pod Game
 
-> Working title: **Pod Game**. This is a separate game concept from the Minecraft add-on ideas in `Mobs/`. The title can change later.
+> Working title: **Pod Game**. This is a separate game concept from the Minecraft add-on ideas in the [mods](../mods/README.md) folder. The title can change later.
 
 ## High concept
 
-A space exploration and action RPG inspired by the feeling of discovering a vast, procedurally varied universe, but with a central twist: **the player is the spaceship**. The ship is called a **pod**. There is no pilot character to leave behind and no walking around outside the pod. The pod is the player's body, identity, transport, and customizable build.
+A space exploration and action RPG inspired by the feeling of discovering a vast, procedurally varied universe, but with a central twist: **the player is the spaceship**. The ship is called a **pod**.
 
-Instead of ordinary planets to land on and mine, the universe contains strange, procedurally assembled **system entities**: miniature space bosses made from combinations of categories, subcategories, and smaller traits. Defeating them earns currency, metals, and sometimes rare parts.
+Instead of ordinary planets to land on and mine, the universe contains strange, procedurally assembled **system entities**: miniature space bosses made from combinations of categories, subcategories, traits, and behaviors.
 
 ## Core gameplay loop
 
@@ -31,7 +31,7 @@ Possible upgrades include:
 - Lasers.
 - Other abilities unlocked by particular parts or combinations.
 
-The goal is to make pods visually distinctive, potentially allowing a wide variety of silhouettes and configurations. Stations have docking spaces where the player can access shops, speak to NPCs, and modify the pod without ever exiting it.
+The goal is to make pods visually distinctive, potentially allowing a wide variety of silhouettes and configurations. Stations have docking spaces where the player can access shops, speak to NPCs, and manage upgrades.
 
 ## Procedural system entities
 
@@ -47,9 +47,9 @@ Build each entity by selecting from a hierarchy:
 
 Not every feature needs to use the same hierarchy. Some can be selected independently, while others should depend on earlier choices to keep combinations coherent.
 
-For example, three independent feature groups with ten options each produce 1,000 combinations before accounting for any further traits. Many categories and layered choices could create a huge variety of entities without hand-authoring every possible combination.
+For example, three independent feature groups with ten options each produce 1,000 combinations before accounting for any further traits. Many categories and layered choices could create a huge variety of outcomes.
 
-**Design principle:** randomness should create surprising combinations, not nonsense. Use compatibility rules, weighted choices, and threat-level constraints so each generated encounter feels intentional and beatable.
+**Design principle:** randomness should create surprising combinations, not nonsense. Use compatibility rules, weighted choices, and threat-level constraints so each generated encounter feels intentional.
 
 Potential generation dimensions:
 - Body shape and scale.
@@ -78,7 +78,7 @@ Loot uses four ranks:
 | A | High |
 | S | High baseline value, with special black-market potential |
 
-A and S are both good-value ranks in ordinary selling. S-ranked items are especially valuable when sold through the black market. The rank primarily communicates selling value, not necessarily combat power.
+A and S are both good-value ranks in ordinary selling. S-ranked items are especially valuable when sold through the black market. The rank primarily communicates selling value, not necessarily combat value.
 
 The ordinary shop should make selling and upgrading simple. Detailed inventory management should not overwhelm the main loop.
 
@@ -106,17 +106,15 @@ This creates a choice between safe, predictable income and a risky opportunity f
 
 ### Portal history and lore
 
-The black market was originally accessed through a major portal. Authorities eventually contained that portal and used its **unsaturated energy** to develop a way of identifying vehicles that had broken the law.
+The black market was originally accessed through a major portal. Authorities eventually contained that portal and used its **unsaturated energy** to develop a way of identifying vehicles that had entered illegally.
 
-After the main portal was contained, others discovered that **white energy**, found by mining certain floating ores, could be used with expensive energy accelerators to open portals elsewhere. Recreating a stable connection required both white energy and unsaturated energy.
-
-An attempt to establish a new connection used far too much white energy while the old portals were still open. The resulting event permanently linked the routes in an unstable way. Now, black-market portals can open unpredictably across the universe. Attempts to deliberately create a portal with the same machinery tend to end in an explosion.
+After the main portal was contained, others discovered that **white energy**, found by mining certain floating ores, could be used with expensive energy accelerators to open portals elsewhere. Repeated use of unstable routes caused the connection network to permanently splice together.
 
 This history explains why black-market access is possible but rare, dangerous, and difficult to control.
 
 ## Saturation and law enforcement
 
-**Saturation** is a visible player attribute related to the government's ability to identify illegal activity. Police use unsaturated energy derived from the contained original portal as a detection system. They can inspect pods and attempt to arrest those carrying too much unsaturated energy.
+**Saturation** is a visible player attribute related to the government's ability to identify illegal activity. Police use unsaturated energy derived from the contained original portal as a detection tool.
 
 The black market has a complicated relationship with saturation:
 - Passing through black-market portals can reduce the pod's saturation.
@@ -124,7 +122,7 @@ The black market has a complicated relationship with saturation:
 - Saturated items are worth considerably more when sold illegally.
 - This makes repeated black-market visits a trade-off: potential item profits versus increased legal risk.
 
-The exact direction, terminology, and thresholds of the saturation meter need a final rules pass. The core intended tension is that the player can gain profitable contraband opportunities while becoming easier for law enforcement to target.
+The exact direction, terminology, and thresholds of the saturation meter need a final rules pass. The core intended tension is that the player can gain profitable contraband opportunities while balancing legal risk.
 
 ## Hyper energy and attributes
 
@@ -179,4 +177,5 @@ Additional attributes may be added later, but should only be introduced if they 
 
 ## Current scope
 
-This document records the concept and its intended systems. It is **design documentation only**, not a playable implementation. Unresolved mechanics are deliberately marked as questions rather than silently decided.
+This document records the concept and its intended systems. It is **design documentation only**, not a playable implementation. Unresolved mechanics are deliberately marked as questions rather than treated as final decisions.
+
