@@ -4,7 +4,7 @@ This folder contains the design for Drawing Adventure Game (DAG). The **master d
 
 ## Start here
 
-- [Master Game Design Document](GAME_DESIGN_DOCUMENT.md): the complete design reference, including world rules, drawing, weapons, Inkoff, characters, social systems, and production questions. Anything still undecided is marked with a curly-brace prompt such as `{DECIDE: ...}`.
+- [Master Game Design Document](GAME_DESIGN_DOCUMENT.md): the complete design reference, including world rules, drawing, weapons, Inkoff, characters, social systems, and production questions. Anything still undecided is marked with a curly-brace prompt such as {DECIDE: ...}.
 - [Game Summary](GAME_SUMMARY.md): a short, hype-focused introduction.
 - [Project Overview](PROJECT_OVERVIEW_AI.md): a quick summary of the main systems.
 - [Design Decisions and Open Questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md): a shorter checklist of unresolved questions.
@@ -28,17 +28,16 @@ This folder contains the design for Drawing Adventure Game (DAG). The **master d
 - [YAP](YAP_AI.md)
 - [Trap](TRAP_AI.md)
 - [Homes, Props, Badges, and PAL](HOMES_AND_PAL_AI.md)
+- [Merchant Reference](MERCHANTS.md): current summary of YAP and Trap.
 
 ### Reference material
 - [Inspirations and References](INSPIRATIONS_AI.md): broad inspirations and the rules for keeping the game original.
-- [Original Merchant Notes](MERCHANTS.md): unpolished original notes, retained for historical reference.
 - [Caves Scratchpad Note](CAVES.md): points to the current cave documentation.
 
 ## Reading and editing rules
 
 - **The master design document is the main complete reference.** The focused files are supporting notes for individual systems.
 - Text inside curly braces in the master document describes a decision that still needs to be made. Replace the prompt with the chosen rule once it is decided.
-- When two notes disagree, don't guess. Keep the conflict open until the creator chooses which version is current.
-- Files ending in `_AI` have been edited with AI help for spelling, grammar, clarity, or organization. The ideas remain the creator's unless explicitly marked otherwise.
-- `MERCHANTS.md` is intentionally retained as a historical source note. It may contain rough wording or details that conflict with newer documents.
+- **Source priority:** the creator's latest explicit clarification comes first, followed by the uploaded Games.pdf, then older repository notes. The PDF's rules override older notes wherever they conflict; if the PDF itself is unclear, preserve the question rather than guessing.
+- Files ending in _AI have been edited with AI help for spelling, grammar, clarity, or organization. The ideas remain the creator's unless explicitly marked otherwise.
 - The old daily, seasonal, and white-island world plan, white emergency ore, colored shards, teammate ink transfer by slashing, the old core-stone Inkoff win condition, and custom-drawn weapon skins are not part of the current design.
