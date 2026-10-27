@@ -1,37 +1,44 @@
 # Drawing Adventure Game
 
-This folder holds the game's design notes. Files ending in `_AI` have been edited with AI help to improve spelling, grammar, clarity, and organization. The ideas are still the creator's unless stated otherwise. Files without `_AI` are original notes and have been left as they were.
+This folder contains the design for Drawing Adventure Game (DAG). The **master design document** is the single place to read the full concept and work through unresolved decisions.
 
 ## Start here
-- [Game summary](GAME_SUMMARY.md): a quick, hype-focused introduction to the game.
-- [Project overview](PROJECT_OVERVIEW_AI.md)
-- [Design decisions and open questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md)
 
-## Design docs
+- [Master Game Design Document](GAME_DESIGN_DOCUMENT.md): the complete design reference, including world rules, drawing, weapons, Inkoff, characters, social systems, and production questions. Anything still undecided is marked with a curly-brace prompt such as `{DECIDE: ...}`.
+- [Game Summary](GAME_SUMMARY.md): a short, hype-focused introduction.
+- [Project Overview](PROJECT_OVERVIEW_AI.md): a quick summary of the main systems.
+- [Design Decisions and Open Questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md): a shorter checklist of unresolved questions.
+
+## Supporting design notes
 
 ### World and exploration
-- [World, Camp, and caves](WORLD_AND_CAVES_AI.md)
-- [Creatures and cave encounters](CREATURES_AI.md)
+- [World, Camp, and Caves](WORLD_AND_CAVES_AI.md)
+- [Creatures and Cave Encounters](CREATURES_AI.md)
 
-### Drawing and weapons
-- [Drawing, the glitch artifact, and stash portal](DRAWING_AND_GLITCH_AI.md)
-- [Weapons, ink, and shards](WEAPONS_AND_INK_AI.md)
+### Drawing, resources, and weapons
+- [Drawing, the Glitch Artifact, and Stash Portal](DRAWING_AND_GLITCH_AI.md)
+- [Weapons, Ink, and Shards](WEAPONS_AND_INK_AI.md)
 
-### Multiplayer
+### Multiplayer and relationships
 - [Inkoff](INKOFF_AI.md)
-- [Social play and friendship](SOCIAL_AND_FRIENDSHIP_AI.md)
-- [Passions: gestures and paired actions](FRIENDSHIP_ACTIONS_AI.md)
+- [Social Play and Friendship](SOCIAL_AND_FRIENDSHIP_AI.md)
+- [Passions: Gestures and Paired Actions](FRIENDSHIP_ACTIONS_AI.md)
 
-### Other features
-- [Homes, props, badges, and PAL](HOMES_AND_PAL_AI.md)
+### Merchants and optional features
 - [YAP](YAP_AI.md)
 - [Trap](TRAP_AI.md)
-- [Inspirations and references](INSPIRATIONS_AI.md)
-- [Original merchant notes](MERCHANTS.md)
+- [Homes, Props, Badges, and PAL](HOMES_AND_PAL_AI.md)
 
-## Notes to keep in mind
-- The creator's latest decisions take priority. Ideas marked as undecided are not final.
-- The game now takes place on one large planet, with the Camp as the starting area and caves as a major part of exploration. The old daily, seasonal, and white-island plan is no longer current.
-- White emergency ore, colored shards, item unlock tokens, teammate ink transfer by slashing, the old core-stone Inkoff win condition, and custom-drawn weapon skins are not part of the current plan.
-- Yellow ink's effect, cave-layout changes, homes and PAL, Heart Point costs, and several balance details still need decisions. See the decision tracker.
-- `CAVES.md` is an empty original scratchpad. The current cave notes are in `WORLD_AND_CAVES_AI.md`.
+### Reference material
+- [Inspirations and References](INSPIRATIONS_AI.md): broad inspirations and the rules for keeping the game original.
+- [Original Merchant Notes](MERCHANTS.md): unpolished original notes, retained for historical reference.
+- [Caves Scratchpad Note](CAVES.md): points to the current cave documentation.
+
+## Reading and editing rules
+
+- **The master design document is the main complete reference.** The focused files are supporting notes for individual systems.
+- Text inside curly braces in the master document describes a decision that still needs to be made. Replace the prompt with the chosen rule once it is decided.
+- When two notes disagree, don't guess. Keep the conflict open until the creator chooses which version is current.
+- Files ending in `_AI` have been edited with AI help for spelling, grammar, clarity, or organization. The ideas remain the creator's unless explicitly marked otherwise.
+- `MERCHANTS.md` is intentionally retained as a historical source note. It may contain rough wording or details that conflict with newer documents.
+- The old daily, seasonal, and white-island world plan, white emergency ore, colored shards, teammate ink transfer by slashing, the old core-stone Inkoff win condition, and custom-drawn weapon skins are not part of the current design.
