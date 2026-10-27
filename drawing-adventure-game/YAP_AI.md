@@ -1,22 +1,32 @@
 # YAP
 
 ## Appearance
-The original merchant notes describe YAP with a plus sign over his right eye and a sticky note marked with an X over his left eye. Use that description if older notes disagree, unless the creator changes it.
+YAP has a plus sign over his right eye and a sticky note marked with an X over his left eye.
 
-## Shop
-The original notes say YAP sells:
-- One locked weapon with a special tonic applied to the whole weapon.
-- One blade.
-- One handle.
-- One amulet.
+## Shop inventory
+YAP sells exactly four item types:
+- **Completed weapon:** a random, fully assembled weapon made from a blade, handle, and amulet. Some completed weapons can have a tonic, which is a buff.
+- **Blade:** a random blade part, with no tonic or other buff.
+- **Handle:** a random handle part, with no tonic or other buff.
+- **Amulet:** a random amulet part, with no tonic or other buff.
 
-Players can summon YAP with any ink color and buy items with shards.
+Tonics can apply only to the completed weapon sold by YAP. The separate blade, handle, and amulet items cannot have buffs.
 
-## Where he appears
-YAP can appear in deeper cave layers. Merchants become more likely the deeper players go. There are no shopkeepers in the first cave.
+Players pay shards to buy items.
+
+## Summoning and spawn depth
+The uploaded PDF says YAP appears at A1 and lower. The player tips him with ink to try to summon him, and each tip has a 10% chance to make him appear. The tip can use any ink color. The exact meaning of “lower” depends on the cave-layer numbering system.
+
+There are no shopkeepers in the first cave. Merchants become more likely to appear deeper underground.
 
 ## Still undecided
-- Does YAP give players starter gear at the Camp?
-- Is tipping still part of the shop?
-- Does the tonic last temporarily or permanently?
-- What are YAP's dialogue, greetings, and friendship actions?
+- How much ink counts as one tip?
+- What does “A1 and lower” mean exactly in the level system?
+- What are the prices of each of the four shop items?
+- What buffs can tonics provide, and can a weapon have more than one tonic?
+- How long does a tonic last, and can it be removed or replaced?
+- Does YAP give starter gear at the Camp?
+- What are YAP's dialogue, greetings, animation, sound, and relationship with other merchants?
+
+## Source priority
+For specific rules, use the creator's latest explicit clarification first, then the uploaded PDF, then older repository notes. The creator's latest clarification establishes the completed weapon as YAP's fourth item, correcting the PDF's apparent “random blade” wording.
