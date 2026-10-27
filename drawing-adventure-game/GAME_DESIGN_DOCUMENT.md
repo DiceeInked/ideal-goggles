@@ -851,7 +851,7 @@ An earlier idea let players pay extra money to use their own drawn weapon design
 
 An older objective used protected stones: each team had a final stone behind a force field and three other stones around the map. The outer stones had to be destroyed first, then the final stone could be attacked to win. The current plan instead uses gel deposits to fill the team's base or eliminate all three of the opposing Queen's lives.
 
-The following ideas appear in older notes but are not part of the current plan unless deliberately restored:
+Other retired rules include:
 - Daily, seasonal, and white islands as the main world structure.
 - White emergency ore in Inkoff, including the old rule that it only appears when ink reaches zero and cannot later be equipped normally.
 - Colored shards and separate item-unlock tokens.
