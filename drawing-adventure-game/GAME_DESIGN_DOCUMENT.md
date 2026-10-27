@@ -146,6 +146,10 @@ That wording is internally unclear, so it is recorded as a source note rather th
 
 The PDF says cave terrain is random, that caves are the main adventure area, that caves spawn ink ores, and that the layout resets for all players each week. However, the current design tracker explicitly says weekly cave-layout changes are not confirmed. Treat weekly reset as a proposed rule until it is confirmed.
 
+Older notes also describe very large spiral-like cave spaces, gems that can be mined for extra ink, special rooms with extra gems, and lower cave levels that can unexpectedly continue down through a portal. Their current status is unclear, so they are preserved here as ideas to confirm rather than guaranteed features.
+
+{DECIDE: Are giant spiral caves, gem deposits, extra-gem rooms, and surprise deeper portals still part of the cave design? If so, how do they work?}
+
 {DECIDE: Are cave layouts reset weekly, at another interval, per run, per server, or never?}  
 {DECIDE: If weekly resets happen, what day and time do they happen, and what happens to players currently in a cave?}  
 {DECIDE: Is the random layout global and shared by all players, or does each server or party generate a different layout?}  
@@ -746,7 +750,7 @@ The existing notes do not yet specify a complete interface, sound system, access
 
 ### Audio and visual direction
 
-Current notes reference blue static and a revolver cue for Trap, panting and glitch effects for the stash portal, a heart beat for close-friend healing, creature sounds, and colorful ink effects. The overall sound and art bible is not defined.
+Current notes reference blue static and a revolver cue for Trap, panting and glitch effects for the stash portal, a heart beat for close-friend healing, creature sounds, and colorful ink effects. The inspirations notes also propose that deeper scenery might become more 3D-looking while the player remains 2D; this is a visual direction idea, not a confirmed requirement. The overall sound and art bible is not defined.
 
 {DECIDE: What is the overall art direction, line style, animation style, lighting, and color palette?}  
 {DECIDE: What is the sound direction for the Camp, caves, Water Caves, Strongholds, drawing, mining, combat, creatures, merchants, and Inkoff?}  
@@ -824,7 +828,28 @@ Keep characters, maps, levels, creature designs, assets, sound, writing, interfa
 {DECIDE: Are there any inspirations to add, remove, or clarify?}  
 {DECIDE: What visual or mechanical elements must be specifically avoided to keep the game distinct?}
 
-## 20. Retired or non-current ideas
+## 20. Retired, parked, or historical ideas
+
+The following ideas appear in older notes. Explicitly scrapped ideas are not part of the current plan unless deliberately restored; less certain older ideas are kept here so their details are not lost.
+
+### Older island and color-source plan (scrapped)
+
+- The old default island was meant to contain a little of every ink color and reset daily for each player.
+- The old seasonal island was meant to change its main color by season and reset daily: winter used blue shades, fall used orange/red, spring used green/yellow, and summer used pink or party colors.
+- The old white island began pale white. Dropping a chosen ink into its center caused that color to spread and become the island's primary color, making the island a source of extra amounts of that ink.
+- This entire island-based resource structure is scrapped in favor of the large planet and cave system.
+
+### White emergency ore in Inkoff (scrapped)
+
+An older idea said a white gemstone/ore would appear only when a player's Inkoff ink reached zero. It would be visible only at that moment, and mining it would switch the player's ink to white. White could not later be equipped normally, and the player would receive no ink return or end-of-match ink reward for it. This emergency fallback is not part of the current plan.
+
+### Older weapon skin idea (not current)
+
+An earlier idea let players pay extra money to use their own drawn weapon design after the weapon or set reached maximum level. The editor would show 50%-transparent dots or lines over the weapon and handle, and the center of every marker had to be covered by the player's art to prevent invisible skins. Custom-drawn weapon skins are not part of the current plan.
+
+### Earlier Inkoff stone objective (not current)
+
+An older objective used protected stones: each team had a final stone behind a force field and three other stones around the map. The outer stones had to be destroyed first, then the final stone could be attacked to win. The current plan instead uses gel deposits to fill the team's base or eliminate all three of the opposing Queen's lives.
 
 The following ideas appear in older notes but are not part of the current plan unless deliberately restored:
 - Daily, seasonal, and white islands as the main world structure.
