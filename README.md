@@ -2,14 +2,15 @@
 
 Minecraft mod ideas, design docs, prototypes, and experiment notes.
 
-This repository mixes game design, Minecraft add-on experiments, web toy prototypes, and devlog notes. The project has grown quickly, so this README acts as the main index and landing page for the current repo structure.
+This repository mixes game design, Minecraft add-on experiments, web toy prototypes, and devlog notes. This README is the main index for the project.
 
 > Note: a few older folders still use legacy names from early experiments. The documentation below standardizes the repo for browsing without removing history.
 
 ## Project index
 
 ### Game design and ideas
-- [drawing-adventure-game](drawing-adventure-game/README.md) — current world, mechanics, and design documentation for the major game concept.
+- [Drawing Adventure Game: Master Design Document](drawing-adventure-game/GAME_DESIGN_DOCUMENT.md) — the full design reference, with undecided details marked as fill-in prompts.
+- [Drawing Adventure Game folder index](drawing-adventure-game/README.md) — supporting documents and project navigation.
 - [Pod Game](Pod%20Game/README.md) — a separate space-exploration concept document.
 - [devlog](devlog/README.md) — development notes and learning writeups.
 
@@ -39,7 +40,7 @@ ideal-goggles/
 
 ## Quick orientation
 
-- The largest active design work is in [drawing-adventure-game](drawing-adventure-game/README.md).
+- The largest active design work is in [drawing-adventure-game](drawing-adventure-game/README.md), with the complete concept in its [master design document](drawing-adventure-game/GAME_DESIGN_DOCUMENT.md).
 - The [mods](mods/README.md) folder contains the Minecraft Bedrock experiments and their build artifacts.
 - The [games](games/README.md) folder is for lighter web prototypes and mini-experiments.
 - The [devlog](devlog/README.md) holds the project's learning notes and design reflections.
@@ -49,4 +50,3 @@ ideal-goggles/
 - Prefer the folder READMEs as the canonical entry point for each section.
 - Keep design documents, concept notes, and packaged builds separated where possible.
 - Use consistent naming for new content so the repo stays easy to browse.
-
