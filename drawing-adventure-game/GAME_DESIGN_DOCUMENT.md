@@ -7,6 +7,14 @@
 
 > **How to use this document:** Anything inside curly braces is a task for the creator to answer, revise, or explicitly mark as not applicable. For example, {DECIDE: What platforms will the game support?}. These prompts are intentionally left in the text so the document can be worked through without needing a conversation. When a decision is made, replace the prompt with the decision and update the relevant supporting note if needed.
 
+## Source-of-truth rules
+
+1. **The creator's latest explicit clarification wins.** A direct correction from the creator overrides older notes and the uploaded PDF.
+2. **The uploaded Games.pdf is the authoritative source when it conflicts with older repository documents.** Use the PDF's version of a rule instead of an older conflicting version in a repository file.
+3. **Repository notes fill in details the PDF does not address.** If the PDF itself is ambiguous or does not specify a detail, leave a curly-brace prompt rather than inventing an answer.
+
+The PDF's separate-game material is outside this document's scope.
+
 ## 1. The game at a glance
 
 Drawing Adventure Game is a 2D multiplayer drawing adventure set on a large planet. Players begin at the Camp, explore a huge network of caves, collect ink and shards, mine resources, encounter creatures and merchants, assemble weapons from three parts, draw their own character looks and artwork, and naturally cross paths with other players.
@@ -144,15 +152,15 @@ That wording is internally unclear, so it is recorded as a source note rather th
 
 ### Cave generation and resets
 
-The PDF says cave terrain is random, that caves are the main adventure area, that caves spawn ink ores, and that the layout resets for all players each week. However, the current design tracker explicitly says weekly cave-layout changes are not confirmed. Treat weekly reset as a proposed rule until it is confirmed.
+The PDF says cave terrain is random, that caves are the main adventure area, that caves spawn ink ores, and that the layout resets for all players each week. Under the source-of-truth rules, the current rule is that cave terrain is randomly generated and resets globally for all players once per week. Older repository notes that say weekly resets are unconfirmed are superseded by the PDF.
 
 Older notes also describe very large spiral-like cave spaces, gems that can be mined for extra ink, special rooms with extra gems, and lower cave levels that can unexpectedly continue down through a portal. Their current status is unclear, so they are preserved here as ideas to confirm rather than guaranteed features.
 
 {DECIDE: Are giant spiral caves, gem deposits, extra-gem rooms, and surprise deeper portals still part of the cave design? If so, how do they work?}
 
-{DECIDE: Are cave layouts reset weekly, at another interval, per run, per server, or never?}  
-{DECIDE: If weekly resets happen, what day and time do they happen, and what happens to players currently in a cave?}  
-{DECIDE: Is the random layout global and shared by all players, or does each server or party generate a different layout?}  
+{DECIDE: What day and time does the global weekly cave reset happen, and what happens to players currently in a cave?}  
+{DECIDE: Does the weekly reset regenerate all cave features and ores, or only terrain and layout?}  
+{DECIDE: Are players in a shared cave instance given the same randomly generated layout and seed?}  
 {DECIDE: Which terrain features are procedural, and which are hand-designed?}  
 {DECIDE: Can players leave drawings, build structures, or otherwise change cave terrain permanently?}
 
@@ -411,34 +419,24 @@ Custom-drawn weapon skins with transparent marker requirements appeared in older
 
 Merchants are special characters players can interact with to buy items or services. The original notes say all merchants know each other, although it is not clear whether they want to talk about that.
 
-The current direction says deeper layers are more likely to contain merchants, while the first cave has none. The PDF provides specific threshold ideas for YAP and Trap, but these do not yet agree with every current note.
+The current direction says deeper layers are more likely to contain merchants, while the first cave has none. When the PDF provides a specific spawn rule that differs from an older repository note, use the PDF's rule.
 
 ### YAP
 
 **Appearance:** The original merchant description gives YAP a plus sign over his right eye and a sticky note marked with an X over his left eye.
 
-**Current repository version of inventory:**
-- One locked weapon with a special tonic applied to the whole weapon.
-- One blade.
-- One handle.
-- One amulet.
+**YAP's four shop items:**
+- One random blade with no tonic or other buff.
+- One random handle with no tonic or other buff.
+- One random amulet with no tonic or other buff.
+- One completed weapon. Some completed weapons can have a tonic applied; a tonic is a buff. The separate blade, handle, and amulet items cannot have buffs.
 
-Players can summon YAP with any ink color and buy items with shards. Whether he gives starter gear at the Camp is undecided. Tonic effects and duration are not described.
+Players tip YAP with any color of ink to try to summon him. Each tip has a 10% chance to spawn him. The PDF says he appears at A1 and lower; what “lower” means must follow the level-numbering rules. Items are bought with shards. The tonic effects and duration are not described.
 
-**PDF version of spawn and inventory notes:**
-- YAP appears at A1 and lower.
-- Players tip him with ink to summon him.
-- Each tip has a 10% chance to spawn him.
-- He sells four items: a random locked weapon that may contain tonics, a random blade, a random handle, and a fourth item written as “random blade.”
-
-The fourth item conflicts with the current repository version, which says an amulet. The PDF's “A1 and lower” threshold also needs mapping to the layer numbering system.
-
-{DECIDE: Is YAP summoned by tipping with any color of ink, or does he naturally spawn? Can both methods exist?}  
-{DECIDE: Is the 10% chance per tip still intended, and what amount of ink counts as one tip?}  
-{DECIDE: Does YAP appear at A1 and lower, and what does “lower” mean in the final level system?}  
-{DECIDE: Is the fourth item an amulet or another blade?}  
-{DECIDE: What are the prices for the locked weapon, blade, handle, and amulet?}  
-{DECIDE: What do tonics do, how are they applied, and do they expire?}  
+{DECIDE: What amount of ink counts as one tip?}  
+{DECIDE: Does YAP appear at A1 and lower, and what does “lower” mean in the level numbering system?}  
+{DECIDE: What are the prices for the completed weapon, blade, handle, and amulet?}  
+{DECIDE: What do tonics do, how are they applied to a completed weapon, and do they expire?}  
 {DECIDE: Does YAP sell starter gear at the Camp, and does he interact with the player before the first cave?}  
 {DECIDE: What are his dialogue, personality, animation, sound, and relationship with Trap and other merchants?}
 
@@ -448,30 +446,23 @@ Trap offers a risky service to separate a locked weapon into its three parts. Th
 
 The player puts a locked weapon into a machine, clamps it into place, signs a contract, and begins a challenge. The machine holds the weapon on both sides of its handle. The amulet is shown on one side and the other weapon part on the other. The machine resembles a revolver. The player must win twice to fully separate the weapon into three parts. The two-stage challenge is intentional.
 
-**Original repository challenge version:**
-1. Five numbers appear in blue static, one after another for 0.5 seconds each.
-2. The player can write the numbers down using an available notepad.
-3. The player chooses one of three buttons: respin, guess the top barrel, or guess the bottom barrel.
-4. The intended puzzle uses a clockwise/counterclockwise number rule, but the wording is unclear.
-5. The player has 60 seconds. A revolver indicator advances one tick every 10 seconds, five times, and then fires and kills the player.
-6. A respin costs 10 ink. Entering the challenge costs 2 shards.
-7. Winning twice splits the weapon into three parts.
+The authoritative PDF version of the challenge is:
+1. A six-slot barrel is shown with a glowing marker in the top slot.
+2. The barrel spins, and five numbers appear one after another in a light-blue glowing font.
+3. The player uses the sequence to work out the answer: move the first number clockwise from the top, then the next number counterclockwise from that position, and continue alternating in this fashion.
+4. The player can choose to respin or guess the top or bottom barrel. The older repository notes specify that respinning costs 10 ink; that cost is retained because the PDF does not contradict it.
+5. The revolver points at the player and spins for 10 seconds, then fires every three seconds with a one-in-six chance of killing the player.
+6. Entering the challenge costs 2 shards.
+7. The player must win twice to separate the weapon into three parts.
 
-**PDF challenge version:**
-- A six-slot barrel is shown with a glowing marker in the top slot.
-- The barrel spins and five numbers appear in a light-blue glowing font.
-- The solution is described as moving the first number clockwise from the top, then the next number counterclockwise from that position, and continuing in that fashion.
-- The revolver points at the player and spins for 10 seconds, then fires every three seconds with a one-in-six chance of killing the player.
-
-The two versions have conflicting timing and failure rules. The challenge must not be implemented from this description until the exact sequence is clarified.
+Use this PDF timing and six-slot layout instead of the older repository version, which described a 60-second deadline, five revolver ticks ten seconds apart, and a guaranteed fatal shot. The exact number of shots, stopping condition, and a worked example of the alternating-number puzzle are not fully specified.
 
 The PDF says Trap appears at G and lower. Current repository notes only say deeper cave layers, with merchants more likely farther down.
 
 {DECIDE: What is Trap's exact spawn threshold, and does he spawn in Water Caves?}  
-{DECIDE: Is the barrel five slots or six slots?}  
 {DECIDE: What are the exact five displayed numbers, and what does the clockwise/counterclockwise rule ask the player to calculate? Give a solved example.}  
-{DECIDE: Is there a 60-second total deadline, a 10-second spin followed by shots every three seconds, five ticks ten seconds apart, or a different timer?}  
-{DECIDE: What determines whether the player dies? Is death guaranteed when the indicator finishes, or is there a one-in-six chance each shot?}  
+{DECIDE: After the initial 10-second spin, how many shots can occur, what ends the challenge, and can the player continue guessing between shots?}  
+{DECIDE: How does the one-in-six death chance work in practice, and what happens if the player survives the shot sequence?}  
 {DECIDE: What does failure cost beyond the 2-shard entry fee: the weapon, shards, ink, time, or nothing else?}  
 {DECIDE: What does a successful first stage split or change? What happens if the player wins once but fails the second stage?}  
 {DECIDE: Is the 10-ink respin cost still correct, and can the player respin more than once?}  
@@ -887,8 +878,8 @@ Work through these first if the goal is to make the design implementable.
 - {DECIDE: Define each ink color's exact effect, including yellow and black.}
 - {DECIDE: Define weapon stats, ink consumption, cooldowns, upgrades, and part acquisition.}
 - {DECIDE: Confirm whether the starter pickaxe exists and where it comes from.}
-- {DECIDE: Resolve YAP's fourth inventory item, spawn threshold, tipping chance, and tonic rules.}
-- {DECIDE: Resolve Trap's barrel layout, number rule, timer, death chance, failure penalties, and two-stage result.}
+- {DECIDE: Define YAP's tip amount, item prices, and tonic effects/duration.}
+- {DECIDE: Define Trap's exact puzzle answer method, shot sequence end condition, failure penalties, and two-stage result.}
 
 ### Creatures
 - {DECIDE: Specify full Scribble Spider behavior and its attack/counterplay.}
@@ -923,6 +914,6 @@ This master document is the main readable specification. Supporting notes provid
 - [Trap](TRAP_AI.md): Trap merchant challenge.
 - [Inspirations](INSPIRATIONS_AI.md): reference games and originality guidance.
 - [Design Decisions and Open Questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md): shorter decision tracker.
-- [Original Merchant Notes](MERCHANTS.md): original, unpolished notes retained for historical reference.
+- [Merchant Reference](MERCHANTS.md): current summary of YAP and Trap, using the PDF and latest creator clarifications.
 
-When the master document and an older supporting note disagree, do not silently guess. Use the creator's latest explicit decision. If there is no explicit decision, keep the conflict marked with a curly-brace prompt and update the docs only after the choice is made.
+When the master document and an older supporting note disagree, follow the source-of-truth rules at the beginning of this document: the creator's latest explicit clarification comes first, followed by the uploaded PDF, then older repository notes. Keep curly-brace prompts only where the authoritative material does not specify the answer.
