@@ -212,15 +212,18 @@
             cameraY = 400;
             crowd = [];
             props = [];
+            levelTargetDistance = 360 + lvl * 55;
 
+            const doorSide = Math.random() < 0.5 ? 'left' : 'right';
             exitDoor = {
-                x: HALL_LEFT + HALL_WIDTH / 2,
+                x: doorSide === 'left' ? HALL_LEFT + 22 : HALL_RIGHT - 22,
                 y: 500 - levelTargetDistance - 30,
                 w: 22,
                 h: 38,
+                side: doorSide,
                 active: false
             };
-            props.push({ type: 'door', x: exitDoor.x - exitDoor.w / 2, y: exitDoor.y, w: exitDoor.w, h: exitDoor.h, isExit: true, active: false });
+            props.push({ type: 'door', x: exitDoor.x - exitDoor.w / 2, y: exitDoor.y, w: exitDoor.w, h: exitDoor.h, isExit: true, active: false, side: exitDoor.side });
 
             for (let y = 600; y > -400; y -= 45) {
                 spawnPropsAndCrowd(y);
@@ -353,20 +356,44 @@
         function loop() {
             if (!gameActive) return;
 
-            const activeSpeed = player.baseSpeed * (1 + (embarrassment / 30));
-            player.vx = 0;
-            player.vy = 0;
+            const moveX = (keys['arrowright'] || keys['d'] ? 1 : 0) - (keys['arrowleft'] || keys['a'] ? 1 : 0);
+            const moveY = (keys['arrowdown'] || keys['s'] ? 1 : 0) - (keys['arrowup'] || keys['w'] ? 1 : 0);
+            const maxSpeed = player.baseSpeed * (1 + embarrassment / 40);
+            const accel = 0.25;
 
-            if (keys['arrowup'] || keys['w']) player.vy = -activeSpeed;
-            if (keys['arrowdown'] || keys['s']) player.vy = activeSpeed * 0.5;
-            if (keys['arrowleft'] || keys['a']) player.vx = -activeSpeed * 0.8;
-            if (keys['arrowright'] || keys['d']) player.vx = activeSpeed * 0.8;
+            if (moveX !== 0 || moveY !== 0) {
+                const len = Math.hypot(moveX, moveY) || 1;
+                const dirX = moveX / len;
+                const dirY = moveY / len;
+                player.vx += dirX * accel;
+                player.vy += dirY * accel;
+            }
+
+            const drag = 0.78;
+            player.vx *= drag;
+            player.vy *= drag;
+
+            const speed = Math.hypot(player.vx, player.vy);
+            if (speed > maxSpeed) {
+                const scale = maxSpeed / speed;
+                player.vx *= scale;
+                player.vy *= scale;
+            }
 
             player.x += player.vx;
             player.y += player.vy;
 
-            if (player.x - player.r < HALL_LEFT) player.x = HALL_LEFT + player.r;
-            if (player.x + player.r > HALL_RIGHT) player.x = HALL_RIGHT - player.r;
+            if (player.x - player.r < HALL_LEFT) {
+                player.x = HALL_LEFT + player.r;
+                player.vx *= -0.2;
+            }
+            if (player.x + player.r > HALL_RIGHT) {
+                player.x = HALL_RIGHT - player.r;
+                player.vx *= -0.2;
+            }
+
+            if (Math.abs(player.vx) < 0.02) player.vx = 0;
+            if (Math.abs(player.vy) < 0.02) player.vy = 0;
 
             cameraY += (player.y - cameraY - 450) * 0.1;
 
