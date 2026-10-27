@@ -2,7 +2,11 @@
 
 This is the short decision tracker. For the complete design, use the [Master Game Design Document](GAME_DESIGN_DOCUMENT.md). That document places curly-brace prompts beside the systems they refer to, so the creator can work through questions without needing a conversation.
 
-The creator's latest explicit decisions take priority. When two documents conflict and no decision exists, leave both versions identified as unresolved rather than silently choosing one.
+## Source priority
+1. The creator's latest explicit clarification comes first.
+2. The uploaded Games.pdf is the authoritative source when it conflicts with older repository notes.
+3. Repository notes fill in details not covered by the PDF.
+4. If the authoritative material itself is ambiguous or silent, keep a curly-brace prompt rather than guessing.
 
 ## The game in a nutshell
 
@@ -16,9 +20,9 @@ Inkoff is the competitive mode. Teams can win by filling their base with gel or 
 - The old daily, seasonal, and white-island plan is scrapped. The game takes place on one large planet.
 - The Camp is the starting area. The first cave has a few ores but no enemies or merchants.
 - Deeper cave layers can have more creatures and merchants. Merchants become more likely the deeper players go.
+- The PDF's rules are current: randomized cave terrain resets globally once per week; caves use A99–Z00 labels; Strongholds change layers; Water Caves are completely flooded, beautiful, and do not spawn merchants.
 - A drawing puzzle opens a long fall that moves the player into a new cave layer and server instance.
-- Rare cave biomes may replace the normal cave network, but their special traits are not defined yet.
-- The uploaded PDF adds proposed Water Caves, letter/number levels (A99–Z00), Strongholds, a possible weekly cave reset, and named creatures. The reset rule and level notation remain unresolved.
+- The PDF names three creatures: Scribble Spider, Phantom Jelly, and Box Jelly. Their core concepts are included in the creature notes.
 
 See [World and Caves](WORLD_AND_CAVES_AI.md), [Creatures](CREATURES_AI.md), and the full [Master Game Design Document](GAME_DESIGN_DOCUMENT.md).
 
@@ -38,7 +42,7 @@ See [World and Caves](WORLD_AND_CAVES_AI.md), [Creatures](CREATURES_AI.md), and 
 - Players can carry effectively unlimited ink and shards. The stash is mainly for weapons and special artifacts.
 - Ink is used for combat and drawing. Weapons can also mine ores.
 - Red is linked to healing or survivability, blue to damage, and green to luck or rewards. Yellow is undecided.
-- The current YAP notes list a locked weapon with a tonic plus a blade, handle, and amulet; the PDF lists a fourth item as another blade.
+- YAP sells four items: a blade, handle, amulet, and completed weapon. The separate parts cannot have buffs; some completed weapons can have a tonic. YAP can be summoned by tipping with any ink color, with a 10% chance per tip, and appears at A1 and lower according to the PDF. The meaning of "lower" still depends on the layer notation.
 
 ### Inkoff
 - Players start with the same amount of ink and can mine ores to refill it.
@@ -59,14 +63,15 @@ See [World and Caves](WORLD_AND_CAVES_AI.md), [Creatures](CREATURES_AI.md), and 
 ### Homes and PAL
 Personal homes, props, badges, and PAL (Passionate Art Lineup) appeared in earlier notes. They remain optional/unconfirmed until the creator decides how they fit into the current planet-and-Camp design.
 
-## Important unresolved conflicts from the uploaded PDF
+## Details from the authoritative PDF that still need clarification
 
-- **Cave reset:** the PDF says global terrain resets weekly. The previous tracker said this idea was not confirmed.
-- **Layer notation:** the PDF says levels run A99–Z00 and separately mentions Water Caves at levels A–D. The relationship between these systems is unclear.
-- **Stronghold rule:** the written random destination formula is unclear and needs examples.
-- **YAP inventory:** the PDF's fourth item says a random blade; current notes say an amulet.
-- **Trap challenge:** the original merchant notes describe five numbers, a 60-second limit, a revolver tick every 10 seconds, and a fatal shot. The PDF describes a six-slot barrel, 10 seconds of spinning, then shots every 3 seconds with a one-in-six chance to kill.
-- **Creature roster:** the PDF names Scribble Spider, Phantom Jelly, and Box Jelly, but the current creature file has not fully specified them.
+These are not conflicts between documents. They are parts of the PDF's own rules that remain ambiguous or underspecified.
+
+- **Layer notation:** The PDF says levels run A99–Z00 and Water Caves can appear in levels A–D. The relationship between those systems and the exact order of labels need clarification.
+- **Stronghold rule:** The PDF's random destination wording is unclear, especially the direction of the letter change when 00 is selected. Add a precise formula and examples.
+- **YAP spawn depth:** The PDF says A1 and lower. Define the intended meaning of “lower” within the A99–Z00 numbering system.
+- **Trap number puzzle:** The PDF gives a six-slot barrel, five brief numbers, alternating clockwise/counterclockwise movements, an initial 10-second spin, then shots every three seconds with a one-in-six chance of death. A worked example, exact shot sequence, and end condition are still needed.
+- **Creature details:** The PDF describes Scribble Spider, Phantom Jelly, and Box Jelly, but exact stats, spawn rates, and interactions are not specified.
 
 ## Retired or non-current ideas
 - The original daily, seasonal, and white-island world plan.
@@ -75,7 +80,6 @@ Personal homes, props, badges, and PAL (Passionate Art Lineup) appeared in earli
 - Giving teammates ink by slashing them.
 - The old core-stone-only Inkoff win condition.
 - Custom-drawn weapon skins with transparent marker requirements.
-- Treating weekly cave-layout changes as confirmed.
 - Treating black ink's effect on match rewards as decided.
 
 ## Workflow for finishing the design
