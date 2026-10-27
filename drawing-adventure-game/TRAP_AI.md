@@ -1,32 +1,38 @@
 # Trap
 
-Trap is a merchant who offers a risky way to take apart a locked weapon. Normally, a locked weapon's parts can't be changed; Trap's challenge is the exception.
+Trap is a merchant who offers a risky way to separate a locked weapon into its three parts. His appearance is described as a bright smile with sharp teeth and a sticky note covering his left eye, marked with a target.
 
-## Appearance
-The original description says Trap has a bright smile with sharp teeth and a sticky note covering his left eye, marked with a target.
+## Location
+The uploaded PDF says Trap appears at G and lower. What “lower” means must follow the final cave-level numbering rule. The first cave has no merchants, and merchants become more likely as players descend.
 
-## Why the challenge happens twice
-Trap's machine clamps the weapon on both sides of the handle. The amulet is shown on one side and the other weapon part on the other. The machine works like a revolver. A correct guess makes it fire and split the weapon down the middle.
+{DECIDE: Does Trap's spawn rule include Water Caves or other special biomes?}
 
-The player must win twice to separate the weapon into its three parts. The two stages are intentional, though repeating the challenge may be frustrating.
+## Challenge purpose
+Normally, a locked weapon's parts cannot be changed. Trap's service is the exception. The player puts a locked weapon into his machine, clamps it down, signs a contract, and starts the challenge. The amulet is shown on one side of the handle and the other weapon part on the other side. The machine resembles a revolver.
 
-## Challenge sequence
-The original merchant notes describe it like this:
-1. Put a locked weapon in the machine, secure it, sign a contract, and begin.
-2. The machine clamps both sides of the handle.
-3. A barrel shows five numbers in blue static, one after another for 0.5 seconds each. The player can use a notepad to write them down.
-4. Choose one of three buttons: respin, guess the top barrel, or guess the bottom barrel.
-5. The puzzle uses a clockwise/counterclockwise number rule, but the original wording is unclear and needs to be clarified.
-6. The player has 60 seconds. A revolver indicator advances every 10 seconds, five times, then fires and kills the player.
-7. A correct guess splits the weapon. The player must win twice to separate all three parts.
+The player must win twice to separate the locked weapon into three parts. The two rounds are intentional.
 
-The original note says an attempt costs 2 shards and a respin costs 10 ink. Those costs need confirmation.
+## Current challenge rules
+The uploaded PDF is the authoritative version where it differs from older repository notes.
 
-## Where Trap appears
-Trap can show up in deeper cave layers. Merchants are more likely to appear as players descend. The first cave has no merchants.
+1. A six-slot barrel is shown with a glowing marker in the top slot.
+2. The barrel spins, and five numbers appear one after another in a light-blue glowing font. The player can use a notepad to record them.
+3. The intended puzzle rule is to move the first number clockwise from the top, then the next number counterclockwise from that position, continuing to alternate direction.
+4. The player chooses to respin, guess the top barrel, or guess the bottom barrel.
+5. The revolver points at the player and spins for 10 seconds, then fires every three seconds. Each shot has a one-in-six chance to kill the player.
+6. An attempt costs 2 shards. Older notes specify that respinning costs 10 ink; the PDF does not contradict that cost, so it remains the current working rule.
+7. Winning twice splits the weapon into three parts.
+
+The older repository draft described a five-slot barrel, a 60-second deadline, five revolver ticks ten seconds apart, and a guaranteed fatal shot. Those details are superseded by the PDF and should not be used as the current design.
 
 ## Still undecided
-- What exactly is the clockwise/counterclockwise number rule?
-- Does failure always kill the player, and what is lost?
-- Are the 10-ink respin and 2-shard entry costs still correct?
-- Does the weapon split immediately after each correct guess, and what happens if the second stage fails?
+- {DECIDE: Give a worked example showing the exact solution to the alternating clockwise/counterclockwise number puzzle.}
+- {DECIDE: After the initial 10-second spin, how many shots can occur, what ends the challenge, and can the player keep guessing between shots?}
+- {DECIDE: What exactly is the one-in-six chance applied to, and what happens if the player survives the shot sequence?}
+- {DECIDE: What does failure cost beyond the 2-shard entry fee? Can the locked weapon be lost or damaged?}
+- {DECIDE: What is split after the first successful round, and what happens if the player wins one round but fails the second?}
+- {DECIDE: Can the player respin more than once?}
+- {DECIDE: What does signing the contract mean in gameplay and story terms?}
+
+## Source priority
+For specific rules, use the creator's latest explicit clarification first, then the uploaded PDF, then older repository notes.
