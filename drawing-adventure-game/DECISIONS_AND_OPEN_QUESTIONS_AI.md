@@ -47,6 +47,7 @@ Players begin at the Camp, enter the Mines, descend through cave Sections A–Z,
 - What exact shapes are drawn in the tutorial, how quickly must they be drawn, and how many attempts are allowed?
 - Can a player opt out of random Queen selection, or is every team member eligible?
 - Is the older “separate drawing planet” reached with the glitch artifact and large antenna the same place as The Grid, or a different location?
+- Is the Rift the same object as the square glitch artifact, or a separate ability/item?
 - How does a player get from The Grid to a specific shared board or another world?
 - What day/time does the global cave reset happen, and what happens to players still inside caves?
 - Does the reset regenerate ores and all cave features, or only terrain?
