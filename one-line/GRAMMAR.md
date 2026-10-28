@@ -106,8 +106,8 @@ Exponentiation is right-associative. Precedence from highest to lowest is groupi
 
 Example:
 
-    func(("double")((num)(x))((int)))[
-      ret(cal(num(par(x))*num(2)));
+    func(("double")((num)(x))((num)))[
+      ret(cal(par(x)*num(2)));
     ]
 
     flag()[

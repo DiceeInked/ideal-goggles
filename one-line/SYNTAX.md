@@ -63,4 +63,4 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
       ]
     ]
 
-Semicolons separate simple statements; line breaks do not. Built-ins are lowercase and case-sensitive. Text is quoted inside txt(...). Function names are quoted; variable and parameter names are bare identifiers. Invalid or ambiguous code is an error, never an invitation for the parser to guess.
+Semicolons terminate simple statements; line breaks do not. Built-ins are lowercase and case-sensitive. Text is quoted inside txt(...). Function names are quoted; variable and parameter names are bare identifiers. Invalid or ambiguous code is an error, never an invitation for the parser to guess.
