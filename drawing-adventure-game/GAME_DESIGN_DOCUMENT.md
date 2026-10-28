@@ -252,7 +252,7 @@ Gesture notes say characters have separate head, arm, leg, and torso parts, with
 
 ### Glitch artifact
 
-A square, glitchy artifact may be found around the second or third cave level. It may instead appear as part of the tutorial, but that placement is undecided. The artifact is also used at the surface with a large antenna-like object to reach the separate drawing planet.
+A square, glitchy artifact may be found around the second or third cave level. It may instead appear as part of the tutorial, but that placement is undecided. Older notes describe using the artifact with a large antenna at the surface to reach a separate drawing planet. The latest answers name The Grid and describe it as the hub for multiplayer and shared boards; the relationship between The Grid and the main cave planet remains unresolved.
 
 {DECIDE: Is the artifact guaranteed, random, tutorial-only, or a reusable permanent item?}  
 {DECIDE: Does it occupy an inventory slot, and can it be lost, dropped, stolen, or destroyed?}  
