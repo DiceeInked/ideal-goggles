@@ -19,7 +19,7 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
     FloatLiteral   = Digit, { Digit }, ".", Digit, { Digit }, [ Exponent ] ;
     NumberLiteral  = IntegerLiteral | FloatLiteral ;
 
-Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons terminate simple statements. Text literals cannot contain an unescaped quote, backslash, or raw line break. Supported escape spellings are `\\`, `\"`, `\n`, `\r`, and `\t`; unknown escapes are errors. In this EBNF, the notation A...Z means any character in that inclusive range.
+Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons terminate simple statements. Text literals cannot contain an unescaped quote, backslash, or raw line break. Supported escape spellings are `\\`, `\"`, `\n`, `\r`, and `\t`; unknown escapes are errors. In this EBNF, the notation A...Z means any character in that inclusive range. `Character` in the string rule means any Unicode scalar value other than an unescaped double quote, backslash, carriage return, or line feed. The names used for escape alternatives correspond exactly to the five spellings listed above.
 
 ## Compilation unit
 
@@ -69,6 +69,7 @@ Every simple statement must end with a semicolon, including the final simple sta
                      | Comparison
                      | BooleanOperation
                      | TupleValue ;
+    Expression       = Value ;
     TupleValue       = "tup" "(" ValueList? ")" ;
     ValueList        = Value, { Value } ;
     Comparison       = "com" "(" Value CompareOperator Value ")" ;
