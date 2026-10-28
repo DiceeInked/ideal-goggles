@@ -80,7 +80,7 @@ Built-in types are int, flo, num, txt, boo, and nul.
 - par(x): read parameter x.
 - tup(...): tuple value available in Core only in version 0.2.
 
-The val(value) wrapper evaluates to the same value and type as value. A bare parenthesized value expression is a grouping/value wrapper and has the same meaning as val(value). In Raw, num is a tagged numeric union that holds either an int or a flo. Literal inference is not a general conversion function. int and flo do not silently convert arbitrary values.
+The val(value) wrapper evaluates to the same value and type as value. A bare parenthesized value expression is a grouping/value wrapper and has the same meaning as val(value). The val(value) wrapper evaluates to the same value and type as value. A bare parenthesized value expression is a grouping/value wrapper with the same meaning as val(value). In Raw, num is a tagged numeric union that holds either an int or a flo. Literal inference is not a general conversion function. int and flo do not silently convert arbitrary values.
 
 Core may support dynamic values, tuples, richer return values, custom types, and source-specific semantics when the compiler's semantic representation defines them. Function parameters and return types remain explicit in both profiles. Core flexibility does not excuse unknown operations or undefined behavior: a used operation must have defined semantics or explicit metadata.
 
