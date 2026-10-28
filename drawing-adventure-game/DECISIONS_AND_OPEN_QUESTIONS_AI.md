@@ -1,90 +1,66 @@
 # Design Decisions and Open Questions
 
-This is the short decision tracker. For the complete design, use the [Master Game Design Document](GAME_DESIGN_DOCUMENT.md). That document places curly-brace prompts beside the systems they refer to, so the creator can work through questions without needing a conversation.
+This is the short decision tracker. For the complete design, use the [Master Game Design Document](GAME_DESIGN_DOCUMENT.md). Anything still undecided is marked with a curly-brace prompt there.
 
 ## Source priority
 1. The creator's latest explicit clarification comes first.
-2. The uploaded Games.pdf is the authoritative source when it conflicts with older repository notes.
+2. The uploaded Games.pdf takes priority over older repository notes when the creator has not given a newer answer.
 3. Repository notes fill in details not covered by the PDF.
-4. If the authoritative material itself is ambiguous or silent, keep a curly-brace prompt rather than guessing.
+4. If two direct creator answers conflict, ask the creator rather than choosing one. If authoritative notes are ambiguous or silent, keep a curly-brace prompt rather than guessing.
 
-## The game in a nutshell
+## Current overview
 
-A 2D multiplayer drawing adventure set on a large planet. Players start at the Camp, explore caves, collect ink and shards, build weapons from three parts, draw their own characters and artwork, and meet other players along the way.
+Drawing Adventure Game (DAG) is a 2D multiplayer drawing adventure for players who enjoy art and exploration. The tentative target age is around 8–13+. Mobile and computer are planned platforms, and web is a possibility.
 
-Inkoff is the competitive mode. Teams can win by filling their base with gel or by taking all three of the opposing Queen's lives.
+Players begin at the Camp, enter the Mines, descend through cave Sections A–Z, collect ink and shards, build weapons from a blade, handle, and amulet, create custom drawings, meet other players, and encounter creatures and merchants. Inkoff is the competitive team experience, with gel delivery and Queen elimination as its two win conditions.
 
-## Current plan
+## Confirmed from the latest filled answers
 
-### World and caves
-- The old daily, seasonal, and white-island plan is scrapped. The game takes place on one large planet.
-- The Camp is the starting area. The first cave has a few ores but no enemies or merchants.
-- Deeper cave layers can have more creatures and merchants. Merchants become more likely the deeper players go.
-- The PDF's rules are current: randomized cave terrain resets globally once per week; caves use A99–Z00 labels; Strongholds change layers; Water Caves are completely flooded, beautiful, and do not spawn merchants.
-- A drawing puzzle opens a long fall that moves the player into a new cave layer and server instance.
-- The PDF names three creatures: Scribble Spider, Phantom Jelly, and Box Jelly. Their core concepts are included in the creature notes.
+### Camp and access
+- Players can draw on the Camp, and other players can see the drawings.
+- Camp servers host up to three randomly selected players.
+- Liv lets players create and edit weapons as long as they are not locked.
+- The Mines entrance is to the left of Camp.
+- The Pit entrance is to the right of Camp, and is unlocked after the player meets Que, a quest merchant in the caves.
+- Players cannot skip the tutorial, but can replay it. The drawing puzzle can be retried after failure.
+- Players can leave a cave at any time by jumping into the Rift, a one-way exit to the surface/Camp that also moves items to the player's stash.
 
-See [World and Caves](WORLD_AND_CAVES_AI.md), [Creatures](CREATURES_AI.md), and the full [Master Game Design Document](GAME_DESIGN_DOCUMENT.md).
+### Cave Sections and Strongholds
+- Sections progress from A (highest) through Z (lowest/deepest).
+- Each Section contains levels numbered 99 down through 01. Level 00 connects to the next deeper Section, such as A00 leading into B. A run starts at A99.
+- Exact spawn and rarity rules by cave level are still TBD.
+- A Stronghold resembles a shrine with a stone-like floor. Players hit it, then draw three symbols in under three seconds to receive one shard.
+- An opened Stronghold emits light and disables mob spawning, including shopkeepers, on that level.
+- Strongholds open a physical hole that players jump into individually. They do not take players shallower and do not move an entire party together.
+- Strongholds can appear inside Water Caves and other special biomes.
+- Cave layouts have no per-instance seeds and are the same for all players.
 
-### Drawing and the glitch artifact
-- Players can draw character appearances, clothes, and artwork.
-- The editor starts with black and shades of gray. White is the canvas, not a normal ink color.
-- Dragging ink onto a gray or filled region recolors matching areas. The exact fill rules still need to be worked out.
-- Artwork uses ink based on how much of each color is used. Ink should be common enough that drawing stays fun.
-- A small glitchy portal at the Camp opens a persistent personal drawing board.
-- A square glitch artifact can open a temporary portal to the player's stash. It may appear around cave level two or three, but its tutorial placement is undecided.
-- At the surface, the artifact can be used with a large antenna to reach a separate drawing planet. Its privacy settings are undecided.
+## Direct contradictions or questions that need the creator's answer
 
-### Weapons, ink, and shards
-- A weapon has three parts: a blade for the primary attack, a handle for the secondary ability, and an amulet that gives passive benefits and sets the Queen's projectile pattern in Inkoff.
-- Players spend shards to lock a weapon combination. Locked weapons can be upgraded and used in modes such as Inkoff. They cannot normally be edited afterward.
-- Trap is the exception: players can try to split a locked weapon apart by completing his challenge twice.
-- Players can carry effectively unlimited ink and shards. The stash is mainly for weapons and special artifacts.
-- Ink is used for combat and drawing. Weapons can also mine ores.
-- Red is linked to healing or survivability, blue to damage, and green to luck or rewards. Yellow is undecided.
-- YAP sells four items: a blade, handle, amulet, and completed weapon. The separate parts cannot have buffs; some completed weapons can have a tonic. YAP can be summoned by tipping with any ink color, with a 10% chance per tip, and appears at A1 and lower according to the PDF. The meaning of "lower" still depends on the layer notation.
+1. **Cave reset frequency:** one filled answer says the global layout resets weekly; another says bi-weekly. This cannot be resolved from the current notes.
+2. **The Grid's identity:** The Grid is described as a small, round neon-circle planet with antennas for joined boards and a merchant at the top. The rest of the design describes the Camp and cave network on a large planet. Are these two planets, or is The Grid the main cave planet?
+3. **Inkoff access:** The Pit to the right of Camp is described as the Inkoff entrance, unlocked after meeting Que. Other notes say all multiplayer features, including Inkoff and shared boards, are accessed through The Grid. Does The Pit lead to The Grid, is Inkoff entered through The Pit, or is one description outdated?
+4. **Stronghold destination:** The latest answer says a Stronghold opens a physical hole and cannot take players to shallower areas. The earlier PDF describes a random destination. The destination rule still needs a clear formula and examples.
 
-### Inkoff
-- Players start with the same amount of ink and can mine ores to refill it.
-- Running out of ink causes death. Workers respawn; the Queen loses one of three lives.
-- Each team has a randomly selected Queen. A Queen's death is clearly shown, followed by a short delay before respawning at base.
-- Workers collect gel, carry it above their heads, and deposit it into the holes in their team's hexagon-style base. Filling all holes wins. Dropped gel can be stolen.
-- The Queen can fly and use a gun-like version of their equipped sword. The amulet sets the projectile pattern. Queen projectiles do not hurt the opposing Queen, but melee works. Friendly fire is off.
-- Black ink is an optional harder challenge and needs a clear warning. Its exact penalty is undecided.
+## Other important open questions
 
-### Friends and Passions
-- Passions is the social-action/emote system. A paired action is started by one player and confirmed by the other by approaching and pressing the button.
-- The romantic-partner option is optional, requires both players to agree, and allows one partner per player.
-- Becoming partners unlocks a special greeting. The planned gesture order is special bow, hand-to-heart, hug, then kiss.
-- Either partner can end the partnership after confirmation; partner gestures remain visible but greyed out for the former partner.
-- At the friendship threshold where the partner option unlocks, nearby players slowly regain health whether or not they become partners. The exact range/rate and whether this works in Inkoff are undecided.
-- Heart Points is the working name for a friendship currency. Its final name, earning rules, costs, and gift replacement are undecided.
+- What exact shapes are drawn in the tutorial, how quickly must they be drawn, and how many attempts are allowed?
+- How does a player get from The Grid to a specific shared board or another world?
+- What day/time does the global cave reset happen, and what happens to players still inside caves?
+- Does the reset regenerate ores and all cave features, or only terrain?
+- What do the A–D Water Cave spawn labels mean relative to Sections A–Z and levels 99–00?
+- What are the prices, exact tip amount, and tonic effects/durations for YAP?
+- What are the exact creature, ore, merchant, and structure spawn rules at each cave level?
+- What is the final ink-cost formula, what does yellow ink do, and what drawback does black ink apply?
+- How do friendship levels, Heart Points, gifts, and gesture unlocks work?
+- Are personal homes and PAL still planned?
 
-### Homes and PAL
-Personal homes, props, badges, and PAL (Passionate Art Lineup) appeared in earlier notes. They remain optional/unconfirmed until the creator decides how they fit into the current planet-and-Camp design.
+## Reference links
 
-## Details from the authoritative PDF that still need clarification
-
-These are not conflicts between documents. They are parts of the PDF's own rules that remain ambiguous or underspecified.
-
-- **Layer notation:** The PDF says levels run A99–Z00 and Water Caves can appear in levels A–D. The relationship between those systems and the exact order of labels need clarification.
-- **Stronghold rule:** The PDF's random destination wording is unclear, especially the direction of the letter change when 00 is selected. Add a precise formula and examples.
-- **YAP spawn depth:** The PDF says A1 and lower. Define the intended meaning of “lower” within the A99–Z00 numbering system.
-- **Trap number puzzle:** The PDF gives a six-slot barrel, five brief numbers, alternating clockwise/counterclockwise movements, an initial 10-second spin, then shots every three seconds with a one-in-six chance of death. A worked example, exact shot sequence, and end condition are still needed.
-- **Creature details:** The PDF describes Scribble Spider, Phantom Jelly, and Box Jelly, but exact stats, spawn rates, and interactions are not specified.
-
-## Retired or non-current ideas
-- The original daily, seasonal, and white-island world plan.
-- White emergency ore in Inkoff.
-- Colored shards and item unlock tokens.
-- Giving teammates ink by slashing them.
-- The old core-stone-only Inkoff win condition.
-- Custom-drawn weapon skins with transparent marker requirements.
-- Treating black ink's effect on match rewards as decided.
-
-## Workflow for finishing the design
-1. Read the [Master Game Design Document](GAME_DESIGN_DOCUMENT.md).
-2. Answer the {DECIDE: ...} prompts in any order.
-3. Replace each prompt with the chosen rule, or mark it as intentionally omitted.
-4. Update the relevant focused note when a rule changes.
-5. Keep this tracker short; use the master document for the full questions and details.
+- [Master Game Design Document](GAME_DESIGN_DOCUMENT.md)
+- [World, Camp, and Caves](WORLD_AND_CAVES_AI.md)
+- [Creatures and Cave Encounters](CREATURES_AI.md)
+- [Drawing and Glitch Artifact](DRAWING_AND_GLITCH_AI.md)
+- [Weapons, Ink, and Shards](WEAPONS_AND_INK_AI.md)
+- [Inkoff](INKOFF_AI.md)
+- [Merchant and Character Reference](MERCHANTS.md)
