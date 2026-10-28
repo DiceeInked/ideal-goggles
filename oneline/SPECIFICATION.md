@@ -51,6 +51,7 @@ The intended naming convention is three letters for ordinary built-ins and four 
 | cal | Arithmetic expression |
 | com | Comparison |
 | and, or, not | Boolean operations |
+| tup | Tuple value, Core-only in version 0.2 |
 | func | Function definition block |
 | fun | Function call |
 | ret | Return from function |
