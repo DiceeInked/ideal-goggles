@@ -24,7 +24,7 @@ These games and tools helped spark ideas for this project. They're references fo
 
 **Inspiration:** Exploring dangerous underground areas, gathering resources, improving equipment, and moving between a social hub and riskier places.
 
-**How this game differs:** It uses a 2D cave world, ink and ore collection, weapon parts, and original merchants. Cave terrain is randomly generated and the layout resets globally for all players once per week, according to the uploaded design PDF.
+**How this game differs:** It uses a 2D cave world, ink and ore collection, weapon parts, and original merchants. Cave terrain is randomly generated, and the new layout is shared globally by all players. The PDF says weekly resets, but the latest filled answers say both weekly and bi-weekly, so the reset interval still needs the creator's decision.
 
 ## DOORS
 **Type:** Roblox horror/exploration  
