@@ -51,13 +51,13 @@ A new run starts at **A99**. Reaching Z00 from A99 should take at least 3–4 ho
 
 ## Strongholds
 
-A Stronghold looks like a shrine with a stone-like floor. To activate it, a player hits it and then draws three symbols. If all three symbols are drawn in under three seconds, the player receives one shard.
+A Stronghold looks like a shrine with a stone-like floor. The player hits it, then draws three symbols. Completing all three in under three seconds earns one shard. Whether the symbol puzzle is required to open the hole or only determines the shard reward is unresolved.
 
 Once opened, a Stronghold emits light, making it easier to find after the player leaves for the surface and returns. Opening a Stronghold disables mob spawning, including shopkeepers, on that level. Strongholds can spawn inside Water Caves and all other special biomes.
 
 A Stronghold opens a physical hole that players jump into. It does not take players to shallower areas and does not move an entire party together; players enter the hole individually.
 
-{DECIDE: Where exactly does the hole lead? The earlier PDF describes a random destination, while the latest answers confirm a physical hole and rule out shallower destinations. Does it always lead to the next deeper Section, or can it lead to a random deeper level? Give examples.}
+{DECIDE: Does the hole open when the player hits the Stronghold or only after the symbol puzzle? Does puzzle success control the shard reward only, or also whether the hole opens? Where exactly does the hole lead: always to the next deeper Section or to a random deeper level? Give examples.}
 
 ## Random generation and resets
 
