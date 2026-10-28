@@ -145,7 +145,7 @@ The PDF notes describe a **Stronghold** as a passive structure that spawns in ev
 That wording is internally unclear, so it is recorded as a source note rather than a usable final rule.
 
 {DECIDE: What does a Stronghold look like, and how does a player activate it?}  It looks like a shrine with a stone like floor. A player activates it by hit it and then drawing the three symbols, if the symbols are drawn in under 3 secs a single shard is given.
-{DECIDE: What exact random destination range does it use? Write the rule as a clear formula and give at least three examples.}  s = current section (ex A, B, C… ) l = current level (ex 01, 02, 03… ) S = new level L = new level
+{DECIDE: What exact random destination range does it use? Write the rule as a clear formula and give at least three examples.}
 {DECIDE: Can a Stronghold move players shallower as well as deeper?}  No, it just opens a hole players jump into.
 {DECIDE: Does it move a whole party together, and does it preserve the current cave seed?}  No, it just opens a hole players jump into. Also cave seeds dont exist the cave resets for ALL players weekly the new layout is the same for everyone.
 {DECIDE: Can Strongholds spawn inside Water Caves or other special biomes?}  Yes, always.
