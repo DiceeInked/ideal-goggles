@@ -205,6 +205,157 @@
       .board-caption { font-size:9px; }
       .inkoff-top { flex-wrap:wrap; }
     }
+    /* This is a game screen, not a landing page: keep the world full-screen
+       and treat every control as an overlay inside the game. */
+    html, body { width:100%; height:100%; overflow:hidden; }
+    body { min-height:0; }
+    .shell { position:relative; width:100%; height:100%; min-height:0; margin:0; padding:0; }
+    .topbar { display:contents; }
+    .brand, .save-chip, .intro, .section-head, .side-stack .side-card:nth-child(2),
+    #globalFooter, .footer-note { display:none !important; }
+    .nav {
+      position:fixed; z-index:30; top:12px; left:50%; bottom:auto; transform:translateX(-50%);
+      display:flex; width:max-content; max-width:calc(100vw - 88px); padding:4px;
+      border:1px solid #d8f0df38; border-radius:14px; background:#111915c9;
+      box-shadow:0 8px 30px #0005; backdrop-filter:blur(12px);
+    }
+    .nav button { display:flex; align-items:center; gap:7px; padding:8px 12px; font-size:11px; }
+    .nav button span { font-size:14px; }
+    .fullscreen-btn {
+      position:fixed; z-index:31; top:12px; right:12px; display:grid; place-items:center;
+      width:38px; height:38px; border:1px solid #d8f0df38; border-radius:12px;
+      background:#111915c9; color:#eaf2e9; font-size:21px; cursor:pointer;
+      box-shadow:0 8px 30px #0004; backdrop-filter:blur(12px);
+    }
+    .fullscreen-btn:hover { background:#28362d; }
+    .view.active { position:fixed; inset:0; z-index:1; display:block; width:100vw; height:100vh; height:100dvh; overflow:hidden; }
+    #exploreView .game-layout { position:absolute; inset:0; display:block; }
+    #exploreView .game-card {
+      position:absolute; inset:0; overflow:visible; border:0; border-radius:0;
+      background:transparent; box-shadow:none;
+    }
+    #exploreView .canvas-wrap {
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:min(100vw, calc(100dvh * 1.8461538)); aspect-ratio:960 / 520;
+      height:auto; overflow:hidden; background:#17211c;
+    }
+    #gameCanvas, #inkoffCanvas { width:100%; height:100%; aspect-ratio:auto; }
+    #exploreView .game-topline {
+      position:absolute; z-index:4; top:12px; left:16px; right:205px; padding:0;
+      border:0; background:transparent; pointer-events:none;
+    }
+    #exploreView .location { padding:8px 11px; width:max-content; max-width:100%; border:1px solid #d8f0df30; border-radius:13px; background:#111915b8; backdrop-filter:blur(8px); }
+    #exploreView .location-icon { width:28px; height:28px; }
+    #exploreView .location strong { font-size:11px; }
+    #exploreView .location small { font-size:9px; }
+    #exploreView .objective { position:absolute; top:7px; right:0; max-width:190px; padding:8px 10px; border:1px solid #d8f0df30; border-radius:12px; background:#111915b8; font-size:9px; backdrop-filter:blur(8px); }
+    #exploreView .side-stack { position:absolute; z-index:4; top:69px; right:max(12px, calc((100vw - min(100vw, 100dvh * 1.8461538)) / 2 + 12px)); display:block; width:178px; pointer-events:none; }
+    #exploreView .side-card { padding:10px 12px; border:1px solid #d8f0df30; border-radius:14px; background:#111915b8; box-shadow:none; backdrop-filter:blur(8px); }
+    #exploreView .side-head { margin-bottom:6px; }
+    #exploreView .side-head h2 { font-size:10px; }
+    #exploreView .tag { font-size:8px; }
+    #exploreView .resource { grid-template-columns:25px 1fr auto; gap:7px; padding:6px 0; }
+    #exploreView .resource-icon { width:23px; height:23px; border-radius:8px; font-size:12px; }
+    #exploreView .resource-name { font-size:10px; }
+    #exploreView .resource-note { display:none; }
+    #exploreView .resource strong { font-size:11px; }
+    #exploreView .meter { height:4px; margin-top:4px; }
+    #exploreView .game-foot {
+      position:absolute; z-index:4; left:50%; bottom:10px; transform:translateX(-50%);
+      width:max-content; max-width:calc(100% - 24px); padding:6px 10px;
+      border:1px solid #d8f0df26; border-radius:10px; background:#111915b8;
+      color:#d5dfd6; font-size:9px; backdrop-filter:blur(8px);
+    }
+    #exploreView .game-foot > span { display:none; }
+    #exploreView .key-hints { gap:6px 10px; }
+    #exploreView kbd { font-size:8px; padding:1px 4px; }
+    .touch-controls { position:absolute; z-index:6; left:10px; right:10px; bottom:9px; padding:0; border:0; background:transparent; }
+    .touch-controls button { min-width:42px; min-height:38px; background:#17221dcc; backdrop-filter:blur(6px); }
+    .touch-controls button.action { background:var(--mint); }
+    #drawView .editor-layout { display:block; }
+    #drawView .editor-card {
+      position:fixed; inset:0; display:block; overflow:visible; padding:0;
+      border:0; border-radius:0; background:transparent; box-shadow:none;
+    }
+    #drawView .editor-aside, #drawView .brush-row { display:none; }
+    #drawView .toolbar {
+      position:fixed; z-index:22; top:12px; left:50%; transform:translateX(-50%);
+      display:flex; justify-content:center; width:max-content; max-width:calc(100vw - 100px);
+      padding:7px 9px; border:1px solid #d8f0df38; border-radius:14px;
+      background:#111915d9; box-shadow:0 8px 30px #0005; backdrop-filter:blur(12px);
+    }
+    #drawView .palette { gap:7px; }
+    #drawView .swatch { width:25px; height:25px; }
+    #drawView .tool-actions { gap:5px; }
+    #drawView .quiet-btn, #drawView .primary-btn { padding:6px 9px; font-size:9px; }
+    #drawView .board-frame {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:min(92vw, calc((100dvh - 125px) * 1.666667)); aspect-ratio:900 / 540;
+      height:auto; border:2px solid #c7d1c8; border-radius:8px;
+      box-shadow:0 20px 80px #0007;
+    }
+    #drawView #boardCanvas { width:100%; height:100%; aspect-ratio:auto; }
+    #drawView .board-caption { display:none; }
+    #inkoffView .inkoff-card {
+      position:fixed; inset:0; overflow:visible; border:0; border-radius:0;
+      background:transparent; box-shadow:none;
+    }
+    #inkoffView .inkoff-top {
+      position:fixed; z-index:20; top:12px; left:12px; transform:none;
+      display:flex; width:max-content; max-width:calc(100vw - 24px); padding:7px 10px;
+      border:1px solid #d8f0df38; border-radius:13px; background:#111915d9;
+      box-shadow:0 8px 30px #0005; backdrop-filter:blur(12px);
+    }
+    #inkoffView .team-scores { font-size:10px; }
+    #inkoffView .team-pill { padding:5px 8px; }
+    #inkoffView .match-label { display:none; }
+    #inkoffView .quiet-btn { padding:6px 8px; font-size:9px; }
+    #inkoffView .canvas-wrap {
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:min(100vw, calc(100dvh * 1.8461538)); aspect-ratio:960 / 520;
+      height:auto; overflow:hidden; background:#17211d;
+    }
+    #inkoffView .inkoff-controls {
+      position:fixed; z-index:20; left:50%; bottom:12px; transform:translateX(-50%);
+      width:max-content; max-width:calc(100vw - 24px); padding:7px 10px;
+      border:1px solid #d8f0df30; border-radius:11px; background:#111915d9;
+      backdrop-filter:blur(10px);
+    }
+    #inkoffView .inkoff-controls p { font-size:9px; }
+    #inkoffView .mode-note { font-size:9px; }
+    .mode-draw .nav { top:auto; bottom:12px; }
+    @media (max-width:620px) {
+      .nav { top:11px; max-width:calc(100vw - 64px); }
+      .nav button { gap:4px; padding:7px 8px; font-size:10px; }
+      .fullscreen-btn { top:11px; right:9px; width:34px; height:34px; left:auto; }
+      #exploreView .side-stack { top:60px; right:7px; width:128px; }
+      #exploreView .side-card { padding:7px 8px; }
+      #exploreView .side-head h2 { font-size:9px; }
+      #exploreView .resource { grid-template-columns:20px 1fr auto; gap:5px; padding:4px 0; }
+      #exploreView .resource-icon { width:19px; height:19px; font-size:10px; }
+      #exploreView .resource-name { font-size:8px; }
+      #exploreView .resource strong { font-size:9px; }
+      #exploreView .game-topline { top:58px; left:7px; right:145px; }
+      #exploreView .location { gap:6px; padding:5px 7px; }
+      #exploreView .location-icon { width:22px; height:22px; }
+      #exploreView .location strong { font-size:9px; }
+      #exploreView .location small { font-size:7px; }
+      #exploreView .objective { display:none; }
+      #exploreView .game-foot { bottom:54px; font-size:7px; }
+      .touch-controls { display:flex; }
+      #drawView .toolbar { top:58px; width:calc(100vw - 14px); max-width:none; padding:5px; gap:5px; }
+      #drawView .swatch { width:22px; height:22px; }
+      #drawView .tool-actions { gap:3px; }
+      #drawView .quiet-btn, #drawView .primary-btn { padding:5px 6px; font-size:8px; }
+      #drawView .board-frame { width:min(96vw, calc((100dvh - 190px) * 1.666667)); }
+      #inkoffView .inkoff-top { top:54px; left:50%; right:auto; transform:translateX(-50%); }
+      #inkoffView .team-scores { font-size:8px; gap:4px; }
+      #inkoffView .team-pill { padding:4px 5px; }
+      #inkoffView .canvas-wrap { width:min(100vw, calc(100dvh * 1.8461538)); }
+      #inkoffView .inkoff-controls { bottom:58px; flex-wrap:wrap; justify-content:center; gap:4px; }
+      #inkoffView .inkoff-controls p { font-size:7px; }
+      #inkoffView .mode-note { font-size:8px; }
+    }
   </style>
 </head>
 <body>
@@ -215,10 +366,11 @@
         <div><div class="brand-name">WORLD OF INK</div><span class="brand-kicker">A drawing adventure</span></div>
       </div>
       <nav class="nav" aria-label="Game modes">
-        <button class="active" data-mode="explore">Explore</button>
-        <button data-mode="draw">Draw</button>
-        <button data-mode="inkoff">Inkoff</button>
+        <button class="active" data-mode="explore"><span aria-hidden="true">⌂</span> Explore</button>
+        <button data-mode="draw"><span aria-hidden="true">✎</span> Sketch</button>
+        <button data-mode="inkoff"><span aria-hidden="true">⚔</span> Inkoff</button>
       </nav>
+      <button class="fullscreen-btn" id="fullscreenBtn" type="button" aria-label="Toggle fullscreen" title="Toggle fullscreen">⛶</button>
       <div class="save-chip"><span class="save-dot"></span><span>Saved on this device</span></div>
     </header>
 
@@ -360,7 +512,6 @@
         <p class="footer-note">The world is a prototype. Team matchmaking, persistent multiplayer, and final weapon balance are not included in this single-file build.</p>
       </section>
     </main>
-    <p class="footer-note" id="globalFooter">A small playable slice of a world still taking shape.</p>
   </div>
 
   <div class="overlay" id="puzzleOverlay" role="dialog" aria-modal="true" aria-labelledby="puzzleTitle">
@@ -461,6 +612,8 @@
       }
       function setMode(next) {
         mode=next;
+        document.body.classList.toggle("mode-draw",next==="draw");
+        document.body.classList.toggle("mode-inkoff",next==="inkoff");
         $$(".nav button").forEach(button=>button.classList.toggle("active",button.dataset.mode===next));
         $("#exploreView").classList.toggle("active",next==="explore");
         $("#drawView").classList.toggle("active",next==="draw");
@@ -469,6 +622,12 @@
         if(next==="inkoff") updateMatchLabels();
       }
       $$(".nav button").forEach(button=>button.addEventListener("click",()=>setMode(button.dataset.mode)));
+      $("#fullscreenBtn").addEventListener("click",async()=>{
+        try {
+          if(document.fullscreenElement) await document.exitFullscreen();
+          else await document.documentElement.requestFullscreen();
+        } catch { showToast("Fullscreen is not available in this browser."); }
+      });
 
       function nearestOre() {
         return ores.find(ore=>!state.mined.includes(ore.id)&&Math.hypot(ore.x-(player.x+player.w/2),ore.y-(player.y+player.h/2))<64);
@@ -670,16 +829,26 @@
       function drawPlayer() {
         const x=player.x-cameraX+player.w/2,y=player.y+player.h/2;
         const bob=player.onGround?Math.sin(player.walk)*1.7:0;
+        const shape=(points,color)=>{
+          g.fillStyle=color;g.beginPath();g.moveTo(points[0][0],points[0][1]);
+          for(let i=1;i<points.length;i++)g.lineTo(points[i][0],points[i][1]);
+          g.closePath();g.fill();
+        };
         g.save();g.translate(x,y+bob);if(player.face<0)g.scale(-1,1);
-        if(player.swing>0){g.strokeStyle="#e8f5dc";g.lineWidth=5;g.lineCap="round";g.beginPath();g.arc(13,-3,27,-.9,.6);g.stroke();}
-        g.fillStyle="#e88672";g.beginPath();g.moveTo(-10,9);g.lineTo(-17,27);g.lineTo(-2,23);g.closePath();g.fill();
-        g.fillStyle="#d8e1ce";g.beginPath();g.roundRect(-9,-5,18,23,7);g.fill();
-        g.fillStyle="#f0cba2";g.beginPath();g.arc(0,-14,10,0,Math.PI*2);g.fill();
-        g.fillStyle="#2e3730";g.beginPath();g.arc(0,-17,10,Math.PI,Math.PI*2);g.fill();
-        g.fillStyle="#2b332d";g.fillRect(2,-16,2,2);
-        g.strokeStyle="#d8e1ce";g.lineWidth=4;g.lineCap="round";
-        const stride=player.onGround?Math.sin(player.walk)*4:0;
-        g.beginPath();g.moveTo(-5,15);g.lineTo(-7+stride,25);g.moveTo(5,15);g.lineTo(7-stride,25);g.stroke();
+        const stride=player.onGround?Math.sin(player.walk)*3:0;
+        shape([[-7,8],[-1,10],[-5+stride,24],[-11,24]],"#34453b");
+        shape([[1,10],[7,8],[11,22],[5-stride,24]],"#34453b");
+        shape([[-11,22],[-4,22],[-3,26],[-12,26]],"#bd9d70");
+        shape([[5,22],[11,20],[14,24],[5,26]],"#bd9d70");
+        shape([[-9,-5],[-4,-10],[5,-10],[10,-4],[7,10],[0,14],[-8,10]],"#d8e1ce");
+        shape([[-10,-5],[-3,-2],[-7,5],[-14,1]],"#e88672");
+        shape([[-8,-16],[-8,-22],[-3,-28],[5,-27],[10,-21],[8,-14],[2,-10],[-4,-10]],"#f0cba2");
+        shape([[-8,-20],[-6,-27],[1,-30],[8,-26],[11,-20],[4,-23],[-1,-19]],"#2e3730");
+        shape([[3,-19],[6,-18],[4,-16]],"#2b332d");
+        if(player.swing>0){
+          shape([[9,-8],[23,-19],[31,-22],[27,-14],[13,-1]],"#e8f5dc");
+          shape([[12,-6],[17,-10],[18,-7],[13,-3]],"#d4ad70");
+        }
         g.restore();
       }
       function drawWorld() {
@@ -766,14 +935,27 @@
         updateMatchLabels();
       }
       function drawFighter(ctx,x,y,color,face,queen=false,carrying=false,slash=false) {
+        const shape=(points,fill)=>{
+          ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
+          for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);
+          ctx.closePath();ctx.fill();
+        };
         ctx.save();ctx.translate(x,y);if(face<0)ctx.scale(-1,1);
-        if(queen){ctx.fillStyle="#d4ad70";ctx.beginPath();ctx.moveTo(-12,-31);ctx.lineTo(-8,-43);ctx.lineTo(-1,-33);ctx.lineTo(6,-45);ctx.lineTo(12,-30);ctx.fill();}
-        ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(-10,-21,20,25,7);ctx.fill();
-        ctx.fillStyle="#e8c9a7";ctx.beginPath();ctx.arc(0,-28,9,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle="#26322a";ctx.beginPath();ctx.arc(2,-29,2,0,Math.PI*2);ctx.fill();
-        ctx.strokeStyle="#e8c9a7";ctx.lineWidth=4;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-5,1);ctx.lineTo(-7,10);ctx.moveTo(5,1);ctx.lineTo(7,10);ctx.stroke();
-        if(carrying){ctx.fillStyle="#92e2d0";ctx.beginPath();ctx.arc(0,-52,8,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(-2,-54,2,0,Math.PI*2);ctx.fill();}
-        if(slash){ctx.strokeStyle="#f8e3aa";ctx.lineWidth=4;ctx.beginPath();ctx.arc(17,-17,22,-.9,.6);ctx.stroke();}
+        if(queen){
+          shape([[-7,-23],[-24,-38],[-20,-21],[-12,-13]],"#7aa4a0");
+          shape([[7,-23],[24,-38],[20,-21],[12,-13]],"#7aa4a0");
+          shape([[-12,-31],[-8,-43],[-1,-33],[6,-45],[12,-30]],"#d4ad70");
+        }
+        shape([[-8,-4],[-2,-7],[1,1],[-5,10],[-12,9]],"#36433a");
+        shape([[2,1],[9,-4],[12,8],[5,11]],"#36433a");
+        shape([[-10,-22],[-5,-28],[5,-28],[10,-22],[7,-3],[0,2],[-7,-3]],color);
+        shape([[-12,-20],[-8,-23],[-7,-10],[-12,-6]],color);
+        shape([[8,-22],[12,-19],[12,-7],[8,-10]],color);
+        shape([[-8,-29],[-7,-36],[-2,-40],[5,-38],[10,-32],[8,-25],[2,-22],[-5,-24]],"#e8c9a7");
+        shape([[-8,-33],[-5,-39],[3,-41],[10,-35],[10,-31],[3,-34],[-2,-32]],"#344039");
+        shape([[3,-31],[6,-30],[4,-28]],"#26322a");
+        if(carrying)shape([[-8,-53],[0,-61],[8,-53],[0,-45]],"#92e2d0");
+        if(slash)shape([[11,-14],[28,-28],[34,-30],[30,-22],[14,-8]],"#f8e3aa");
         ctx.restore();
       }
       function drawInkoff() {
