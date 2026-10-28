@@ -1,16 +1,16 @@
 # OneLine Formal Grammar
 
-The canonical syntax and semantics are defined in SPECIFICATION.md. This file summarizes the parser structure.
+The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATION.md). This file summarizes the parser structure.
 
 ## Lexical tokens
 
     Identifier      = Letter, { Letter | Digit | "_" } ;
     StringLiteral   = '"', { Character | Escape }, '"' ;
-    Escape          = "\\" | "\\"" | "\\n" | "\\r" | "\\t" ;
+    Escape          = backslash | escaped-quote | newline | carriage-return | tab ;
     Boolean         = "TRUE" | "FALSE" ;
     Type            = "int" | "flo" | "num" | "txt" | "boo" | "nul" ;
 
-Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. // comments end at a line break. Semicolons separate simple statements.
+Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons separate simple statements.
 
 ## Program structure
 
@@ -22,11 +22,9 @@ Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase
                   | Expression ";"
                   | Conditional
                   | Block ;
-    Block         = "flag" "(" ")" "[" Statement* "]"
+    Block         = "flag" "()" "[" Statement* "]"
                   | "reap" "(" Rate? ")" "[" Statement* "]"
                   | FunctionDefinition ;
-    Rate          = Expression ;
-
     Declaration   = "glo" "(" "(" Type ")" "(" Identifier ")" Value ")"
                   | "loc" "(" "(" Type ")" "(" Identifier ")" Value ")" ;
     Assignment    = "set" "(" "(" Identifier ")" Value ")" ;
@@ -40,13 +38,14 @@ A semicolon before a closing bracket is optional. A semicolon is mandatory betwe
 ## Values and operations
 
     Literal       = "boo" "(" Boolean ")"
-                  | "nul" "(" ")"
+                  | "nul" "()"
                   | "txt" "(" StringLiteral ")"
                   | "int" "(" IntegerLiteral ")"
                   | "flo" "(" FloatLiteral ")"
                   | "num" "(" NumberLiteral ")" ;
-    Value         = Literal | VariableRead | ParameterRead | FunctionCall
-                  | Arithmetic | Comparison | BooleanOperation | TupleValue ;
+    Value         = Literal | "val" "(" Value ")" | VariableRead | ParameterRead
+                  | FunctionCall | Arithmetic | Comparison | BooleanOperation
+                  | TupleValue | "(" Value ")" ;
     TupleValue    = "tup" "(" ValueList? ")" ;
     ValueList     = Value, { Value } ;
     Comparison    = "com" "(" Value CompareOperator Value ")" ;
@@ -56,16 +55,19 @@ A semicolon before a closing bracket is optional. A semicolon is mandatory betwe
                      | "not" "(" Value ")" ;
     Arithmetic    = "cal" "(" NumericExpression ")" ;
 
-    NumericExpression = NumericExpression "+" NumericExpression
-                      | NumericExpression "-" NumericExpression
-                      | NumericExpression "*" NumericExpression
-                      | NumericExpression ":" NumericExpression
-                      | NumericExpression "^" NumericExpression
-                      | NumericAtom ;
-    NumericAtom   = NumericLiteral | VariableRead | ParameterRead | FunctionCall
+val(value) and a bare parenthesized value are transparent wrappers: they preserve the wrapped value and type. Tuples are Core-only in version 0.2.
+
+## Arithmetic precedence
+
+    NumericExpression = Sum ;
+    Sum           = Product, { ("+" | "-"), Product } ;
+    Product       = Unary, { ("*" | ":"), Unary } ;
+    Unary         = ("+" | "-"), Unary | Power ;
+    Power         = Atom, [ "^", Unary ] ;
+    Atom          = NumericLiteral | VariableRead | ParameterRead | FunctionCall
                   | "(" NumericExpression ")" ;
 
-Raw permits only the value forms and types listed in SPECIFICATION.md. Tuples are Core-only in version 0.2.
+Exponentiation is right-associative. Precedence from highest to lowest is grouping, exponentiation, unary sign, multiplication/division, addition/subtraction.
 
 ## Functions
 
@@ -88,13 +90,13 @@ Function names are quoted. Variable and parameter names are bare identifiers. Fu
 ## Conditions and mixed mode
 
     Conditional   = "cond" "(" Value ")" "[" Statement* "]"
-                    ("else" "[" Statement* "]")? ;
-    MixedProgram  = "mixd" "(" ")" "[" Region+ "]" ;
-    Region        = "core" "(" ")" "[" Statement* "]"
-                  | "rawb" "(" ")" "[" Statement* "]" ;
+                    [ "else" "[" Statement* "]" ] ;
+    MixedProgram  = "mixd" "()" "[" Region+ "]" ;
+    Region        = "core" "()" "[" Statement* "]"
+                  | "rawb" "()" "[" Statement* "]" ;
 
-A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only.
+A condition must be boolean in Raw. A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only.
 
 ## Parser obligations
 
-Implement explicit operator precedence and associativity, not naive string splitting. Raw uses exponentiation right-associative, then unary sign, multiplication/division, and addition/subtraction. Reject missing separators, unknown tokens, mismatched delimiters, and trailing tokens.
+Implement explicit operator precedence and associativity, not naive string splitting. Reject missing separators, unknown tokens, mismatched delimiters, invalid type forms, and trailing tokens. Preserve source spans for diagnostics. The parser must not invent declarations or conversions.
