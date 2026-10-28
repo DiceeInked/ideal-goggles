@@ -275,7 +275,7 @@ The stash mainly holds weapons and special artifacts. Ink and shards can be carr
 {DECIDE: Does opening another portal close the first one immediately, even across different players or locations?}  
 {DECIDE: Does the 30-second timer pause while an item is thrown?}  
 {DECIDE: What happens if an item cannot be stored, the stash is full, or the throw misses the portal?}  
-{DECIDE: Is the stash one persistent inventory for each player across all servers and modes?}  
+{DECIDE: Is the stash one persistent inventory for each player across all servers and game areas?}  
 {DECIDE: Can the stash be opened or accessed by another player?}
 
 ### Antenna planet and shared boards
@@ -295,7 +295,7 @@ Ink is a primary resource. It is used for:
 - Drawing and recoloring artwork.
 - Weapon attacks and secondary abilities.
 - Mining and interactions tied to weapons or ores.
-- Other color-linked effects, depending on the player's selected ink and mode.
+- Other color-linked effects, depending on the player's selected ink and the area or experience.
 
 Ink should be sufficiently common that drawing remains fun instead of feeling too expensive. Players can carry effectively unlimited ink in the current concept.
 
@@ -309,7 +309,7 @@ Ink should be sufficiently common that drawing remains fun instead of feeling to
 Shards are the current currency. Colored shards and separate item unlock tokens are no longer part of the plan. Shards are used to lock weapon combinations and may also be used for shop purchases and upgrades. A possible cost of one shard for adding a friend appeared in earlier notes, but it is not confirmed.
 
 {DECIDE: How are shards earned, what are the expected rates, and which systems spend them?}  
-{DECIDE: Are shards shared across exploration and Inkoff or kept in separate mode economies?}  
+{DECIDE: Are shards shared between exploration and Inkoff, or does each area/experience have a separate economy?}  
 {DECIDE: Can players lose shards on death?}  
 {DECIDE: Are purchases permanent, refundable, tradeable, or account-bound?}
 
@@ -360,7 +360,7 @@ The amulet is a real weapon part, not only a Queen accessory. In the normal weap
 
 ### Locking a weapon
 
-Players choose a blade, handle, and amulet, then spend shards to lock that combination. A locked weapon can be upgraded and used in modes such as Inkoff, but its parts cannot normally be edited afterward. Trap can attempt to split a locked weapon apart by completing his challenge twice.
+Players choose a blade, handle, and amulet, then spend shards to lock that combination. A locked weapon can be upgraded and used in areas/experiences such as Inkoff, but its parts cannot normally be edited afterward. Trap can attempt to split a locked weapon apart by completing his challenge twice.
 
 {DECIDE: What is the exact shard cost to lock a weapon?}  
 {DECIDE: What is the weapon inventory limit, and can players own duplicate combinations?}  
@@ -680,7 +680,7 @@ Nearby players can see the effects. Colors should blend the two players' inks. E
 When two players reach the friendship level where the romantic-partner option unlocks, both slowly regain health while nearby, whether or not they become partners. A heart appears on each player's chest and beats while the players are close. Romantic-partner status itself is not meant to affect Inkoff, but it is undecided whether this close-friend healing effect works in Inkoff.
 
 {DECIDE: What is the healing rate, distance, cooldown, and maximum benefit?}  
-{DECIDE: Is the effect active in caves, all modes, and Inkoff?}  
+{DECIDE: Is the effect active in caves, other areas, and Inkoff?}  
 {DECIDE: Can players receive the effect from several friends at once?}
 
 ### Gifts
@@ -760,7 +760,7 @@ Player-made art, public drawings, social interactions, paired gestures, and dire
 
 The current notes do not describe a complete progression or account system. Weapon locking and upgrades, cave depth, friendship trees, and resource collection imply several forms of progression, but how they connect is not settled.
 
-{DECIDE: Is progression mostly account-wide, character-specific, per-run, or mode-specific?}  
+{DECIDE: Is progression mostly account-wide, character-specific, per-run, or specific to each area/experience?}  
 {DECIDE: What persists after dying, leaving a cave, switching servers, or ending an Inkoff match?}  
 {DECIDE: Which items, resources, drawings, relationships, and upgrades are saved to the player's account?}  
 {DECIDE: How does the game save, restore, or version a player's drawings?}  
