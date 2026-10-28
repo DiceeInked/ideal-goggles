@@ -77,7 +77,7 @@ The cave descent is designed to feel continuous even though the game may disconn
 - **Planet and caves:** The main exploration experience.
 - **Inkoff:** Competitive team combat with gel delivery and Queen lives.
 - **Personal drawing board:** Persistent space at the Camp for drawing.
-- **Separate drawing planet:** An additional drawing destination accessed with the glitch artifact and an antenna.
+- **Antenna hub/shared boards:** The latest answers call this planet The Grid and say it provides access to Inkoff and shared boards. Whether The Grid is separate from the main cave planet remains unresolved.
 - **Personal homes and PAL:** Earlier ideas that need confirmation before being treated as current features.
 
 **Connected areas:** These are areas within one connected experience, not completely separate modes. Multiplayer features such as Inkoff and shared boards are accessed from the antenna planet. The personal drawing board at the Camp is a tiny physical board. The Grid's identity and the Inkoff access route remain open questions in Section 3.
