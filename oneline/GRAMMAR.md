@@ -9,19 +9,23 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
     Escape        = backslash | escaped-quote | newline | carriage-return | tab ;
     Boolean       = "TRUE" | "FALSE" ;
     Type          = "int" | "flo" | "num" | "txt" | "boo" | "nul" ;
+    IntegerLiteral = Digit, { Digit } ;
+    FloatLiteral   = Digit, { Digit }, ".", Digit, { Digit }, [ Exponent ] ;
+    NumberLiteral  = IntegerLiteral | FloatLiteral ;
+    Expression     = Value ;
 
 Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons separate simple statements.
 
 ## Compilation unit
 
-    Program          = TopLevelItem* ;
+    Program          = TopLevelItem* | MixedProgram ;
     TopLevelItem     = FunctionDefinition | ExecutionBlock ;
     ExecutionBlock   = FlagBlock | ReapBlock ;
     FlagBlock        = "flag" "()" "[" BodyStatement* "]" ;
     ReapBlock        = "reap" "(" Rate? ")" "[" BodyStatement* "]" ;
     Rate             = Expression ;
 
-A regular Core or Raw file contains top-level function definitions and execution blocks. Bare executable statements are not allowed at the top level. A mixed file is instead exactly one MixedProgram and cannot contain material before or after it.
+A regular Core or Raw file contains top-level function definitions and execution blocks. Bare executable statements are not allowed at the top level. A mixed file is instead exactly one MixedProgram and cannot contain material before or after it. A file must be either a regular program or a mixed program, never both.
 
 ## Statements inside bodies
 
@@ -78,6 +82,7 @@ val(value) and a bare parenthesized value are transparent wrappers: they preserv
     Product           = Unary, { ("*" | ":"), Unary } ;
     Unary             = ("+" | "-"), Unary | Power ;
     Power             = Atom, [ "^", Unary ] ;
+    NumericLiteral    = IntegerLiteral | FloatLiteral ;
     Atom              = NumericLiteral | VariableRead | ParameterRead | FunctionCall
                       | "(" NumericExpression ")" ;
 
