@@ -39,10 +39,10 @@ The intended feeling is a shared journey: other players should appear along the 
 6. **Competition has multiple routes to victory.** Inkoff supports both resource delivery and Queen elimination.
 7. **Originality matters.** Inspiration from other games is for broad feelings or systems, not copying their characters, assets, maps, sounds, writing, or interface.
 
-{DECIDE: What is the final title and title abbreviation?}  
-{DECIDE: Who is the intended audience and age rating?}  
-{DECIDE: Which platforms, input methods, game engine, and release target are planned?}  
-{DECIDE: What is the intended balance between calm exploration, horror, combat, drawing, and social play?}
+{DECIDE: What is the final title and title abbreviation?}  DAG (Drawing Adventure Game )
+{DECIDE: Who is the intended audience and age rating?}  People who love adventure and art Age rating probily 8~13+
+{DECIDE: Which platforms, input methods, game engine, and release target are planned?}  Mobile, computer, and maybe web.
+{DECIDE: What is the intended balance between calm exploration, horror, combat, drawing, and social play?} Social is every where even if subtle. Exploration is pretty important with the cave biomes and weekly cave resets. Horror is important as its starts to get pretty scary the deeper you go however I would say its to much of a horror game. Combat is very important as pretty much the entire time you’re carrying a weapon. Drawing is pretty important.
 
 ## 2. Player experience and overall loop
 
@@ -53,7 +53,7 @@ The intended broad loop is:
 1. Start at the Camp.
 2. Prepare, talk to available characters, and access the stash.
 3. Enter the first cave and collect a small amount of ore.
-4. Explore, find the drawing-puzzle passage, and descend to a new cave layer.
+4. Explore, find the drawing-puzzle passage (Stronghold), and descend to a new cave layer.
 5. Continue gathering ink and shards, discovering creatures, merchants, structures, and biomes.
 6. Use resources to create or recolor art, buy or build weapons, and improve gear.
 7. Encounter other players naturally, optionally travel with them, and use social actions.
@@ -61,11 +61,11 @@ The intended broad loop is:
 
 The cave descent is designed to feel continuous even though the game may disconnect the player from one server instance, load another layer, and reconnect during the fall.
 
-{DECIDE: What exactly starts a new adventure run, and can players leave and resume at any time?}  
-{DECIDE: How does a player return to the Camp or surface?}  
-{DECIDE: Are there quests, missions, narrative objectives, achievements, or a final ending?}  
-{DECIDE: What is the intended length of a typical cave run?}  
-{DECIDE: What should a new player do in their first five minutes?}
+{DECIDE: What exactly starts a new adventure run, and can players leave and resume at any time?}  Players can leave the cave at any time by using the rift (portable stash) and jumping into it, but it’s a one way trip. Players start by just walking in.
+{DECIDE: How does a player return to the Camp or surface?}  Using the rift which can also be used to teleport items to your stash.
+{DECIDE: Are there quests, missions, narrative objectives, achievements, or a final ending?}  There may be a challenge board but not realy.
+{DECIDE: What is the intended length of a typical cave run?}  Depends on the week (since the caves reset bi-weekly), but to get from A99 to Z00 I would say at least 3-4 hours if your going as quick as possible (NOTE: once you open a stronghold it will emit light making it much easier to find if you return to the surface and then are trying to get back quicker, also opening a stronghold disables mob spawning (including shopkeepers) for that level).
+{DECIDE: What should a new player do in their first five minutes?}  The tutorial and hen go explore the mines probably.
 
 ### Modes
 
@@ -75,8 +75,8 @@ The cave descent is designed to feel continuous even though the game may disconn
 - **Separate drawing planet:** An additional drawing destination accessed with the glitch artifact and an antenna.
 - **Personal homes and PAL:** Earlier ideas that need confirmation before being treated as current features.
 
-{DECIDE: Are these all separate modes or areas of one connected experience?}  
-{DECIDE: Is there a main menu, match browser, party system, or other mode-selection screen?}
+{DECIDE: Are these all separate modes or areas of one connected experience?}  Areas, however all the multiplayer stuff (InkOff, Shared Boards etc) is accessed from the antenna planet. Also the drawing board is just a tiny little board.
+{DECIDE: Is there a main menu, match browser, party system, or other mode-selection screen?} All of the UIs (aside from the start menu) will be represented with merchants or robots. Aside from that you need to walk around manually.
 
 ## 3. World and setting
 
@@ -90,9 +90,9 @@ The older island plan is no longer current:
 - The white island that changes color when ink is placed in its center is scrapped.
 - Those islands should not be added back into the current design unless deliberately reintroduced.
 
-{DECIDE: What are the planet's name, surface appearance, climate, landmarks, and story?}  
-{DECIDE: What exists on the surface beyond the Camp, cave entrances, and the antenna?}  
-{DECIDE: How large is the playable planet, and is it continuous or divided into areas?}  
+{DECIDE: What are the planet's name, surface appearance, climate, landmarks, and story?}  The planets nam is the grid and it looks like a neon circle you can walk around with a merchant at the top and antennas for boards you’ve joined. You can talk to the shop keeper(not specified yet but should seem mysterious and bragging about how it has the ability’s and info to do its job) to join other boards, and other worlds.
+{DECIDE: What exists on the surface beyond the Camp, cave entrances, and the antenna?}  Not planned yet will probably be a later update
+{DECIDE: How large is the playable planet, and is it continuous or divided into areas?}  It is round and not to big you can literally walk around it and if you go to the bottom you will be upside down.
 {DECIDE: Is there a world map, compass, navigation aid, or fast travel?}
 
 ### The Camp
