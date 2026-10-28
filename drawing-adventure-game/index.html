@@ -640,9 +640,13 @@
         platformList.forEach((p,i)=>{
           const sx=p.x-cameraX;if(sx>1000||sx+p.w<0)return;
           const surface=(state.depth>1||player.x>1500)?"#6a8070":"#70836d";
-          g.fillStyle=i<6?"#3b483d":"#46564a";g.fillRect(sx,p.y,p.w,520-p.y);
+          const ledge=i>=7;
+          g.fillStyle=ledge?"#46564a":"#3b483d";
+          g.fillRect(sx,p.y,p.w,ledge?17:520-p.y);
           g.fillStyle=surface;g.fillRect(sx,p.y,p.w,6);
-          g.fillStyle="#97aa82";for(let j=0;j<p.w;j+=28){g.globalAlpha=.22+((j%3)*.08);g.fillRect(sx+j,p.y+9,11,2);}g.globalAlpha=1;
+          g.fillStyle=ledge?"#2d3931":"#97aa82";
+          for(let j=0;j<p.w;j+=28){g.globalAlpha=.22+((j%3)*.08);g.fillRect(sx+j,p.y+(ledge?8:9),11,2);}
+          g.globalAlpha=1;
         });
       }
       function drawGate() {
