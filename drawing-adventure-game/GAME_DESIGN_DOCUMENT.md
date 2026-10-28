@@ -93,7 +93,7 @@ The older island plan is no longer current:
 {DECIDE: What are the planet's name, surface appearance, climate, landmarks, and story?}  The planets nam is the grid and it looks like a neon circle you can walk around with a merchant at the top and antennas for boards you’ve joined. You can talk to the shop keeper(not specified yet but should seem mysterious and bragging about how it has the ability’s and info to do its job) to join other boards, and other worlds.
 {DECIDE: What exists on the surface beyond the Camp, cave entrances, and the antenna?}  Not planned yet will probably be a later update
 {DECIDE: How large is the playable planet, and is it continuous or divided into areas?}  It is round and not to big you can literally walk around it and if you go to the bottom you will be upside down.
-{DECIDE: Is there a world map, compass, navigation aid, or fast travel?}
+{DECIDE: Is there a world map, compass, navigation aid, or fast travel?} No the only “map” you have is next to the mines and shows all the layers you have opened the stronghold in. Ther are also signs defining area.
 
 ### The Camp
 
@@ -101,9 +101,9 @@ The Camp is the starting and preparation area. Current notes say players can tal
 
 The stash is mainly for weapons and special artifacts. Players can carry effectively unlimited ink and shards, so those resources do not need to be stored there.
 
-{DECIDE: Which characters are in the Camp, what can each one do, and what dialogue do they have?}  
-{DECIDE: Does the Camp contain training, weapon assembly, a party meeting point, shops, portals, or other services?}  
-{DECIDE: Can players draw on the Camp itself, and can other players see those drawings?}  
+{DECIDE: Which characters are in the Camp, what can each one do, and what dialogue do they have?}  A droplet that is next to the antenna.
+{DECIDE: Does the Camp contain training, weapon assembly, a party meeting point, shops, portals, or other services?}  Multiplayer is on the planet. There is a merchant named Liv, she lets you edit and make weapons (as long as they are not locked). And T h e   P i t which is how you get to ink off unlocked after you meet Que the quest merchant in the caves.
+{DECIDE: Can players draw on the Camp itself, and can other players see those drawings?}  Yes, and yes.
 {DECIDE: Is the Camp shared by all players or split into instances?}  
 {DECIDE: How does the player enter the first cave?}
 
