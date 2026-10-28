@@ -45,6 +45,7 @@ Players begin at the Camp, enter the Mines, descend through cave Sections A–Z,
 ## Other important open questions
 
 - What exact shapes are drawn in the tutorial, how quickly must they be drawn, and how many attempts are allowed?
+- Can a player opt out of random Queen selection, or is every team member eligible?
 - How does a player get from The Grid to a specific shared board or another world?
 - What day/time does the global cave reset happen, and what happens to players still inside caves?
 - Does the reset regenerate ores and all cave features, or only terrain?
