@@ -4,17 +4,20 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
 
 ## Lexical tokens
 
-    Identifier    = Letter, { Letter | Digit | "_" } ;
+    Letter        = "A"..."Z" | "a"..."z" | "_" ;
+    Digit         = "0"..."9" ;
+    Identifier    = Letter, { Letter | Digit } ;
     StringLiteral = double-quote, { Character | Escape }, double-quote ;
     Escape        = backslash | escaped-quote | newline | carriage-return | tab ;
     Boolean       = "TRUE" | "FALSE" ;
     Type          = "int" | "flo" | "num" | "txt" | "boo" | "nul" ;
+    Exponent      = ("e" | "E"), [ "+" | "-" ], Digit, { Digit } ;
     IntegerLiteral = Digit, { Digit } ;
     FloatLiteral   = Digit, { Digit }, ".", Digit, { Digit }, [ Exponent ] ;
     NumberLiteral  = IntegerLiteral | FloatLiteral ;
     Expression     = Value ;
 
-Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons separate simple statements.
+Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons separate simple statements. In this EBNF, the notation A...Z means any character in that inclusive range.
 
 ## Compilation unit
 
