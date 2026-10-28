@@ -29,6 +29,16 @@ The game mixes four main activities:
 
 The intended feeling is a shared journey: other players should appear along the route and sometimes travel nearby, rather than every social interaction requiring a lobby invitation. The drawing system is a central identity feature, not a side activity.
 
+### Project details
+
+**Title and abbreviation:** Drawing Adventure Game (DAG).
+
+**Audience and target age:** Players who enjoy adventure and art; the tentative target age is around 8–13+.
+
+**Platforms:** Mobile and computer are planned; web is a possibility. {DECIDE: Which engine, input methods, and release target will be used?}
+
+**Design emphasis:** Social features should be present everywhere, even subtly. Exploration is important, especially through cave biomes and resets. Horror should grow stronger deeper underground, but the game should not become too horror-focused. Combat is very important because players carry weapons for most of the adventure. Drawing is also a major part of the experience.
+
 ### Core design pillars
 
 1. **Drawing matters.** Player-made art and custom character appearances are part of the identity of the game.
@@ -38,11 +48,6 @@ The intended feeling is a shared journey: other players should appear along the 
 5. **Weapons allow personal play styles.** A weapon is assembled from three parts with different jobs.
 6. **Competition has multiple routes to victory.** Inkoff supports both resource delivery and Queen elimination.
 7. **Originality matters.** Inspiration from other games is for broad feelings or systems, not copying their characters, assets, maps, sounds, writing, or interface.
-
-**Title and abbreviation:** Drawing Adventure Game (DAG).
-**Audience and target age:** Players who enjoy adventure and art; the tentative target age is around 8–13+.
-**Platforms:** Mobile and computer are planned; web is a possibility. {DECIDE: Which engine, input methods, and release target will be used?}
-**Design emphasis:** Social features should be present everywhere, even subtly. Exploration is important, especially through cave biomes and resets. Horror should grow stronger deeper underground, but the game should not become too horror-focused. Combat is very important because players carry weapons for most of the adventure. Drawing is also a major part of the experience.
 
 ## 2. Player experience and overall loop
 
@@ -75,7 +80,7 @@ The cave descent is designed to feel continuous even though the game may disconn
 - **Separate drawing planet:** An additional drawing destination accessed with the glitch artifact and an antenna.
 - **Personal homes and PAL:** Earlier ideas that need confirmation before being treated as current features.
 
-{DECIDE: Are these all separate modes or areas of one connected experience?}  Areas, however all the multiplayer stuff (InkOff, Shared Boards etc) is accessed from the antenna planet. Also the drawing board is just a tiny little board.
+**Connected areas:** These are areas within one connected experience, not completely separate modes. Multiplayer features such as Inkoff and shared boards are accessed from the antenna planet. The personal drawing board at the Camp is a tiny physical board. The Grid's identity and the Inkoff access route remain open questions in Section 3.
 **Menus and interaction:** Aside from the start menu, interfaces are represented by in-world merchants or robots. Players generally need to walk up to them to interact rather than opening a conventional interface from anywhere.
 
 ## 3. World and setting
