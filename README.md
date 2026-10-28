@@ -14,6 +14,9 @@ This repository mixes game design, Minecraft add-on experiments, web toy prototy
 - [Pod Game](Pod%20Game/README.md) — a separate space-exploration concept document.
 - [devlog](devlog/README.md) — development notes and learning writeups.
 
+### Language design
+- [OneLine language documentation](oneline/README.md) — OneLine Core, OneLine Raw, syntax, translation model, and roadmap.
+
 ### Minecraft add-on experiments
 - [mods](mods/README.md) — collection of Bedrock add-on prototypes, concepts, and packaged builds.
 
@@ -31,6 +34,7 @@ ideal-goggles/
 ├── LICENSE
 ├── devlog/
 ├── drawing-adventure-game/
+├── oneline/
 ├── Pod Game/
 ├── games/
 ├── mods/
@@ -40,7 +44,8 @@ ideal-goggles/
 
 ## Quick orientation
 
-- The largest active design work is in [drawing-adventure-game](drawing-adventure-game/README.md), with the complete concept in its [master design document](drawing-adventure-game/GAME_DESIGN_DOCUMENT.md).
+- The largest active game design work is in [drawing-adventure-game](drawing-adventure-game/README.md), with the complete concept in its [master design document](drawing-adventure-game/GAME_DESIGN_DOCUMENT.md).
+- The [oneline](oneline/README.md) folder documents the proposed programming language and its translation architecture.
 - The [mods](mods/README.md) folder contains the Minecraft Bedrock experiments and their build artifacts.
 - The [games](games/README.md) folder is for lighter web prototypes and mini-experiments.
 - The [devlog](devlog/README.md) holds the project's learning notes and design reflections.
