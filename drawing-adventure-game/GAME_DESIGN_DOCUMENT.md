@@ -104,8 +104,8 @@ The stash is mainly for weapons and special artifacts. Players can carry effecti
 {DECIDE: Which characters are in the Camp, what can each one do, and what dialogue do they have?}  A droplet that is next to the antenna.
 {DECIDE: Does the Camp contain training, weapon assembly, a party meeting point, shops, portals, or other services?}  Multiplayer is on the planet. There is a merchant named Liv, she lets you edit and make weapons (as long as they are not locked). And T h e   P i t which is how you get to ink off unlocked after you meet Que the quest merchant in the caves.
 {DECIDE: Can players draw on the Camp itself, and can other players see those drawings?}  Yes, and yes.
-{DECIDE: Is the Camp shared by all players or split into instances?}  
-{DECIDE: How does the player enter the first cave?}
+{DECIDE: Is the Camp shared by all players or split into instances?}  Split into servers the same way the caves are but it can only have three different players which are random.
+{DECIDE: How does the player enter the first cave?} There is mines entrance that you can find to the left of the Camp (T h e   P i t i to the right of the camp).
 
 ## 4. Caves, levels, structures, and transitions
 
@@ -119,9 +119,9 @@ The first cave is intended to be quiet and mostly empty:
 
 After exploring, the player can find a passage that drops almost straight down. Before descending, the player must solve a drawing puzzle: copy one shape, then quickly draw a couple more shapes as they appear. Solving the puzzle opens a long fall into the next cave layer.
 
-{DECIDE: What are the exact tutorial shapes, timing, number of attempts, and failure behavior?}  
-{DECIDE: Can players skip or replay the tutorial?}  
-{DECIDE: What happens if a player walks away from the puzzle or fails it?}
+{DECIDE: What are the exact tutorial shapes, timing, number of attempts, and failure behavior?}  IDK what dat means.
+{DECIDE: Can players skip or replay the tutorial?}  No Skip Yes Replay.
+{DECIDE: What happens if a player walks away from the puzzle or fails it?}  Retry.
 
 ### Layer numbering
 
@@ -133,9 +133,9 @@ The Keynote-exported notes describe a letter-and-number level system:
 
 The notation and direction of progression are not yet fully clear. It is not safe to assume that a higher letter or number means deeper, rarer, or more dangerous without clarifying the numbering rule.
 
-{DECIDE: Explain what A99, A01, A00, B99, B01, B00, and Z00 mean in order.}  
-{DECIDE: Does the number count down within each letter, and does progression move from A to B or from Z to A?}  
-{DECIDE: Is a “level” one screen, one cave floor, one server instance, or a larger depth band?}  
+{DECIDE: Explain what A99, A01, A00, B99, B01, B00, and Z00 mean in order.}  A Is the highest section, 99-01 are layers in the section, 00 is the layer that takes to a deeper section (ex A -> B)
+{DECIDE: Does the number count down within each letter, and does progression move from A to B or from Z to A?}  A to Z, A is higher, Z is the lowest.
+{DECIDE: Is a “level” one screen, one cave floor, one server instance, or a larger depth band?}  Actually they are gonna be called Sections, and it is a Section of cave levels.
 {DECIDE: What are the exact creature, ore, merchant, and structure spawn rules for each level?}
 
 ### Strongholds
