@@ -14,7 +14,7 @@ Players start at the Camp, enter the Mines, and explore cave Sections from A thr
 - Meet other players naturally while exploring and use friendship actions.
 - Play Inkoff, where teams can win by filling their base with gel or taking all three of the opposing Queen's lives.
 - Meet merchants including YAP, Trap, Liv, and Que.
-- Use Strongholds to earn a shard by drawing three symbols in under three seconds, then open a physical hole to jump into. Once opened, a Stronghold emits light and disables mob spawning, including shopkeepers, on that level.
+- Strongholds look like shrine-like structures. After hitting one, drawing three symbols in under three seconds earns a shard. A Stronghold opens a physical hole, emits light, and disables mob spawning, including shopkeepers, on its level. Whether the symbol puzzle triggers the hole or only the shard reward, and the hole's exact destination, remain undecided.
 
 ## Camp and access points
 
@@ -66,5 +66,6 @@ The creator's latest explicit answers take priority, followed by the uploaded Ga
 - Confirm whether the global cave reset is weekly or bi-weekly.
 - Clarify whether The Grid is separate from the main cave planet.
 - Clarify the access route between The Pit and The Grid for Inkoff.
-- Specify the Stronghold hole's destination rule.
+- Clarify whether the Stronghold symbol puzzle controls hole opening or only the shard reward, and set the hole's destination rule.
+- Clarify whether every player is eligible for random Queen selection or can opt out.
 - Continue resolving the remaining prompts in the [Master Game Design Document](GAME_DESIGN_DOCUMENT.md).
