@@ -235,7 +235,7 @@ Custom-drawn weapon skins were an older idea and are not part of the current pla
 {DECIDE: Are character, clothing, and art canvases different sizes or use different rules?}  
 {DECIDE: Can players draw on the terrain in the main world or only on designated boards?}  
 {DECIDE: Does the separate drawing planet reset, and can players save drawings there permanently?}  
-{DECIDE: What is the final name of the drawing planet and the antenna?}  
+{CLARIFY: Is the earlier “separate drawing planet” reached with the glitch artifact and large antenna the same place as The Grid, or is it a different location? The Grid itself has already been named.}  
 {DECIDE: Is the drawing planet public, private, invite-only, or shared with friends?}  
 {DECIDE: Can strangers edit, erase, or cover another player's artwork?}  
 {DECIDE: What moderation, reporting, and privacy tools are required for player-made art?}
