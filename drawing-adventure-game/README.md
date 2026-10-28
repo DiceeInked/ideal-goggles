@@ -28,7 +28,7 @@ This folder contains the design for Drawing Adventure Game (DAG). The **master d
 - [YAP](YAP_AI.md)
 - [Trap](TRAP_AI.md)
 - [Homes, Props, Badges, and PAL](HOMES_AND_PAL_AI.md)
-- [Merchant Reference](MERCHANTS.md): current summary of YAP and Trap.
+- [Merchant and Character Reference](MERCHANTS.md): current notes for YAP, Trap, Liv, Que, the Grid merchant, and the droplet character.
 
 ### Reference material
 - [Inspirations and References](INSPIRATIONS_AI.md): broad inspirations and the rules for keeping the game original.
