@@ -26,7 +26,7 @@ Raw cannot guarantee every program will run on every language or platform. A tar
 - Text is written as txt("text"). Supported escapes are backslash, escaped double quote, newline, carriage return, and tab. Unknown escapes are errors.
 - // begins a comment that ends at the line break.
 - Whitespace and line breaks are ignored except inside text literals and comments.
-- Semicolons separate simple statements. A final semicolon before a closing square bracket is optional.
+- Semicolons separate simple statements and are required after every simple statement, including the final simple statement before a closing square bracket. Self-delimiting blocks and conditionals do not take a trailing semicolon.
 - Parentheses and punctuation inside a quoted text literal are text, not syntax.
 - Documentation placeholders such as /NAME/ are not source code.
 
