@@ -6,17 +6,22 @@
   <title>Drawing Adventure: Mining Run</title>
   <style>
     :root {
-      --bg: #0b1014;
-      --panel: rgba(16, 22, 28, 0.9);
-      --panel-strong: rgba(21, 28, 35, 0.96);
-      --line: rgba(173, 191, 207, 0.14);
-      --text: #ebf6ff;
-      --muted: #a9bbca;
-      --gold: #e0c07a;
-      --blue: #78c7ff;
-      --green: #7fe4b9;
-      --rose: #f4b2c6;
-      --shadow: rgba(0, 0, 0, 0.35);
+      --bg: #0b1015;
+      --bg-2: #111c24;
+      --panel: rgba(16, 22, 28, 0.88);
+      --panel-strong: rgba(20, 28, 35, 0.96);
+      --line: rgba(177, 196, 210, 0.14);
+      --line-strong: rgba(177, 196, 210, 0.22);
+      --text: #edf6ff;
+      --muted: #aabcc9;
+      --soft: #dfeaf5;
+      --gold: #e3c17c;
+      --gold-soft: #f5d99a;
+      --blue: #7cc9ff;
+      --blue-soft: rgba(124, 201, 255, 0.18);
+      --green: #8fe7bb;
+      --rose: #f2b6ca;
+      --shadow: rgba(0, 0, 0, 0.36);
     }
 
     * { box-sizing: border-box; }
@@ -25,8 +30,9 @@
       margin: 0;
       width: 100%;
       height: 100%;
-      background: radial-gradient(circle at top, rgba(120,199,255,0.12), transparent 30%),
-                  linear-gradient(180deg, #0b1014, #101923);
+      background:
+        radial-gradient(circle at top, rgba(124, 201, 255, 0.11), transparent 32%),
+        linear-gradient(180deg, var(--bg), var(--bg-2));
       color: var(--text);
       font-family: Inter, "Segoe UI", sans-serif;
       overflow: hidden;
@@ -39,7 +45,7 @@
     }
 
     .shell {
-      width: min(1320px, calc(100vw - 24px));
+      width: min(1320px, calc(100vw - 22px));
       height: min(94vh, 820px);
       display: grid;
       grid-template-columns: 320px minmax(0, 1fr);
@@ -53,9 +59,9 @@
 
     .sidebar {
       position: relative;
-      background: linear-gradient(180deg, rgba(16,22,28,0.95), rgba(13,18,24,0.96));
+      background: linear-gradient(180deg, rgba(16,22,28,0.94), rgba(12,17,23,0.98));
       border-right: 1px solid var(--line);
-      padding: 20px 18px 16px;
+      padding: 20px 18px 18px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -65,7 +71,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(140deg, rgba(120,199,255,0.04), transparent 34%, rgba(224,192,122,0.04));
+      background: linear-gradient(135deg, rgba(124,201,255,0.04), transparent 30%, rgba(227,193,124,0.04));
       pointer-events: none;
     }
 
@@ -75,7 +81,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--muted);
@@ -86,7 +92,7 @@
       height: 10px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--gold), var(--blue));
-      box-shadow: 0 0 12px rgba(120,199,255,0.5);
+      box-shadow: 0 0 16px rgba(124,201,255,0.5);
       position: relative;
     }
 
@@ -94,8 +100,8 @@
       content: "";
       position: absolute;
       inset: -6px;
-      border: 1px solid rgba(120,199,255,0.25);
       border-radius: 50%;
+      border: 1px solid rgba(124,201,255,0.26);
     }
 
     .panel {
@@ -109,8 +115,8 @@
 
     h1 {
       margin: 0;
-      font-size: 1.2rem;
-      letter-spacing: -0.03em;
+      font-size: 1.18rem;
+      letter-spacing: -0.04em;
     }
 
     .stats {
@@ -129,7 +135,7 @@
 
     .stat .label {
       display: block;
-      font-size: 0.65rem;
+      font-size: 0.64rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
@@ -137,13 +143,13 @@
     }
 
     .stat .value {
-      font-size: 1.35rem;
+      font-size: 1.32rem;
       letter-spacing: -0.04em;
       font-weight: 700;
     }
 
     .objective {
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 0.82rem;
       line-height: 1.6;
       color: var(--muted);
@@ -164,7 +170,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
@@ -183,8 +189,8 @@
     .meter > span {
       position: absolute;
       inset: 0 auto 0 0;
-      width: 50%;
       border-radius: inherit;
+      width: 50%;
       background: linear-gradient(90deg, var(--gold), var(--rose));
       box-shadow: inset 0 0 12px rgba(255,255,255,0.12);
     }
@@ -205,7 +211,7 @@
 
     .controls h2 {
       margin: 0 0 10px;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
       letter-spacing: 0.15em;
       color: var(--gold);
@@ -237,12 +243,12 @@
       height: 22px;
       padding: 0 6px;
       border: 1px solid var(--line);
-      border-radius: 7px;
+      border-radius: 6px;
       background: rgba(255,255,255,0.02);
       color: var(--text);
-      font-family: inherit;
-      font-size: 0.72rem;
+      font: inherit;
       font-weight: 700;
+      font-size: 0.72rem;
     }
 
     .game-panel {
@@ -256,11 +262,11 @@
     canvas {
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, #0d1419, #111c24 36%, #101821);
+      display: block;
       border: 1px solid var(--line);
       border-radius: 16px;
-      display: block;
-      box-shadow: inset 0 0 40px rgba(0,0,0,0.18);
+      background: linear-gradient(180deg, #0d1419 0%, #101a22 38%, #0d1318 100%);
+      box-shadow: inset 0 0 38px rgba(0,0,0,0.2);
     }
 
     .message {
@@ -270,12 +276,13 @@
       padding: 10px 12px;
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: rgba(13,17,21,0.8);
-      font-size: 0.78rem;
+      background: rgba(13,17,21,0.76);
+      font-size: 0.77rem;
       color: var(--soft);
       letter-spacing: 0.04em;
-      max-width: 420px;
+      max-width: 440px;
       backdrop-filter: blur(6px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
     @media (max-width: 980px) {
@@ -288,7 +295,7 @@
         border-bottom: 1px solid var(--line);
       }
       .game-panel {
-        min-height: 64vh;
+        min-height: 60vh;
       }
     }
   </style>
@@ -352,21 +359,20 @@
           <div class="key"><kbd>WASD</kbd><span>Move</span></div>
           <div class="key"><kbd>E</kbd><span>Mine</span></div>
           <div class="key"><kbd>Q</kbd><span>Draw</span></div>
-          <div class="key"><kbd>F</kbd><span>Camp / Portal</span></div>
+          <div class="key"><kbd>F</kbd><span>Camp</span></div>
         </div>
       </div>
     </aside>
 
     <main class="game-panel">
-      <canvas id="gameCanvas" width="980" height="760"></canvas>
-      <div class="message" id="messageBox">The camp is safe. Mine a little, draw a mark, then head down.</div>
+      <canvas id="gameCanvas" width="1040" height="760"></canvas>
+      <div class="message" id="messageBox">The camp is safe. Mine a bit, draw a mark, then descend.</div>
     </main>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-
     const ui = {
       depth: document.getElementById('depthValue'),
       shards: document.getElementById('shardsValue'),
@@ -380,31 +386,32 @@
       message: document.getElementById('messageBox')
     };
 
-    const world = {
-      w: 2200,
-      h: 1800,
+    const state = {
+      worldWidth: 2400,
+      worldHeight: 1800,
       depth: 1,
-      totalOreGoal: 18,
+      oreGoal: 18,
       oreCollected: 0,
       shards: 0,
       ink: 100,
-      camp: { x: 260, y: 260, r: 110 },
-      portal: { x: 1780, y: 1380, r: 105, active: false },
+      camera: { x: 0, y: 0 },
       player: {
         x: 260,
         y: 260,
+        vx: 0,
+        vy: 0,
         radius: 14,
         speed: 2.5,
         drawCooldown: 0,
-        miningCooldown: 0,
+        mineCooldown: 0,
       },
+      camp: { x: 260, y: 290, r: 120 },
+      portal: { x: 1830, y: 1430, r: 82, active: false },
       rocks: [],
       particles: [],
-      drawMarks: [],
-      visitedCamp: true,
+      marks: [],
+      keys: {}
     };
-
-    const keys = {};
 
     function clamp(value, min, max) {
       return Math.min(Math.max(value, min), max);
@@ -414,140 +421,148 @@
       return Math.random() * (max - min) + min;
     }
 
-    function distance(ax, ay, bx, by) {
+    function dist(ax, ay, bx, by) {
       return Math.hypot(ax - bx, ay - by);
     }
 
-    function generateRocks() {
-      const types = [
-        { name: 'copper', color: '#78c7ff', value: 1, hp: 2 },
-        { name: 'iron', color: '#b8d6ef', value: 2, hp: 3 },
-        { name: 'amber', color: '#e0c07a', value: 3, hp: 4 },
-        { name: 'crystal', color: '#9ef0d0', value: 4, hp: 5 },
-      ];
-
-      const rocks = [];
-      const safeRadius = 180;
-
-      for (let i = 0; i < 120; i++) {
-        let x, y, type;
-        for (let tries = 0; tries < 40; tries++) {
-          x = rand(70, world.w - 70);
-          y = rand(70, world.h - 70);
-          if (distance(x, y, world.camp.x, world.camp.y) < safeRadius) continue;
-          const t = types[Math.floor(Math.random() * types.length)];
-          const r = 16 + Math.random() * 18;
-          rocks.push({
-            x,
-            y,
-            r,
-            type: t.name,
-            color: t.color,
-            value: t.value,
-            hp: t.hp,
-            maxHp: t.hp,
-            glow: rand(0.5, 1.4)
-          });
-          break;
-        }
-      }
-
-      return rocks;
-    }
-
-    function addParticles(x, y, color, count = 16, speed = 1.3) {
+    function addParticles(x, y, color, count = 12, speed = 1.3) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const vel = rand(0.8, speed + 1.4);
-        world.particles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * vel,
-          vy: Math.sin(angle) * vel,
+        const v = rand(0.6, speed + 1.2);
+        state.particles.push({
+          x, y,
+          vx: Math.cos(angle) * v,
+          vy: Math.sin(angle) * v,
           r: rand(2, 5),
-          life: rand(25, 54),
+          life: rand(25, 52),
           color
         });
       }
     }
 
-    function addDrawMark(x, y, color) {
-      world.drawMarks.push({
-        x, y, color,
+    function addMark(x, y, color) {
+      state.marks.push({
+        x, y,
+        color,
         life: 70,
-        r: 18 + Math.random() * 18
+        radius: rand(16, 28)
       });
     }
 
-    function updateHud() {
-      ui.depth.textContent = String(world.depth);
-      ui.shards.textContent = String(world.shards);
-      ui.ore.textContent = String(world.oreCollected);
-      ui.ink.textContent = String(Math.max(0, Math.floor(world.ink)));
+    function generateRocks() {
+      const oreTypes = [
+        { name: 'copper', color: '#7cc9ff', value: 1, hp: 2 },
+        { name: 'iron', color: '#ddedf5', value: 2, hp: 3 },
+        { name: 'amber', color: '#e3c17c', value: 3, hp: 4 },
+        { name: 'crystal', color: '#8fe7bb', value: 4, hp: 5 }
+      ];
 
-      const progress = clamp((world.oreCollected / world.totalOreGoal) * 100, 0, 100);
-      ui.progressText.textContent = `${world.oreCollected} / ${world.totalOreGoal}`;
-      ui.progressMeter.style.width = `${progress}%`;
-      ui.inkText.textContent = `${Math.max(0, Math.floor(world.ink))}%`;
-      ui.inkMeter.style.width = `${clamp(world.ink, 0, 100)}%`;
+      const rocks = [];
+      const safeRadius = 190;
 
-      if (world.oreCollected >= world.totalOreGoal && !world.portal.active) {
-        world.portal.active = true;
-        ui.message.textContent = 'The stronghold hums awake. Move to the glowing portal in the deep caves.';
+      for (let i = 0; i < 120; i++) {
+        let placed = false;
+        for (let tries = 0; tries < 35; tries++) {
+          const x = rand(80, state.worldWidth - 80);
+          const y = rand(80, state.worldHeight - 80);
+          if (dist(x, y, state.camp.x, state.camp.y) < safeRadius) continue;
+          const type = oreTypes[Math.floor(Math.random() * oreTypes.length)];
+          rocks.push({
+            x,
+            y,
+            r: rand(20, 33),
+            type: type.name,
+            color: type.color,
+            value: type.value,
+            hp: type.hp,
+            maxHp: type.hp,
+            glow: rand(0.8, 1.5)
+          });
+          placed = true;
+          break;
+        }
+        if (!placed) break;
       }
 
-      if (world.oreCollected >= world.totalOreGoal) {
-        ui.objective.textContent = 'A stronghold has appeared. Step into the portal to descend higher and continue the run.';
+      return rocks;
+    }
+
+    function updateHud() {
+      ui.depth.textContent = String(state.depth);
+      ui.shards.textContent = String(state.shards);
+      ui.ore.textContent = String(state.oreCollected);
+      ui.ink.textContent = String(Math.max(0, Math.floor(state.ink)));
+
+      const ratio = clamp((state.oreCollected / state.oreGoal) * 100, 0, 100);
+      ui.progressText.textContent = `${state.oreCollected} / ${state.oreGoal}`;
+      ui.progressMeter.style.width = `${ratio}%`;
+      ui.inkText.textContent = `${Math.max(0, Math.floor(state.ink))}%`;
+      ui.inkMeter.style.width = `${clamp(state.ink, 0, 100)}%`;
+
+      if (state.oreCollected >= state.oreGoal && !state.portal.active) {
+        state.portal.active = true;
+        ui.message.textContent = 'The stronghold hums alive. Head to the glowing portal in the deep cave.';
+      }
+
+      if (state.oreCollected >= state.oreGoal) {
+        ui.objective.textContent = 'A deep portal has opened. Move through it to continue the descent.';
       } else {
-        ui.objective.textContent = 'Collect 18 ore. Return to the camp portal to reinforce your loadout and descend deeper.';
+        ui.objective.textContent = 'Collect 18 ore. Return to camp to refresh before the next descent.';
       }
     }
 
     function updatePlayer() {
-      let dx = 0;
-      let dy = 0;
+      let ax = 0;
+      let ay = 0;
 
-      if (keys['w'] || keys['ArrowUp']) dy -= 1;
-      if (keys['s'] || keys['ArrowDown']) dy += 1;
-      if (keys['a'] || keys['ArrowLeft']) dx -= 1;
-      if (keys['d'] || keys['ArrowRight']) dx += 1;
+      if (state.keys['w'] || state.keys['arrowup']) ay -= 1;
+      if (state.keys['s'] || state.keys['arrowdown']) ay += 1;
+      if (state.keys['a'] || state.keys['arrowleft']) ax -= 1;
+      if (state.keys['d'] || state.keys['arrowright']) ax += 1;
 
-      const length = Math.hypot(dx, dy) || 1;
-      if (dx || dy) {
-        world.player.x += (dx / length) * world.player.speed;
-        world.player.y += (dy / length) * world.player.speed;
+      if (ax || ay) {
+        const len = Math.hypot(ax, ay) || 1;
+        const targetVx = (ax / len) * state.player.speed;
+        const targetVy = (ay / len) * state.player.speed;
+        state.player.vx += (targetVx - state.player.vx) * 0.28;
+        state.player.vy += (targetVy - state.player.vy) * 0.28;
+      } else {
+        state.player.vx *= 0.8;
+        state.player.vy *= 0.8;
       }
 
-      world.player.x = clamp(world.player.x, 20, world.w - 20);
-      world.player.y = clamp(world.player.y, 20, world.h - 20);
+      state.player.x += state.player.vx;
+      state.player.y += state.player.vy;
+      state.player.x = clamp(state.player.x, 30, state.worldWidth - 30);
+      state.player.y = clamp(state.player.y, 30, state.worldHeight - 30);
 
-      if (world.player.miningCooldown > 0) world.player.miningCooldown -= 1;
-      if (world.player.drawCooldown > 0) world.player.drawCooldown -= 1;
+      if (state.player.mineCooldown > 0) state.player.mineCooldown -= 1;
+      if (state.player.drawCooldown > 0) state.player.drawCooldown -= 1;
     }
 
-    function mineClosestRock() {
+    function mineNearbyRock() {
       let target = null;
       let closest = Infinity;
 
-      for (const rock of world.rocks) {
-        const d = distance(world.player.x, world.player.y, rock.x, rock.y);
-        if (d < 56 && d < closest) {
+      for (const rock of state.rocks) {
+        const d = dist(state.player.x, state.player.y, rock.x, rock.y);
+        if (d < 58 && d < closest) {
           target = rock;
           closest = d;
         }
       }
 
-      if (!target || world.player.miningCooldown > 0) return;
+      if (!target || state.player.mineCooldown > 0) return;
 
-      world.player.miningCooldown = 9;
+      state.player.mineCooldown = 10;
       target.hp -= 1;
-      addParticles(target.x, target.y, target.color, 10, 2.0);
+      addParticles(target.x, target.y, target.color, 12, 2.2);
 
       if (target.hp <= 0) {
-        world.oreCollected += target.value;
-        world.shards += target.value;
-        addParticles(target.x, target.y, '#ffffff', 18, 2.6);
-        world.rocks = world.rocks.filter(r => r !== target);
+        state.oreCollected += target.value;
+        state.shards += target.value;
+        addParticles(target.x, target.y, '#fff9d8', 20, 2.8);
+        state.rocks = state.rocks.filter(r => r !== target);
         ui.message.textContent = `${target.type.toUpperCase()} mined! +${target.value} ore.`;
       } else {
         ui.message.textContent = `${target.type.toUpperCase()} hit. ${target.hp}/${target.maxHp} integrity.`;
@@ -556,243 +571,240 @@
       updateHud();
     }
 
-    function drawMark() {
-      if (world.player.drawCooldown > 0 || world.ink <= 0) return;
-      let target = null;
-      let closest = Infinity;
+    function drawInkMark() {
+      if (state.player.drawCooldown > 0 || state.ink <= 0) return;
+      state.player.drawCooldown = 18;
+      state.ink = Math.max(0, state.ink - 10);
 
-      for (const rock of world.rocks) {
-        const d = distance(world.player.x, world.player.y, rock.x, rock.y);
-        if (d < 80 && d < closest) {
-          target = rock;
-          closest = d;
+      const palette = ['#7cc9ff', '#8fe7bb', '#f2b6ca', '#e3c17c'];
+      const color = palette[Math.floor(Math.random() * palette.length)];
+      let x = state.player.x + rand(-26, 26);
+      let y = state.player.y + rand(-26, 26);
+
+      for (const rock of state.rocks) {
+        const d = dist(state.player.x, state.player.y, rock.x, rock.y);
+        if (d < 90) {
+          x = rock.x;
+          y = rock.y;
+          break;
         }
       }
 
-      world.player.drawCooldown = 18;
-      world.ink = Math.max(0, world.ink - 10);
-
-      const color = ['#78c7ff', '#7fe4b9', '#f4b2c6', '#e0c07a'][Math.floor(Math.random() * 4)];
-
-      if (target) {
-        addDrawMark(target.x, target.y, color);
-        target.glow = 1.8;
-      } else {
-        addDrawMark(world.player.x + rand(-24, 24), world.player.y + rand(-24, 24), color);
-      }
-
-      ui.message.textContent = 'A bright ink mark flashes across the stone.';
+      addMark(x, y, color);
+      addParticles(x, y, color, 16, 2.2);
+      ui.message.textContent = 'Ink sparks across the stone.';
       updateHud();
     }
 
-    function handlePortal() {
-      const inCamp = distance(world.player.x, world.player.y, world.camp.x, world.camp.y) < 110;
-      const inPortal = distance(world.player.x, world.player.y, world.portal.x, world.portal.y) < 98;
+    function handleInteraction() {
+      const inCamp = dist(state.player.x, state.player.y, state.camp.x, state.camp.y) < 110;
+      const inPortal = dist(state.player.x, state.player.y, state.portal.x, state.portal.y) < 90;
 
-      if (inCamp && world.oreCollected > 0) {
-        world.shards += 2;
-        world.ink = Math.min(100, world.ink + 18);
-        ui.message.textContent = 'You return to camp. Supplies renewed. The next descent begins.';
+      if (inCamp && state.oreCollected > 0) {
+        state.shards += 2;
+        state.ink = Math.min(100, state.ink + 18);
+        state.oreCollected = 0;
+        ui.message.textContent = 'Camp restock complete. The next descent is ready.';
+        updateHud();
         return;
       }
 
-      if (inPortal && world.portal.active) {
-        world.depth += 1;
-        world.totalOreGoal = 18 + (world.depth - 1) * 8;
-        world.player.x = world.camp.x + 30;
-        world.player.y = world.camp.y + 30;
-        world.portal.active = false;
-        world.rocks = generateRocks();
-        world.ink = Math.min(100, world.ink + 16);
-        ui.message.textContent = `Depth ${world.depth} unlocked. The cave shifts and the ore grows richer.`;
+      if (inPortal && state.portal.active) {
+        state.depth += 1;
+        state.oreGoal += 8;
+        state.player.x = state.camp.x + 30;
+        state.player.y = state.camp.y + 30;
+        state.player.vx = 0;
+        state.player.vy = 0;
+        state.portal.active = false;
+        state.rocks = generateRocks();
+        state.ink = Math.min(100, state.ink + 18);
+        ui.message.textContent = `Depth ${state.depth} unlocked. The ore gets richer.`;
         updateHud();
         return;
       }
 
       if (inCamp) {
-        ui.message.textContent = 'Camp is secure. Mine a bit more before heading out again.';
-      } else if (world.portal.active) {
-        ui.message.textContent = 'The portal hums. Step through when you are ready.';
+        ui.message.textContent = 'The camp is safe. Gather more ore before moving on.';
+      } else if (state.portal.active) {
+        ui.message.textContent = 'The deep portal awaits.';
       }
     }
 
     function updateParticles() {
-      for (let i = world.particles.length - 1; i >= 0; i--) {
-        const p = world.particles[i];
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.life -= 1;
-        if (p.life <= 0) world.particles.splice(i, 1);
+        if (p.life <= 0) state.particles.splice(i, 1);
       }
 
-      for (let i = world.drawMarks.length - 1; i >= 0; i--) {
-        const mark = world.drawMarks[i];
-        mark.life -= 1;
-        if (mark.life <= 0) world.drawMarks.splice(i, 1);
+      for (let i = state.marks.length - 1; i >= 0; i--) {
+        const m = state.marks[i];
+        m.life -= 1;
+        if (m.life <= 0) state.marks.splice(i, 1);
       }
     }
 
-    function renderBackground() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, '#0d1419');
-      gradient.addColorStop(0.45, '#101821');
-      gradient.addColorStop(1, '#0b1014');
-      ctx.fillStyle = gradient;
+    function renderBackground(cameraX, cameraY) {
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, '#0d1419');
+      grad.addColorStop(0.45, '#101a22');
+      grad.addColorStop(1, '#0b1015');
+      ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const cameraX = clamp(world.player.x - canvas.width / 2, 0, world.w - canvas.width);
-      const cameraY = clamp(world.player.y - canvas.height / 2, 0, world.h - canvas.height);
-
-      const tile = 64;
+      const tile = 52;
       for (let x = Math.floor(cameraX / tile) * tile; x < cameraX + canvas.width + tile; x += tile) {
         for (let y = Math.floor(cameraY / tile) * tile; y < cameraY + canvas.height + tile; y += tile) {
           const px = x - cameraX;
           const py = y - cameraY;
-          ctx.fillStyle = (Math.floor(x / tile) + Math.floor(y / tile)) % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.01)';
+          ctx.fillStyle = ((Math.floor(x / tile) + Math.floor(y / tile)) % 2 === 0) ? 'rgba(255,255,255,0.014)' : 'rgba(255,255,255,0.008)';
           ctx.fillRect(px, py, tile, tile);
         }
       }
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.02)';
-      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.rect(-cameraX + world.camp.x - world.camp.r, -cameraY + world.camp.y - world.camp.r, world.camp.r * 2, world.camp.r * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      ctx.rect(state.camp.x - cameraX - state.camp.r, state.camp.y - cameraY - state.camp.r, state.camp.r * 2, state.camp.r * 2);
+      ctx.stroke();
+    }
+
+    function renderCamp(cameraX, cameraY) {
+      const cx = state.camp.x - cameraX;
+      const cy = state.camp.y - cameraY;
+
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(227,193,124,0.16)';
+      ctx.arc(cx, cy, state.camp.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#e3c17c';
+      ctx.lineWidth = 2;
+      ctx.arc(cx, cy, state.camp.r, 0, Math.PI * 2);
       ctx.stroke();
 
-      if (world.portal.active) {
-        const px = world.portal.x - cameraX;
-        const py = world.portal.y - cameraY;
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(120,199,255,0.18)';
-        ctx.arc(px, py, world.portal.r + 16 + Math.sin(Date.now() * 0.005) * 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.strokeStyle = '#78c7ff';
-        ctx.lineWidth = 2;
-        ctx.arc(px, py, world.portal.r + Math.sin(Date.now() * 0.008) * 6, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      ctx.fillStyle = '#e3c17c';
+      ctx.font = '600 14px sans-serif';
+      ctx.fillText('CAMP', cx - 20, cy + 4);
+    }
+
+    function renderPortal(cameraX, cameraY) {
+      if (!state.portal.active) return;
+      const px = state.portal.x - cameraX;
+      const py = state.portal.y - cameraY;
+      const t = Date.now() * 0.008;
+
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(124,201,255,0.16)';
+      ctx.arc(px, py, state.portal.r + 14 + Math.sin(t) * 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#7cc9ff';
+      ctx.lineWidth = 2;
+      ctx.arc(px, py, state.portal.r + Math.sin(t) * 5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.fillStyle = '#8fe7bb';
+      ctx.arc(px, py, 12 + Math.sin(t * 2) * 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function renderRocks(cameraX, cameraY) {
-      for (const rock of world.rocks) {
+      for (const rock of state.rocks) {
         const x = rock.x - cameraX;
         const y = rock.y - cameraY;
-        const r = rock.r;
 
         ctx.beginPath();
         ctx.fillStyle = rock.color;
-        ctx.globalAlpha = 0.75 + rock.glow * 0.18;
-        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.globalAlpha = 0.74 + rock.glow * 0.12;
+        ctx.arc(x, y, rock.r, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
 
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.17)';
         ctx.lineWidth = 1.2;
-        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.arc(x, y, rock.r, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,255,255,0.22)';
-        ctx.arc(x - r * 0.18, y - r * 0.18, r * 0.25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.arc(x - rock.r * 0.22, y - rock.r * 0.2, rock.r * 0.25, 0, Math.PI * 2);
         ctx.fill();
 
-        const barW = r * 1.6;
+        const barW = rock.r * 1.7;
         ctx.fillStyle = 'rgba(0,0,0,0.28)';
-        ctx.fillRect(x - barW / 2, y + r + 8, barW, 5);
-        ctx.fillStyle = '#d9e8f5';
-        ctx.fillRect(x - barW / 2, y + r + 8, (rock.hp / rock.maxHp) * barW, 5);
+        ctx.fillRect(x - barW / 2, y + rock.r + 8, barW, 5);
+        ctx.fillStyle = '#edf6ff';
+        ctx.fillRect(x - barW / 2, y + rock.r + 8, (rock.hp / rock.maxHp) * barW, 5);
+      }
+    }
+
+    function renderMarks(cameraX, cameraY) {
+      for (const mark of state.marks) {
+        const x = mark.x - cameraX;
+        const y = mark.y - cameraY;
+        ctx.beginPath();
+        ctx.globalAlpha = clamp(mark.life / 70, 0, 1);
+        ctx.fillStyle = mark.color;
+        ctx.arc(x, y, mark.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
     }
 
     function renderParticles(cameraX, cameraY) {
-      for (const p of world.particles) {
+      for (const p of state.particles) {
         ctx.beginPath();
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = clamp(p.life / 54, 0, 1);
+        ctx.globalAlpha = clamp(p.life / 50, 0, 1);
         ctx.arc(p.x - cameraX, p.y - cameraY, p.r, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
     }
 
-    function renderMarks(cameraX, cameraY) {
-      for (const mark of world.drawMarks) {
-        const x = mark.x - cameraX;
-        const y = mark.y - cameraY;
-        ctx.beginPath();
-        ctx.globalAlpha = clamp(mark.life / 70, 0, 1);
-        ctx.fillStyle = mark.color;
-        ctx.arc(x, y, mark.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    }
-
     function renderPlayer(cameraX, cameraY) {
-      const px = world.player.x - cameraX;
-      const py = world.player.y - cameraY;
+      const px = state.player.x - cameraX;
+      const py = state.player.y - cameraY;
 
       ctx.beginPath();
-      ctx.fillStyle = '#ebf6ff';
-      ctx.arc(px, py, world.player.radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#edf6ff';
+      ctx.arc(px, py, state.player.radius, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.fillStyle = '#78c7ff';
-      ctx.arc(px + 4, py - 2, world.player.radius * 0.38, 0, Math.PI * 2);
+      ctx.fillStyle = '#7cc9ff';
+      ctx.arc(px + 4, py - 2, state.player.radius * 0.4, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
-      ctx.strokeStyle = '#e0c07a';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#e3c17c';
+      ctx.lineWidth = 2.5;
       ctx.moveTo(px - 11, py + 12);
       ctx.lineTo(px + 12, py + 12);
       ctx.stroke();
     }
 
-    function renderCamp(cameraX, cameraY) {
-      const cx = world.camp.x - cameraX;
-      const cy = world.camp.y - cameraY;
-
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(224,192,122,0.18)';
-      ctx.arc(cx, cy, world.camp.r, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#e0c07a';
-      ctx.lineWidth = 2;
-      ctx.arc(cx, cy, world.camp.r, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#e0c07a';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('CAMP', cx - 22, cy + 4);
-    }
-
     function draw() {
-      const cameraX = clamp(world.player.x - canvas.width / 2, 0, world.w - canvas.width);
-      const cameraY = clamp(world.player.y - canvas.height / 2, 0, world.h - canvas.height);
+      const cameraX = clamp(state.player.x - canvas.width / 2, 0, state.worldWidth - canvas.width);
+      const cameraY = clamp(state.player.y - canvas.height / 2, 0, state.worldHeight - canvas.height);
+      state.camera.x += (cameraX - state.camera.x) * 0.1;
+      state.camera.y += (cameraY - state.camera.y) * 0.1;
 
-      renderBackground();
-      renderCamp(cameraX, cameraY);
-      renderRocks(cameraX, cameraY);
-      renderMarks(cameraX, cameraY);
-      renderParticles(cameraX, cameraY);
-      renderPlayer(cameraX, cameraY);
-
-      if (world.portal.active) {
-        const px = world.portal.x - cameraX;
-        const py = world.portal.y - cameraY;
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(120,199,255,0.55)';
-        ctx.arc(px, py, 12 + Math.sin(Date.now() * 0.01) * 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      renderBackground(state.camera.x, state.camera.y);
+      renderCamp(state.camera.x, state.camera.y);
+      renderPortal(state.camera.x, state.camera.y);
+      renderRocks(state.camera.x, state.camera.y);
+      renderMarks(state.camera.x, state.camera.y);
+      renderParticles(state.camera.x, state.camera.y);
+      renderPlayer(state.camera.x, state.camera.y);
     }
 
     function tick() {
@@ -804,25 +816,27 @@
 
     document.addEventListener('keydown', (event) => {
       const key = event.key.toLowerCase();
-      keys[key] = true;
+      state.keys[key] = true;
 
-      if (key === 'e') mineClosestRock();
-      if (key === 'q') drawMark();
-      if (key === 'f') handlePortal();
+      if (key === 'e') mineNearbyRock();
+      if (key === 'q') drawInkMark();
+      if (key === 'f') handleInteraction();
 
       if (key === 'r') {
-        world.player.x = world.camp.x + 18;
-        world.player.y = world.camp.y + 18;
-        ui.message.textContent = 'You reset to camp.';
+        state.player.x = state.camp.x + 24;
+        state.player.y = state.camp.y + 24;
+        state.player.vx = 0;
+        state.player.vy = 0;
+        ui.message.textContent = 'Reset to camp.';
       }
     });
 
     document.addEventListener('keyup', (event) => {
       const key = event.key.toLowerCase();
-      keys[key] = false;
+      state.keys[key] = false;
     });
 
-    world.rocks = generateRocks();
+    state.rocks = generateRocks();
     updateHud();
     requestAnimationFrame(tick);
   </script>
