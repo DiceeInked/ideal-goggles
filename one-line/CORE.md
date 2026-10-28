@@ -4,12 +4,12 @@ See the canonical [OneLine Language Specification](SPECIFICATION.md) and [Formal
 
 OneLine Core is the flexible, general-purpose form of OneLine. It has near-zero restrictions imposed specifically for portability and does not automatically inherit Raw's strict profile. It still requires valid syntax and defined or explicitly annotated semantics.
 
-Core can represent dynamic or explicit types, richer values such as tuples, source-specific arithmetic and conversion behavior, custom runtime operations, and platform-specific features. Flexibility does not permit the translator to guess what an unknown operation means.
+Core can use tuple values, host-registered custom types, and source-specific arithmetic or runtime operations represented by the semantic model. Version 0.2 does not define untyped variable declarations, custom type declaration syntax, or general-purpose casts. Flexibility does not permit the translator to guess what an unknown operation means.
 
 Example:
 
-    func(("double")((num)(x))((int)))[
-      ret(cal(num(par(x))*num(2)));
+    func(("double")((num)(x))((num)))[
+      ret(cal(par(x)*num(2)));
     ]
 
     flag()[

@@ -22,13 +22,23 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
 
 ## Functions
 
-    func(("double")((num)(x))((int)))[
-      ret(cal(num(par(x))*num(2)));
+    func(("double")((num)(x))((num)))[
+      ret(cal(par(x)*num(2)));
     ]
 
     flag()[
       say(fun(("double")((int(5)))));
     ]
+
+## Arithmetic and comparisons
+
+    cal(int(2)+cal(int(3)*int(4)))
+    com(var(score)>=int(10))
+    and(boo(TRUE)boo(FALSE))
+    or(boo(TRUE)boo(FALSE))
+    not(boo(FALSE))
+
+`cal(...)` supports `+`, `-`, `*`, `:` (division), and `^` (exponentiation). Nested `cal(...)` calls group expressions. Raw division always returns `flo`; division by zero is a runtime error.
 
 ## Conditions
 

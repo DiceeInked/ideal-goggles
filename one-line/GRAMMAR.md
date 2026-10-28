@@ -4,9 +4,9 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
 
 ## Lexical tokens
 
-    Letter        = "A"..."Z" | "a"..."z" | "_" ;
+    Letter        = "A"..."Z" | "a"..."z" ;
     Digit         = "0"..."9" ;
-    Identifier    = Letter, { Letter | Digit } ;
+    Identifier    = (Letter | "_"), { Letter | Digit | "_" } ;
     StringLiteral = double-quote, { Character | Escape }, double-quote ;
     Escape        = backslash | escaped-quote | newline | carriage-return | tab ;
     Boolean       = "TRUE" | "FALSE" ;
@@ -18,9 +18,8 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
     IntegerLiteral = Digit, { Digit } ;
     FloatLiteral   = Digit, { Digit }, ".", Digit, { Digit }, [ Exponent ] ;
     NumberLiteral  = IntegerLiteral | FloatLiteral ;
-    Expression     = Value ;
 
-Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons separate simple statements. In this EBNF, the notation A...Z means any character in that inclusive range.
+Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase. Whitespace is ignored outside strings and comments. A // comment ends at a line break. Semicolons terminate simple statements. Text literals cannot contain an unescaped quote, backslash, or raw line break. Supported escape spellings are `\\`, `\"`, `\n`, `\r`, and `\t`; unknown escapes are errors. In this EBNF, the notation A...Z means any character in that inclusive range.
 
 ## Compilation unit
 
@@ -46,11 +45,11 @@ A regular Core or Raw file contains top-level function definitions and execution
                      | "loc" "(" "(" Type ")" "(" Identifier ")" Value ")" ;
     Assignment       = "set" "(" "(" Identifier ")" Value ")" ;
     Output           = "say" "(" Value ")" ;
-    Return           = "ret" "(" Value? ")" ;
+    Return           = "ret" "(" Value ")" ;
     VariableRead     = "var" "(" Identifier ")" ;
     ParameterRead    = "par" "(" Identifier ")" ;
 
-Every simple statement must end with a semicolon, including the final simple statement before a closing bracket. Self-delimiting conditionals and blocks do not take a trailing semicolon. Newlines alone never separate statements. Function definitions and execution blocks are top-level items, not body statements. Function definitions cannot be nested.
+Every simple statement must end with a semicolon, including the final simple statement before a closing bracket. Self-delimiting conditionals and blocks do not take a trailing semicolon. Newlines alone never separate statements. Function definitions and execution blocks are top-level items, not body statements. Function definitions cannot be nested. `ret` is parsed as a body statement but is semantically valid only inside a function body.
 
 ## Values and operations
 
@@ -78,8 +77,11 @@ Every simple statement must end with a semicolon, including the final simple sta
                      | "or" "(" Value Value ")"
                      | "not" "(" Value ")" ;
     Arithmetic       = "cal" "(" NumericExpression ")" ;
+    NumericValue     = "int" "(" IntegerLiteral ")"
+                     | "flo" "(" FloatLiteral ")"
+                     | "num" "(" NumberLiteral ")" ;
 
-val(value) and a bare parenthesized value are transparent wrappers: they preserve the wrapped value and type. Tuples are Core-only in version 0.2.
+val(value) and a bare parenthesized value are transparent wrappers: they preserve the wrapped value and type. Tuples are Core-only in version 0.2. The `num` type is a tagged union of int and flo; `num(...)` itself accepts a numeric literal only and infers its member type from the literal spelling.
 
 ## Arithmetic precedence
 
@@ -88,9 +90,8 @@ val(value) and a bare parenthesized value are transparent wrappers: they preserv
     Product           = Unary, { ("*" | ":"), Unary } ;
     Unary             = ("+" | "-"), Unary | Power ;
     Power             = Atom, [ "^", Unary ] ;
-    NumericLiteral    = IntegerLiteral | FloatLiteral ;
-    Atom              = NumericLiteral | VariableRead | ParameterRead | FunctionCall
-                      | "(" NumericExpression ")" ;
+    Atom              = NumericValue | VariableRead | ParameterRead | FunctionCall
+                      | Arithmetic | "(" NumericExpression ")" ;
 
 Exponentiation is right-associative. Precedence from highest to lowest is grouping, exponentiation, unary sign, multiplication/division, addition/subtraction. The colon is division.
 
@@ -123,8 +124,8 @@ Function names are quoted. Variable and parameter names are bare identifiers. Fu
     Region        = "core" "()" "[" TopLevelItem* "]"
                   | "rawb" "()" "[" TopLevelItem* "]" ;
 
-A condition must be boolean in Raw. A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only. Every top-level item belongs to exactly one region. Core may use custom or tuple types where defined. Raw profile validation restricts types to the six built-in types.
+A condition must evaluate to boo in both profiles. A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only. Every top-level item belongs to exactly one region. Core may use tuple types and host-registered custom types where defined. Version 0.2 defines no source syntax for custom type declarations. Raw profile validation restricts types to the six built-in types.
 
 ## Parser obligations
 
-Implement explicit operator precedence and associativity, not naive string splitting. Reject missing separators, unknown tokens, mismatched delimiters, invalid type forms, nested function definitions, bare top-level statements, and trailing tokens. Preserve source spans for diagnostics. The parser must not invent declarations or conversions.
+Implement explicit operator precedence and associativity, not naive string splitting. Reject missing separators, unknown tokens, mismatched delimiters, invalid type forms, nested function definitions, `ret` outside a function, bare top-level statements, and trailing tokens. Preserve source spans for diagnostics. The parser must not invent declarations or conversions.

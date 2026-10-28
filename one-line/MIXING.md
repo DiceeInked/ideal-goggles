@@ -22,7 +22,7 @@ A mixed file contains exactly one outer mixd()[...] block. Its body contains one
 - Regions cannot nest.
 - All executable code must belong to exactly one region.
 - Code outside the mixd root is invalid in a mixed file.
-- Cross-region calls require explicit compatible signatures and supported boundary types.
+- Function names are program-wide and unique. A cross-region call uses ordinary `fun(...)` syntax and may target an earlier definition in another region, but its explicit signature and every argument/return type must satisfy the boundary rules. Forward calls remain errors.
 - Version 0.2 allows only int, flo, num, txt, boo, and nul across Raw boundaries. Tuples and custom Core types cannot cross a Raw boundary.
 - A Raw region cannot silently rely on a Core-only behavior.
 

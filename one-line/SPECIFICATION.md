@@ -22,11 +22,11 @@ Raw cannot guarantee every program will run on every language or platform. A tar
 - Identifiers use ASCII in version 0.2 and match [A-Za-z_][A-Za-z0-9_]*. Identifiers are case-sensitive.
 - Function names are double-quoted strings in the function declaration and call syntax. Variable and parameter names are bare identifiers.
 - Boolean literal spellings are exactly TRUE and FALSE.
-- Integer literals are decimal whole numbers. Floating-point literals contain a decimal point, such as 0.1; exponent notation is allowed.
-- Text is written as txt("text"). Supported escapes are backslash, escaped double quote, newline, carriage return, and tab. Unknown escapes are errors.
+- Integer literals are decimal whole numbers. Floating-point literals contain a decimal point, such as 0.1; an exponent may follow a decimal floating-point literal, for example 1.25e-3.
+- Text is written as txt("text"). Text literals cannot contain an unescaped double quote, backslash, or raw line break. The only supported escapes are `\\` for a backslash, `\"` for a double quote, `\n` for a newline, `\r` for a carriage return, and `\t` for a tab. Unknown escapes are errors. Other Unicode text characters are allowed.
 - // begins a comment that ends at the line break.
 - Whitespace and line breaks are ignored except inside text literals and comments.
-- Semicolons separate simple statements and are required after every simple statement, including the final simple statement before a closing square bracket. Self-delimiting blocks and conditionals do not take a trailing semicolon.
+- Semicolons terminate every simple statement and are required after every simple statement, including the final simple statement before a closing square bracket. Self-delimiting blocks and conditionals do not take a trailing semicolon.
 - Parentheses and punctuation inside a quoted text literal are text, not syntax.
 - Documentation placeholders such as /NAME/ are not source code.
 
@@ -72,8 +72,9 @@ Built-in types are int, flo, num, txt, boo, and nul.
 
 - int(5): integer literal.
 - flo(5.5): floating-point literal.
-- num(1): numeric literal inferred as integer from its spelling.
-- num(0.1): numeric literal inferred as floating-point from its spelling.
+- num(1): numeric literal inferred as int from its spelling.
+- num(0.1): numeric literal inferred as flo from its spelling.
+- The type `num` is a tagged numeric union that can hold either an int or a flo value. The `num(...)` literal constructor accepts a numeric literal only; it is not a general cast or conversion.
 - txt("hello"): text.
 - boo(TRUE) and boo(FALSE): booleans.
 - nul(): null/no-value.
@@ -83,7 +84,7 @@ Built-in types are int, flo, num, txt, boo, and nul.
 
 The val(value) wrapper evaluates to the same value and type as value. A bare parenthesized value expression is a grouping/value wrapper with the same meaning as val(value).
 
-Core may support dynamic values, tuples, richer return values, custom types, and source-specific semantics when the compiler's semantic representation defines them. Function parameters and return types remain explicit in both profiles. Core flexibility does not excuse unknown operations or undefined behavior: a used operation must have defined semantics or explicit metadata.
+Core supports tuples in version 0.2 and may use compiler- or host-defined custom types when those types are registered with the semantic model. Version 0.2 does not define syntax for declaring new types or for untyped variables. Function parameters and return types remain explicit in both profiles. Core flexibility does not excuse unknown operations or undefined behavior: a used operation must have defined semantics or explicit metadata.
 
 ## 5. Variables and scope
 
@@ -94,7 +95,7 @@ Canonical declarations:
     set((total)cal(var(total)+var(step)));
     say(var(total));
 
-A declaration supplies type, identifier, and initial value. Raw requires explicit types and initializers. The initializer must match the declared type. Assignment updates an existing variable and does not change its type.
+A declaration supplies type, identifier, and initial value. Raw requires explicit types and initializers. The initializer must match the declared type; for `num`, either int or flo is compatible with the numeric union. Assignment updates an existing variable and does not change its declared type.
 
 Scope rules:
 - A local variable cannot reuse a global variable's name.
@@ -103,14 +104,14 @@ Scope rules:
 - Reads must resolve to a declared variable or current function parameter.
 - Functions must be defined before their calls appear in source order.
 
-Core may represent an explicitly uninitialized or dynamic variable if the implementation defines its behavior. Raw does not permit uninitialized declarations in version 0.2.
+Version 0.2 requires an initializer in both profiles; there is no uninitialized-declaration syntax. Core may define richer initializer semantics through its semantic model, but the source form must still contain an initializer.
 
 ## 6. Functions
 
 Canonical declaration and call:
 
-    func(("double")((num)(x))((int)))[
-      ret(cal(num(par(x))*num(2)));
+    func(("double")((num)(x))((num)))[
+      ret(cal(par(x)*num(2)));
     ]
 
     flag()[
@@ -127,9 +128,9 @@ Structure:
 - par reads a parameter.
 - ret returns a value.
 
-Multiple parameters repeat type-name pairs, for example func(("combine")((int)(first)(txt)(second))((txt)))[...]. Zero-parameter calls use an empty argument group: fun(("name")()).
+Multiple parameters repeat type-name pairs, for example func(("combine")((int)(first)(txt)(second))((txt)))[...]. A `num` parameter accepts either int or flo values, and a `num` return type can return either. Zero-parameter calls use an empty argument group: fun(("name")()).
 
-The return type is explicit in both profiles. Raw functions return exactly one value of the declared type or use nul for no value. A Raw value-returning function must return on every reachable path. Core can return a tuple with ret(tup(value1 value2)) when the Core type checker accepts it.
+The return type is explicit in both profiles. `ret(...)` always has one value argument; use `ret(nul())` to explicitly return no-value. A function declared with return type `nul` may also finish without an explicit `ret`. A Raw function with any other return type must return a compatible value on every reachable path. Core can return a tuple with ret(tup(value1 value2)) when the Core type checker accepts it. `ret` is legal only inside a function body, never inside `flag` or `reap` bodies.
 
 Argument count, parameter types, return types, and function-definition order are checked before translation. Calls to unknown or not-yet-defined functions are errors.
 
@@ -154,9 +155,11 @@ Raw numeric model in version 0.2:
 - int is signed 64-bit.
 - flo is IEEE 754 binary64.
 - Integer overflow is a runtime error, not silent wrapping.
-- Mixed integer/floating-point arithmetic produces flo.
+- Integer `+`, `-`, and `*` produce int and raise a runtime error on signed 64-bit overflow.
+- If both exponent operands are int and the exponent is a nonnegative integer, `^` produces int and raises a runtime error on overflow. If either operand is flo or the exponent is negative, `^` produces flo.
+- Mixed int/flo arithmetic produces flo.
 - Division always produces flo, even if the result is a whole number.
-- Division by zero is a runtime error.
+- Division by zero raises a runtime error when the expression is evaluated, including when the divisor is a literal zero.
 - Floating-point NaN and infinity are supported when produced by defined non-division operations; Raw division by zero remains an error.
 - and and or short-circuit left-to-right.
 
@@ -169,7 +172,7 @@ Comparison syntax:
     com(num(5)>=num(3))
     com(var(score)==int(10))
 
-Supported operators are ==, !=, >=, <=, >, and <. The result is boo. Raw requires comparable operand types and does not convert unrelated values implicitly.
+Supported operators are ==, !=, >=, <=, >, and <. The result is boo. Raw requires comparable operand types and does not convert unrelated values implicitly. Equality and inequality are defined for same-type values and for numeric int/flo pairs; mixed numeric comparisons promote int to flo. Ordering comparisons are defined for numeric values only. Text equality compares the exact text sequence, boolean equality compares boolean values, and nul equals only nul. Floating-point comparisons follow IEEE 754 behavior, including NaN comparison rules.
 
 Boolean syntax:
 
@@ -187,17 +190,17 @@ Boolean operations accept only boolean values in Raw. There is no truthiness con
       say(txt("Try again"));
     ]
 
-The condition must evaluate to boo. else is allowed only immediately after the then-body. say(value) sends output through a configured console/output service. If a target lacks an equivalent service, the translator must require an adapter or report incompatibility.
+The condition must evaluate to boo in both profiles; OneLine does not use implicit truthiness for conditionals. else is allowed only immediately after the then-body. say(value) sends output through a configured console/output service. If a target lacks an equivalent service, the translator must require an adapter or report incompatibility.
 
 ## 10. Execution blocks and ordering
 
 - flag()[...] executes once in ordinary program flow.
 - reap()[...] schedules recurring work once per rendered frame in a runtime that provides frames.
-- reap(rate)[...] schedules recurring work at the specified positive tick rate.
+- reap(rate)[...] schedules recurring work at the specified positive tick rate. The rate expression must evaluate to a positive integer when the block registers; invalid rates are runtime errors. The rate is measured in ticks per second.
 - func(...)[...] defines a function.
 - cond(...)[...] defines conditional flow.
 
-Numeric block priority labels have been removed. Ordinary execution follows source order. Recurring blocks register in source order and are then scheduled by the runtime; they do not block ordinary execution. A no-rate reap requires a frame source. A Raw target without that service must report the requirement rather than silently invent a clock.
+Numeric block priority labels have been removed. Top-level items are processed in source order: function definitions register their signatures but do not execute their bodies; `flag` blocks run once when reached; `reap` blocks register when reached and then run on the runtime scheduler without blocking ordinary execution. A function signature is registered before its body is checked, so self-recursion is allowed; calls to later definitions are errors. A no-rate `reap` requires a frame source. A Raw target without that service must report the requirement rather than silently invent a clock.
 
 ## 11. Mixed Core/Raw programs
 
@@ -223,18 +226,19 @@ Rules:
 - Code outside the outer mixd block is an error in a mixed file.
 - A Raw region cannot silently depend on Core-only behavior.
 - Cross-region calls require explicit, compatible interfaces.
-- In version 0.2, only int, flo, num, txt, boo, and nul may cross a Raw boundary. Tuples and custom Core types cannot cross that boundary.
+- In version 0.2, only int, flo, num, txt, boo, and nul may cross a Raw boundary. Tuples and custom Core types cannot cross that boundary. Function names are program-wide and unique; a cross-region call may target an earlier function definition in another region through ordinary `fun(...)` syntax, but its explicit signature and all argument/return types must satisfy these boundary rules. Forward calls remain errors.
 
 A regular Core file uses Core throughout. A regular Raw file uses Raw throughout. Only mixed files use mixd.
 
 ## 12. Statement and block rules
 
 - Every simple statement must end with a semicolon.
-- A semicolon immediately before a closing square bracket is optional.
+- A semicolon is required after every simple statement, including the final simple statement before a closing square bracket.
 - Newlines do not separate statements.
 - Function definitions, conditionals, and block constructs are self-delimiting.
 - Empty statements are invalid.
 - Every executable statement must be inside a code block.
+- `ret` is valid only inside a function body.
 - Extra tokens after a complete program are an error.
 
 ## 13. Error categories

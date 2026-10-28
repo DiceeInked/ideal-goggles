@@ -9,7 +9,7 @@ The canonical design baseline is [SPECIFICATION.md](SPECIFICATION.md), with pars
 - Mixed files use one mixd()[...] root with explicit, non-nested core()[...] and rawb()[...] regions.
 - Ordinary built-ins use three-letter tokens; block tokens use four letters, with and/or as boolean operators.
 - Text literals are quoted inside txt(...).
-- Semicolons separate simple statements; newlines do not.
+- Semicolons terminate simple statements; newlines do not.
 - Source order controls ordinary execution. Numeric block priority labels are removed.
 - func defines, fun calls, and par reads parameters.
 - Raw requires explicit types and return types, rejects implicit conversions, and defines numeric/error behavior.

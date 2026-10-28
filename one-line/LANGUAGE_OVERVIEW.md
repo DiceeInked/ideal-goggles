@@ -25,7 +25,7 @@ A mixed file uses one outer structure:
 
 The parser is shared; profile validation determines which rules apply. Cross-region calls require explicit compatible interfaces.
 
-Whitespace and line breaks are for readability, not statement separation. Semicolons separate simple statements. Built-ins are lowercase and case-sensitive; text is quoted inside txt(...). Ordinary operations use three-letter tokens, while block constructs use four-letter tokens, with and/or as boolean operators.
+Whitespace and line breaks are for readability, not statement separation. Semicolons terminate simple statements. Built-ins are lowercase and case-sensitive; text is quoted inside txt(...). Ordinary operations use three-letter tokens, while block constructs use four-letter tokens, with and/or as boolean operators.
 
 The translator checks semantics rather than merely replacing syntax. It reports Direct, Adapted, Blocked, or Unverified outcomes. Raw aims for practical portability, not a guarantee that every target can execute every program.
 
