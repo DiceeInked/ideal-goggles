@@ -36,7 +36,7 @@ The intended naming convention is three letters for ordinary built-ins and four 
 
 | Token | Meaning |
 |---|---|
-| val | General value wrapper retained for compatibility with the original concept |
+| val | General value wrapper; semantically transparent |
 | boo | Boolean literal |
 | nul | Null/no-value |
 | txt | Text literal |
