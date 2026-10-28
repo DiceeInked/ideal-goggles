@@ -39,10 +39,10 @@ The intended feeling is a shared journey: other players should appear along the 
 6. **Competition has multiple routes to victory.** Inkoff supports both resource delivery and Queen elimination.
 7. **Originality matters.** Inspiration from other games is for broad feelings or systems, not copying their characters, assets, maps, sounds, writing, or interface.
 
-{DECIDE: What is the final title and title abbreviation?}  DAG (Drawing Adventure Game )
-{DECIDE: Who is the intended audience and age rating?}  People who love adventure and art Age rating probily 8~13+
-{DECIDE: Which platforms, input methods, game engine, and release target are planned?}  Mobile, computer, and maybe web.
-{DECIDE: What is the intended balance between calm exploration, horror, combat, drawing, and social play?} Social is every where even if subtle. Exploration is pretty important with the cave biomes and weekly cave resets. Horror is important as its starts to get pretty scary the deeper you go however I would say its to much of a horror game. Combat is very important as pretty much the entire time you’re carrying a weapon. Drawing is pretty important.
+**Title and abbreviation:** Drawing Adventure Game (DAG).
+**Audience and target age:** Players who enjoy adventure and art; the tentative target age is around 8–13+.
+**Platforms:** Mobile and computer are planned; web is a possibility. {DECIDE: Which engine, input methods, and release target will be used?}
+**Design emphasis:** Social features should be present everywhere, even subtly. Exploration is important, especially through cave biomes and resets. Horror should grow stronger deeper underground, but the game should not become too horror-focused. Combat is very important because players carry weapons for most of the adventure. Drawing is also a major part of the experience.
 
 ## 2. Player experience and overall loop
 
@@ -53,7 +53,7 @@ The intended broad loop is:
 1. Start at the Camp.
 2. Prepare, talk to available characters, and access the stash.
 3. Enter the first cave and collect a small amount of ore.
-4. Explore, find the drawing-puzzle passage (Stronghold), and descend to a new cave layer.
+4. Explore, find and activate a Stronghold, draw its three symbols in under three seconds to earn a shard, then open a hole and jump into a deeper cave level.
 5. Continue gathering ink and shards, discovering creatures, merchants, structures, and biomes.
 6. Use resources to create or recolor art, buy or build weapons, and improve gear.
 7. Encounter other players naturally, optionally travel with them, and use social actions.
@@ -61,11 +61,11 @@ The intended broad loop is:
 
 The cave descent is designed to feel continuous even though the game may disconnect the player from one server instance, load another layer, and reconnect during the fall.
 
-{DECIDE: What exactly starts a new adventure run, and can players leave and resume at any time?}  Players can leave the cave at any time by using the rift (portable stash) and jumping into it, but it’s a one way trip. Players start by just walking in.
-{DECIDE: How does a player return to the Camp or surface?}  Using the rift which can also be used to teleport items to your stash.
-{DECIDE: Are there quests, missions, narrative objectives, achievements, or a final ending?}  There may be a challenge board but not realy.
-{DECIDE: What is the intended length of a typical cave run?}  Depends on the week (since the caves reset bi-weekly), but to get from A99 to Z00 I would say at least 3-4 hours if your going as quick as possible (NOTE: once you open a stronghold it will emit light making it much easier to find if you return to the surface and then are trying to get back quicker, also opening a stronghold disables mob spawning (including shopkeepers) for that level).
-{DECIDE: What should a new player do in their first five minutes?}  The tutorial and hen go explore the mines probably.
+**Starting and leaving a cave:** Players start by walking into the Mines. They can leave a cave at any time by jumping into the Rift (the portable stash portal), but using it is a one-way exit from that cave trip.
+**Returning to the surface:** Players use the Rift. It can also send items directly to the player's stash.
+**Quests and objectives:** A challenge board may be added, but a conventional quest or narrative-objective system is not currently planned.
+**Cave-run length and returning to a known route:** Reaching Z00 from A99 should take at least 3–4 hours when moving as quickly as possible. Run length depends on the cave-reset schedule, which has conflicting answers elsewhere in these notes. Once activated, a Stronghold emits light so it is easier to find after leaving for the surface and returning. Opening a Stronghold disables mob spawning, including shopkeepers, on that level.
+**First five minutes:** Complete the tutorial, then explore the Mines.
 
 ### Modes
 
@@ -76,36 +76,33 @@ The cave descent is designed to feel continuous even though the game may disconn
 - **Personal homes and PAL:** Earlier ideas that need confirmation before being treated as current features.
 
 {DECIDE: Are these all separate modes or areas of one connected experience?}  Areas, however all the multiplayer stuff (InkOff, Shared Boards etc) is accessed from the antenna planet. Also the drawing board is just a tiny little board.
-{DECIDE: Is there a main menu, match browser, party system, or other mode-selection screen?} All of the UIs (aside from the start menu) will be represented with merchants or robots. Aside from that you need to walk around manually.
+**Menus and interaction:** Aside from the start menu, interfaces are represented by in-world merchants or robots. Players generally need to walk up to them to interact rather than opening a conventional interface from anywhere.
 
 ## 3. World and setting
 
 ### The planet
 
-The current world is one large planet, not a group of daily, seasonal, or white islands. The Camp is the starting area, and caves are a major part of exploration.
+The main adventure is a large planet with the Camp and a cave network. The old daily, seasonal, and white-island structure is scrapped.
 
-The older island plan is no longer current:
-- The daily default island with a small amount of every color is scrapped.
-- The seasonal island with colors that change by season is scrapped.
-- The white island that changes color when ink is placed in its center is scrapped.
-- Those islands should not be added back into the current design unless deliberately reintroduced.
+The filled-in notes also describe **The Grid**, a small, round neon-circle planet that players can walk around. A merchant stands at the top, with antennas corresponding to boards the player has joined. The merchant lets players join other boards and worlds, and should feel mysterious, knowledgeable, and boastful about its capabilities. The answer says The Grid is a planet, but the notes also describe an antenna planet that hosts multiplayer features. Its relationship to the main cave planet is not yet clear.
 
-{DECIDE: What are the planet's name, surface appearance, climate, landmarks, and story?}  The planets nam is the grid and it looks like a neon circle you can walk around with a merchant at the top and antennas for boards you’ve joined. You can talk to the shop keeper(not specified yet but should seem mysterious and bragging about how it has the ability’s and info to do its job) to join other boards, and other worlds.
-{DECIDE: What exists on the surface beyond the Camp, cave entrances, and the antenna?}  Not planned yet will probably be a later update
-{DECIDE: How large is the playable planet, and is it continuous or divided into areas?}  It is round and not to big you can literally walk around it and if you go to the bottom you will be upside down.
-{DECIDE: Is there a world map, compass, navigation aid, or fast travel?} No the only “map” you have is next to the mines and shows all the layers you have opened the stronghold in. Ther are also signs defining area.
+{CLARIFY: Is The Grid a separate antenna hub, or is it the same planet that contains the Camp and cave network?}
+
+Other surface landmarks are not currently planned and may be added in a later update. The described round planet is small enough to walk around, and a player becomes upside down when walking around the bottom.
+
+There is no world map or compass. A map beside the Mines shows the cave levels where a player has opened a Stronghold, and signs identify areas.
 
 ### The Camp
 
-The Camp is the starting and preparation area. Current notes say players can talk to certain characters, access the stash, and use a small glitchy portal that opens their own persistent drawing board.
+The Camp is the starting area. Players can draw there, and those drawings are visible to other players. The Camp is divided into servers like the caves, with up to three randomly selected players in each instance.
 
-The stash is mainly for weapons and special artifacts. Players can carry effectively unlimited ink and shards, so those resources do not need to be stored there.
+A droplet character is positioned beside the antenna. {DECIDE: What is the droplet's name and purpose?}
 
-{DECIDE: Which characters are in the Camp, what can each one do, and what dialogue do they have?}  A droplet that is next to the antenna.
-{DECIDE: Does the Camp contain training, weapon assembly, a party meeting point, shops, portals, or other services?}  Multiplayer is on the planet. There is a merchant named Liv, she lets you edit and make weapons (as long as they are not locked). And T h e   P i t which is how you get to ink off unlocked after you meet Que the quest merchant in the caves.
-{DECIDE: Can players draw on the Camp itself, and can other players see those drawings?}  Yes, and yes.
-{DECIDE: Is the Camp shared by all players or split into instances?}  Split into servers the same way the caves are but it can only have three different players which are random.
-{DECIDE: How does the player enter the first cave?} There is mines entrance that you can find to the left of the Camp (T h e   P i t i to the right of the camp).
+Liv is a merchant who lets players create and edit weapons as long as those weapons are not locked. The Mines entrance is to the left of the Camp. The Pit entrance is to the right; it leads to Inkoff and unlocks after the player meets Que, a quest merchant, in the caves.
+
+The notes also say that multiplayer features such as Inkoff and shared boards are accessed from the antenna planet. The relationship between that hub and The Pit needs clarification before the access route can be finalized.
+
+Players use the Rift (portable stash portal) to leave the cave and return to the surface/Camp. This is a one-way exit for that cave trip, though the Rift can also send items directly to the player's stash.
 
 ## 4. Caves, levels, structures, and transitions
 
@@ -117,52 +114,42 @@ The first cave is intended to be quiet and mostly empty:
 - It has no shopkeepers.
 - It introduces the player to cave exploration and resource collection.
 
-After exploring, the player can find a passage that drops almost straight down. Before descending, the player must solve a drawing puzzle: copy one shape, then quickly draw a couple more shapes as they appear. Solving the puzzle opens a long fall into the next cave layer.
+Players enter by walking into the Mines. The tutorial comes first, after which new players are expected to explore the Mines. Players cannot skip the tutorial but can replay it. If they fail the drawing puzzle, they can retry. The exact shapes to draw, timing, and allowed attempts are still unspecified.
 
-{DECIDE: What are the exact tutorial shapes, timing, number of attempts, and failure behavior?}  IDK what dat means.
-{DECIDE: Can players skip or replay the tutorial?}  No Skip Yes Replay.
-{DECIDE: What happens if a player walks away from the puzzle or fails it?}  Retry.
+The first descent leads into a long fall while the game changes cave layer and server instance. The precise puzzle instructions remain to be decided.
 
-### Layer numbering
+### Sections and cave levels
 
-The Keynote-exported notes describe a letter-and-number level system:
-- A new cave run starts at **A99**.
-- Levels range from **A99 to Z00**.
-- A level helps determine what can spawn and how rare those things are.
-- Strongholds can change a player's layer.
+The world is divided into Sections lettered **A through Z**. **A is the highest Section** and **Z is the lowest/deepest**. Each Section contains cave levels numbered from **99 down through 01**. Level **00** connects to the next deeper Section, such as A00 leading onward to Section B. A run starts at **A99**.
 
-The notation and direction of progression are not yet fully clear. It is not safe to assume that a higher letter or number means deeper, rarer, or more dangerous without clarifying the numbering rule.
-
-{DECIDE: Explain what A99, A01, A00, B99, B01, B00, and Z00 mean in order.}  A Is the highest section, 99-01 are layers in the section, 00 is the layer that takes to a deeper section (ex A -> B)
-{DECIDE: Does the number count down within each letter, and does progression move from A to B or from Z to A?}  A to Z, A is higher, Z is the lowest.
-{DECIDE: Is a “level” one screen, one cave floor, one server instance, or a larger depth band?}  Actually they are gonna be called Sections, and it is a Section of cave levels.
-{DECIDE: What are the exact creature, ore, merchant, and structure spawn rules for each level?}  TBD
+A Section is a group of cave levels; the letter identifies the Section and the number identifies a level within it. Exact creature, ore, merchant, and structure spawn rules by cave level are TBD.
 
 ### Strongholds
 
-The PDF notes describe a **Stronghold** as a passive structure that spawns in every cave and changes the layer when entered. It is described as choosing a random layer within a range based on the current letter and floor. The source wording says the range runs from the current letter and a floor one below the current floor to the current letter at 00; if 00 is selected, a random number from 99 to 01 is picked and the floor letter decreases by one, with A to B given as an example.
+A Stronghold looks like a shrine with a stone-like floor. To activate it, the player hits it and then draws three symbols. If all three symbols are drawn in under three seconds, the player receives one shard.
 
-That wording is internally unclear, so it is recorded as a source note rather than a usable final rule.
+Once opened, a Stronghold emits light, making it easier to find after leaving for the surface and returning. Opening a Stronghold disables mob spawning, including shopkeepers, on that level. Strongholds can spawn inside Water Caves and all other special biomes.
 
-{DECIDE: What does a Stronghold look like, and how does a player activate it?}  It looks like a shrine with a stone like floor. A player activates it by hit it and then drawing the three symbols, if the symbols are drawn in under 3 secs a single shard is given.
-{DECIDE: What exact random destination range does it use? Write the rule as a clear formula and give at least three examples.}
-{DECIDE: Can a Stronghold move players shallower as well as deeper?}  No, it just opens a hole players jump into.
-{DECIDE: Does it move a whole party together, and does it preserve the current cave seed?}  No, it just opens a hole players jump into. Also cave seeds dont exist the cave resets for ALL players weekly the new layout is the same for everyone.
-{DECIDE: Can Strongholds spawn inside Water Caves or other special biomes?}  Yes, always.
+A Stronghold opens a physical hole that players jump into. It does not take players to a shallower area and does not move an entire party together; players enter the hole individually. The exact destination for the hole is unresolved. The earlier PDF described a random layer destination, while the latest filled answer describes the physical hole but does not specify a destination formula.
+
+{DECIDE: Where exactly does the hole lead? Does it always lead to the next deeper Section, or can it lead to a random deeper level? Provide examples.}
+
+Cave layouts do not use per-instance seeds. The generated layout is the same for all players.
 
 ### Cave generation and resets
 
-The PDF says cave terrain is random, that caves are the main adventure area, that caves spawn ink ores, and that the layout resets for all players each week. Under the source-of-truth rules, the current rule is that cave terrain is randomly generated and resets globally for all players once per week. Older repository notes that say weekly resets are unconfirmed are superseded by the PDF.
+The cave terrain is randomly generated, and the new layout is shared globally by all players. There are no per-instance cave seeds.
+
+The filled-in answers conflict about the reset interval: one says **weekly**, while another says **bi-weekly**. The interval is not finalized until that contradiction is resolved.
 
 Older notes also describe very large spiral-like cave spaces, gems that can be mined for extra ink, special rooms with extra gems, and lower cave levels that can unexpectedly continue down through a portal. Their current status is unclear, so they are preserved here as ideas to confirm rather than guaranteed features.
 
-{DECIDE: Are giant spiral caves, gem deposits, extra-gem rooms, and surprise deeper portals still part of the cave design? If so, how do they work?}
-
-{DECIDE: What day and time does the global weekly cave reset happen, and what happens to players currently in a cave?}  
-{DECIDE: Does the weekly reset regenerate all cave features and ores, or only terrain and layout?}  
-{DECIDE: Are players in a shared cave instance given the same randomly generated layout and seed?}  
-{DECIDE: Which terrain features are procedural, and which are hand-designed?}  
+{CLARIFY: Is the global cave reset weekly or bi-weekly? The current answers specify both.}
+{DECIDE: What happens to players who are still in a cave when the reset occurs?}
+{DECIDE: Does the reset regenerate all cave features and ores, or only terrain and layout?}
+{DECIDE: Which terrain features are procedural, and which are hand-designed?}
 {DECIDE: Can players leave drawings, build structures, or otherwise change cave terrain permanently?}
+{DECIDE: Are giant spiral caves, gem deposits, extra-gem rooms, and surprise deeper portals still part of the cave design? If so, how do they work?}
 
 ### Cave biomes: Water Cave
 
@@ -233,7 +220,7 @@ A special gray color called **alloy** has been discussed. It would be a gray reg
 Three drawing destinations are currently described:
 
 1. **Character and clothing editor:** Lets players draw their character's appearance and clothes.
-2. **Personal drawing board at the Camp:** Opened through a small glitchy portal. Artwork saved here is persistent and does not reset. This is separate from the drawing planet.
+2. **Personal drawing board at the Camp:** Opened through a small glitchy portal/Rift. It is a tiny physical board, and artwork saved here is persistent and does not reset. This board is distinct from the shared boards accessed through the antenna planet; The Grid's relationship to the main cave world still needs confirmation.
 3. **Separate drawing planet:** Reached from the surface by using the glitch artifact with a large antenna-like object. Players can draw on boards and similar surfaces there.
 
 Custom-drawn weapon skins were an older idea and are not part of the current plan.
@@ -286,9 +273,9 @@ The stash mainly holds weapons and special artifacts. Ink and shards can be carr
 {DECIDE: Is the stash one persistent inventory for each player across all servers and modes?}  
 {DECIDE: Can the stash be opened or accessed by another player?}
 
-### Drawing planet
+### Antenna planet and shared boards
 
-At the surface, the artifact can be used with a large antenna-like object. Jumping into the opening takes the player to another planet, where drawing can be done on boards and similar surfaces.
+The latest notes describe The Grid as a small, round neon-circle planet with a merchant at the top and antennas for boards the player has joined. The player can talk to the merchant to join other boards and worlds. The Grid is described as the access point for multiplayer features such as Inkoff and shared boards. Its relationship to the main cave planet needs confirmation; see the question in Section 3.
 
 {DECIDE: How does the player return from the drawing planet?}  
 {DECIDE: Is the drawing planet an explorable social area or only a drawing room?}  
@@ -417,7 +404,7 @@ Custom-drawn weapon skins with transparent marker requirements appeared in older
 
 ## 10. Merchants
 
-Merchants are special characters players can interact with to buy items or services. The original notes say all merchants know each other, although it is not clear whether they want to talk about that.
+Merchants are special characters players can interact with to buy items or services. The original notes say all merchants know each other, although it is not clear whether they want to talk about that. The current notes also name **Liv**, who lets players create and edit unlocked weapons, and **Que**, a quest merchant whose meeting unlocks The Pit. An unnamed merchant stands at the top of The Grid and connects players to other boards and worlds; it should seem mysterious, knowledgeable, and boastful about its capabilities. A droplet character is positioned beside the antenna, but its name and purpose are not specified.
 
 The current direction says deeper layers are more likely to contain merchants, while the first cave has none. When the PDF provides a specific spawn rule that differs from an older repository note, use the PDF's rule.
 
@@ -784,7 +771,7 @@ The existing design notes do not specify monetization, subscriptions, paid cosme
 {DECIDE: Will there be any paid items, cosmetics, currency, DLC, or other purchases?}  
 {DECIDE: If purchases exist, how will the design avoid pay-to-win effects and protect younger players?}  
 {DECIDE: Is the world updated on a schedule, and who creates or reviews seasonal content?}  
-{DECIDE: What schedule governs PAL events, and how does the confirmed weekly cave reset interact with live operations?}
+{DECIDE: What schedule governs PAL events, and how does the global cave reset interact with live operations?}
 
 ## 18. Technical and production requirements
 
@@ -860,9 +847,8 @@ Other retired rules include:
 Work through these first if the goal is to make the design implementable.
 
 ### World and cave rules
-- {DECIDE: Confirm the A99–Z00 numbering scheme and define exact progression direction.}
-- {DECIDE: Rewrite the Stronghold destination rule with a clear formula and examples.}
-- {DECIDE: Define the exact day/time of the global weekly cave reset and what happens to players currently in caves.}
+- {DECIDE: Define the exact destination rule for the physical hole opened by a Stronghold.}
+- {CLARIFY: Confirm whether the shared global cave reset is weekly or bi-weekly, and what happens to players currently in caves.}
 - {DECIDE: Define how players return to the surface and stay together across server changes.}
 - {DECIDE: Define Water Cave movement and the meaning of its A–D spawn levels.}
 
