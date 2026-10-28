@@ -40,7 +40,7 @@ Players begin at the Camp, enter the Mines, descend through cave Sections A–Z,
 1. **Cave reset frequency:** one filled answer says the global layout resets weekly; another says bi-weekly. This cannot be resolved from the current notes.
 2. **The Grid's identity:** The Grid is described as a small, round neon-circle planet with antennas for joined boards and a merchant at the top. The rest of the design describes the Camp and cave network on a large planet. Are these two planets, or is The Grid the main cave planet?
 3. **Inkoff access:** The Pit to the right of Camp is described as the Inkoff entrance, unlocked after meeting Que. Other notes say all multiplayer features, including Inkoff and shared boards, are accessed through The Grid. Does The Pit lead to The Grid, is Inkoff entered through The Pit, or is one description outdated?
-4. **Stronghold destination:** The latest answer says a Stronghold opens a physical hole and cannot take players to shallower areas. The earlier PDF describes a random destination. The destination rule still needs a clear formula and examples.
+4. **Stronghold trigger and destination:** The latest answer says players hit a shrine-like Stronghold and draw three symbols; drawing them in under three seconds awards one shard. It also says the Stronghold opens a physical hole that players jump into and cannot take players shallower. Clarify whether the hole opens regardless of drawing speed or only after the symbol puzzle, then define where the hole leads. The PDF's earlier random-destination rule is not specific enough to resolve this.
 
 ## Other important open questions
 
