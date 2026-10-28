@@ -9,7 +9,7 @@ Each weapon has three parts:
 The amulet is a real weapon part, not just a Queen accessory.
 
 ## Locking a weapon
-Players choose a blade, handle, and amulet, then spend shards to lock that combination. A locked weapon can be upgraded and used in modes such as Inkoff, but its parts can't normally be changed. Trap can try to split a locked weapon apart through his challenge.
+Players choose a blade, handle, and amulet, then spend shards to lock that combination. A locked weapon can be upgraded and used in experiences such as Inkoff, but its parts can't normally be changed. Trap can try to split a locked weapon apart through his challenge.
 
 Custom-drawn weapon skins with transparent marker requirements are not part of the current plan.
 
