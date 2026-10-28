@@ -43,6 +43,7 @@ The Grid is described as the access point for multiplayer features, including In
 
 {CLARIFY: Is The Grid a separate antenna hub, or is it the same planet that contains the Camp and cave network?}
 {CLARIFY: The Pit at Camp is also described as the Inkoff entrance. Does The Pit lead to The Grid, or is one of these descriptions outdated?}
+{CLARIFY: Is The Grid the same place as the older drawing planet reached with the glitch artifact and large antenna, or a different location?}
 
 ## Still undecided
 
