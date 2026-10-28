@@ -1,32 +1,32 @@
 # OneLine Language Project
 
-OneLine is a compact, function-shaped programming language concept with two related forms:
+OneLine has two profiles and a shared translation system:
 
-- **OneLine Core** is the flexible semantic foundation used by the translator. It can represent behavior that differs between source and target languages without forcing every language to pretend it behaves the same way.
-- **OneLine Raw** is the strict, portable language intended for people to write directly. It aims to make programs easier to translate by restricting ambiguous or target-specific behavior.
+- **OneLine Core** is the flexible, general-purpose language with near-zero restrictions imposed specifically for portability.
+- **OneLine Raw** uses the same syntax but applies strict rules to improve predictability and practical portability.
+- **Mixed OneLine** allows individual regions of one program to use Core or Raw rules.
 
-These are two forms of one project, not two unrelated implementations. Core describes program meaning; Raw defines a portable set of rules that can be checked against Core and target-language capabilities.
-
-> **Status:** Design draft. This documentation records the decisions made so far and proposes consistent rules where the syntax was not yet fully settled. It is not yet an implemented compiler or a guarantee that every program can run on every platform.
+The canonical specification is [SPECIFICATION.md](SPECIFICATION.md). This file is the project index; the specification takes precedence over any abbreviated examples elsewhere.
 
 ## Documents
 
-- [Language overview and shared rules](LANGUAGE_OVERVIEW.md)
-- [OneLine Core specification](CORE.md)
-- [OneLine Raw specification](RAW.md)
-- [Syntax reference and examples](SYNTAX.md)
-- [Translation model and compatibility checks](TRANSLATION.md)
-- [Open decisions and implementation roadmap](ROADMAP.md)
+- [Canonical language specification](SPECIFICATION.md)
+- [Language overview](LANGUAGE_OVERVIEW.md)
+- [Formal grammar](GRAMMAR.md)
+- [OneLine Core](CORE.md)
+- [OneLine Raw](RAW.md)
+- [Syntax examples](SYNTAX.md)
+- [Mixing Core and Raw](MIXING.md)
+- [Translation model](TRANSLATION.md)
+- [Conformance tests](CONFORMANCE.md)
+- [Roadmap](ROADMAP.md)
 
-## Current design principles
+## Design principles
 
-1. Prefer explicit, deterministic syntax over guessing.
-2. Report invalid or ambiguous code instead of silently repairing it.
-3. Preserve source-program behavior where possible.
-4. Tell the user when a target language cannot preserve behavior exactly.
-5. Keep language design separate from the translator implementation.
-6. Keep examples and syntax consistent across the documentation.
+1. One shared grammar, with Raw as a strict profile.
+2. Explicit syntax and deterministic diagnostics.
+3. Core can preserve source-specific behavior; Raw follows defined portable rules.
+4. Mixed files mark each region explicitly.
+5. The translator checks behavior and target capabilities rather than promising universal compatibility.
 
-## Naming
-
-The names **OneLine Core** and **OneLine Raw** are written with a space in prose. The repository folder is `oneline/`. The compact language name may be written as `OneLine`; the visual labels `OneLine Core` and `OneLine Raw` distinguish the two forms.
+**Status:** Version 0.2 design baseline. The compiler/parser is not implemented yet. Conformance tests must be run before calling the language stable.
