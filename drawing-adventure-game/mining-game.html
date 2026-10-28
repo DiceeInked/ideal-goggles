@@ -3,25 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Drawing Adventure: Mining Run</title>
+  <title>Drawing Adventure: Platformer Mine</title>
   <style>
     :root {
       --bg: #0b1015;
       --bg-2: #111c24;
-      --panel: rgba(16, 22, 28, 0.88);
-      --panel-strong: rgba(20, 28, 35, 0.96);
+      --panel: rgba(16, 22, 28, 0.9);
+      --panel-strong: rgba(20, 27, 34, 0.97);
       --line: rgba(177, 196, 210, 0.14);
       --line-strong: rgba(177, 196, 210, 0.22);
       --text: #edf6ff;
-      --muted: #aabcc9;
-      --soft: #dfeaf5;
+      --muted: #a9bbc9;
+      --soft: #dfeaf4;
       --gold: #e3c17c;
-      --gold-soft: #f5d99a;
       --blue: #7cc9ff;
-      --blue-soft: rgba(124, 201, 255, 0.18);
       --green: #8fe7bb;
       --rose: #f2b6ca;
-      --shadow: rgba(0, 0, 0, 0.36);
+      --shadow: rgba(0, 0, 0, 0.4);
     }
 
     * { box-sizing: border-box; }
@@ -31,7 +29,7 @@
       width: 100%;
       height: 100%;
       background:
-        radial-gradient(circle at top, rgba(124, 201, 255, 0.11), transparent 32%),
+        radial-gradient(circle at top, rgba(124, 201, 255, 0.12), transparent 36%),
         linear-gradient(180deg, var(--bg), var(--bg-2));
       color: var(--text);
       font-family: Inter, "Segoe UI", sans-serif;
@@ -45,13 +43,13 @@
     }
 
     .shell {
-      width: min(1320px, calc(100vw - 22px));
-      height: min(94vh, 820px);
+      width: min(1340px, calc(100vw - 20px));
+      height: min(92vh, 820px);
       display: grid;
       grid-template-columns: 320px minmax(0, 1fr);
       border: 1px solid var(--line);
       background: var(--panel);
-      box-shadow: 0 24px 60px var(--shadow);
+      box-shadow: 0 26px 62px var(--shadow);
       border-radius: 22px;
       overflow: hidden;
       backdrop-filter: blur(12px);
@@ -59,7 +57,7 @@
 
     .sidebar {
       position: relative;
-      background: linear-gradient(180deg, rgba(16,22,28,0.94), rgba(12,17,23,0.98));
+      background: linear-gradient(180deg, rgba(15, 22, 28, 0.96), rgba(12, 17, 23, 0.98));
       border-right: 1px solid var(--line);
       padding: 20px 18px 18px;
       display: flex;
@@ -100,8 +98,8 @@
       content: "";
       position: absolute;
       inset: -6px;
-      border-radius: 50%;
       border: 1px solid rgba(124,201,255,0.26);
+      border-radius: 50%;
     }
 
     .panel {
@@ -189,8 +187,8 @@
     .meter > span {
       position: absolute;
       inset: 0 auto 0 0;
-      border-radius: inherit;
       width: 50%;
+      border-radius: inherit;
       background: linear-gradient(90deg, var(--gold), var(--rose));
       box-shadow: inset 0 0 12px rgba(255,255,255,0.12);
     }
@@ -276,7 +274,7 @@
       padding: 10px 12px;
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: rgba(13,17,21,0.76);
+      background: rgba(13,17,21,0.75);
       font-size: 0.77rem;
       color: var(--soft);
       letter-spacing: 0.04em;
@@ -295,7 +293,7 @@
         border-bottom: 1px solid var(--line);
       }
       .game-panel {
-        min-height: 60vh;
+        min-height: 62vh;
       }
     }
   </style>
@@ -309,7 +307,7 @@
       </div>
 
       <div class="panel">
-        <h1>Mining Run</h1>
+        <h1>Mine Runner</h1>
         <div class="stats">
           <div class="stat">
             <span class="label">Depth</span>
@@ -334,8 +332,8 @@
         <div class="bars">
           <div class="bar-wrap">
             <div class="bar-head">
-              <span>Objective</span>
-              <span id="progressText">0 / 18</span>
+              <span>Goal</span>
+              <span id="progressText">0 / 12</span>
             </div>
             <div class="meter"><span id="progressMeter" style="width:0%"></span></div>
           </div>
@@ -347,32 +345,32 @@
             <div class="meter ink"><span id="inkMeter" style="width:100%"></span></div>
           </div>
         </div>
-
         <p class="objective" id="objectiveText">
-          Collect 18 ore. Return to the camp portal to reinforce your loadout and descend deeper.
+          Gather 12 ore, then reach the deep portal high in the caves.
         </p>
       </div>
 
       <div class="controls">
         <h2>Controls</h2>
         <div class="keys">
-          <div class="key"><kbd>WASD</kbd><span>Move</span></div>
+          <div class="key"><kbd>A / D</kbd><span>Move</span></div>
+          <div class="key"><kbd>W / ↑</kbd><span>Jump</span></div>
           <div class="key"><kbd>E</kbd><span>Mine</span></div>
           <div class="key"><kbd>Q</kbd><span>Draw</span></div>
-          <div class="key"><kbd>F</kbd><span>Camp</span></div>
         </div>
       </div>
     </aside>
 
     <main class="game-panel">
       <canvas id="gameCanvas" width="1040" height="760"></canvas>
-      <div class="message" id="messageBox">The camp is safe. Mine a bit, draw a mark, then descend.</div>
+      <div class="message" id="messageBox">The camp overlooks the mine. Jump to the ledges, gather ore, and reach the portal.</div>
     </main>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
     const ui = {
       depth: document.getElementById('depthValue'),
       shards: document.getElementById('shardsValue'),
@@ -387,30 +385,36 @@
     };
 
     const state = {
-      worldWidth: 2400,
-      worldHeight: 1800,
+      width: 2800,
+      height: 1100,
       depth: 1,
-      oreGoal: 18,
+      oreGoal: 12,
       oreCollected: 0,
       shards: 0,
       ink: 100,
-      camera: { x: 0, y: 0 },
-      player: {
-        x: 260,
-        y: 260,
-        vx: 0,
-        vy: 0,
-        radius: 14,
-        speed: 2.5,
-        drawCooldown: 0,
-        mineCooldown: 0,
-      },
-      camp: { x: 260, y: 290, r: 120 },
-      portal: { x: 1830, y: 1430, r: 82, active: false },
-      rocks: [],
+      cameraX: 0,
+      keys: {},
       particles: [],
       marks: [],
-      keys: {}
+      messageTimer: 0,
+      won: false,
+      player: {
+        x: 160,
+        y: 680,
+        w: 26,
+        h: 40,
+        vx: 0,
+        vy: 0,
+        speed: 3.6,
+        jump: 12.6,
+        onGround: false,
+        miningCooldown: 0,
+        drawCooldown: 0,
+      },
+      camp: { x: 90, y: 700, w: 150, h: 110 },
+      portal: { x: 2520, y: 440, w: 96, h: 150, active: false },
+      platforms: [],
+      ore: []
     };
 
     function clamp(value, min, max) {
@@ -421,20 +425,21 @@
       return Math.random() * (max - min) + min;
     }
 
-    function dist(ax, ay, bx, by) {
-      return Math.hypot(ax - bx, ay - by);
+    function rectsIntersect(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
-    function addParticles(x, y, color, count = 12, speed = 1.3) {
+    function addParticles(x, y, color, count = 16, speed = 2.8) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const v = rand(0.6, speed + 1.2);
+        const v = rand(0.8, speed + 1.4);
         state.particles.push({
-          x, y,
+          x,
+          y,
           vx: Math.cos(angle) * v,
           vy: Math.sin(angle) * v,
-          r: rand(2, 5),
-          life: rand(25, 52),
+          r: rand(2, 4.5),
+          life: rand(24, 52),
           color
         });
       }
@@ -442,49 +447,41 @@
 
     function addMark(x, y, color) {
       state.marks.push({
-        x, y,
-        color,
-        life: 70,
-        radius: rand(16, 28)
+        x,
+        y,
+        r: rand(16, 26),
+        life: 72,
+        color
       });
     }
 
-    function generateRocks() {
-      const oreTypes = [
-        { name: 'copper', color: '#7cc9ff', value: 1, hp: 2 },
-        { name: 'iron', color: '#ddedf5', value: 2, hp: 3 },
-        { name: 'amber', color: '#e3c17c', value: 3, hp: 4 },
-        { name: 'crystal', color: '#8fe7bb', value: 4, hp: 5 }
+    function buildLevel() {
+      state.platforms = [
+        { x: 0, y: 780, w: state.width, h: 320, type: 'ground' },
+        { x: 220, y: 680, w: 180, h: 20, type: 'stone' },
+        { x: 520, y: 620, w: 170, h: 18, type: 'stone' },
+        { x: 790, y: 560, w: 180, h: 18, type: 'stone' },
+        { x: 1100, y: 500, w: 200, h: 18, type: 'stone' },
+        { x: 1460, y: 630, w: 170, h: 18, type: 'stone' },
+        { x: 1720, y: 560, w: 180, h: 18, type: 'stone' },
+        { x: 2030, y: 490, w: 210, h: 18, type: 'stone' },
+        { x: 2280, y: 430, w: 140, h: 18, type: 'stone' },
       ];
 
-      const rocks = [];
-      const safeRadius = 190;
-
-      for (let i = 0; i < 120; i++) {
-        let placed = false;
-        for (let tries = 0; tries < 35; tries++) {
-          const x = rand(80, state.worldWidth - 80);
-          const y = rand(80, state.worldHeight - 80);
-          if (dist(x, y, state.camp.x, state.camp.y) < safeRadius) continue;
-          const type = oreTypes[Math.floor(Math.random() * oreTypes.length)];
-          rocks.push({
-            x,
-            y,
-            r: rand(20, 33),
-            type: type.name,
-            color: type.color,
-            value: type.value,
-            hp: type.hp,
-            maxHp: type.hp,
-            glow: rand(0.8, 1.5)
-          });
-          placed = true;
-          break;
-        }
-        if (!placed) break;
-      }
-
-      return rocks;
+      state.ore = [
+        { x: 260, y: 640, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 590, y: 580, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 865, y: 520, r: 12, value: 1, color: '#8fe7bb' },
+        { x: 1195, y: 460, r: 12, value: 1, color: '#e3c17c' },
+        { x: 1540, y: 590, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 1808, y: 520, r: 12, value: 1, color: '#f2b6ca' },
+        { x: 2120, y: 450, r: 12, value: 1, color: '#e3c17c' },
+        { x: 2350, y: 390, r: 12, value: 1, color: '#8fe7bb' },
+        { x: 760, y: 420, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 1670, y: 420, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 2050, y: 290, r: 12, value: 1, color: '#e3c17c' },
+        { x: 2440, y: 330, r: 12, value: 1, color: '#8fe7bb' }
+      ];
     }
 
     function updateHud() {
@@ -493,141 +490,140 @@
       ui.ore.textContent = String(state.oreCollected);
       ui.ink.textContent = String(Math.max(0, Math.floor(state.ink)));
 
-      const ratio = clamp((state.oreCollected / state.oreGoal) * 100, 0, 100);
+      const progress = clamp((state.oreCollected / state.oreGoal) * 100, 0, 100);
       ui.progressText.textContent = `${state.oreCollected} / ${state.oreGoal}`;
-      ui.progressMeter.style.width = `${ratio}%`;
+      ui.progressMeter.style.width = `${progress}%`;
       ui.inkText.textContent = `${Math.max(0, Math.floor(state.ink))}%`;
       ui.inkMeter.style.width = `${clamp(state.ink, 0, 100)}%`;
 
       if (state.oreCollected >= state.oreGoal && !state.portal.active) {
         state.portal.active = true;
-        ui.message.textContent = 'The stronghold hums alive. Head to the glowing portal in the deep cave.';
+        ui.message.textContent = 'The deep portal awakens. Climb higher and reach it.';
       }
 
       if (state.oreCollected >= state.oreGoal) {
-        ui.objective.textContent = 'A deep portal has opened. Move through it to continue the descent.';
+        ui.objective.textContent = 'The portal is open. Reach the glowing doorway at the far end of the cave.';
       } else {
-        ui.objective.textContent = 'Collect 18 ore. Return to camp to refresh before the next descent.';
+        ui.objective.textContent = 'Gather 12 ore, then reach the deep portal high in the caves.';
       }
     }
 
-    function updatePlayer() {
-      let ax = 0;
-      let ay = 0;
+    function handleMovement() {
+      const left = state.keys['a'] || state.keys['arrowleft'];
+      const right = state.keys['d'] || state.keys['arrowright'];
+      const jump = state.keys['w'] || state.keys['arrowup'] || state.keys[' '];
 
-      if (state.keys['w'] || state.keys['arrowup']) ay -= 1;
-      if (state.keys['s'] || state.keys['arrowdown']) ay += 1;
-      if (state.keys['a'] || state.keys['arrowleft']) ax -= 1;
-      if (state.keys['d'] || state.keys['arrowright']) ax += 1;
+      if (left) state.player.vx = -state.player.speed;
+      else if (right) state.player.vx = state.player.speed;
+      else state.player.vx *= 0.7;
 
-      if (ax || ay) {
-        const len = Math.hypot(ax, ay) || 1;
-        const targetVx = (ax / len) * state.player.speed;
-        const targetVy = (ay / len) * state.player.speed;
-        state.player.vx += (targetVx - state.player.vx) * 0.28;
-        state.player.vy += (targetVy - state.player.vy) * 0.28;
-      } else {
-        state.player.vx *= 0.8;
-        state.player.vy *= 0.8;
+      if (jump && state.player.onGround) {
+        state.player.vy = -state.player.jump;
+        state.player.onGround = false;
       }
 
-      state.player.x += state.player.vx;
-      state.player.y += state.player.vy;
-      state.player.x = clamp(state.player.x, 30, state.worldWidth - 30);
-      state.player.y = clamp(state.player.y, 30, state.worldHeight - 30);
+      state.player.vy += 0.5;
+    }
 
-      if (state.player.mineCooldown > 0) state.player.mineCooldown -= 1;
+    function handleMining() {
+      if (state.player.miningCooldown > 0) return;
+      for (const ore of state.ore) {
+        const dX = Math.abs(state.player.x + state.player.w / 2 - ore.x);
+        const dY = Math.abs(state.player.y + state.player.h / 2 - ore.y);
+        if (dX < 26 && dY < 26) {
+          state.player.miningCooldown = 12;
+          state.oreCollected += ore.value;
+          state.shards += ore.value;
+          state.ore = state.ore.filter(o => o !== ore);
+          addParticles(ore.x, ore.y, ore.color, 18, 2.8);
+          ui.message.textContent = `Ore mined! +${ore.value} ore.`;
+          updateHud();
+          return;
+        }
+      }
+    }
+
+    function handleDraw() {
+      if (state.player.drawCooldown > 0 || state.ink <= 0) return;
+      state.player.drawCooldown = 18;
+      state.ink = Math.max(0, state.ink - 8);
+      const color = ['#7cc9ff', '#8fe7bb', '#f2b6ca', '#e3c17c'][Math.floor(Math.random() * 4)];
+      const x = state.player.x + state.player.w / 2 + rand(-18, 18);
+      const y = state.player.y + state.player.h / 2 + rand(-18, 18);
+      addMark(x, y, color);
+      addParticles(x, y, color, 12, 2.1);
+      ui.message.textContent = 'A bright ink glyph flashes across the stone.';
+      updateHud();
+    }
+
+    function applyPhysics() {
+      const p = state.player;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      p.onGround = false;
+      for (const plat of state.platforms) {
+        const playerBox = { x: p.x, y: p.y, w: p.w, h: p.h };
+        const platformBox = { x: plat.x, y: plat.y, w: plat.w, h: plat.h };
+        if (rectsIntersect(playerBox, platformBox)) {
+          const prevY = p.y - p.vy;
+          const prevBottom = prevY + p.h;
+          const prevTop = prevY;
+          const nextBottom = p.y + p.h;
+          const nextTop = p.y;
+
+          if (p.vy >= 0 && prevBottom <= plat.y + 8 && nextBottom >= plat.y) {
+            p.y = plat.y - p.h;
+            p.vy = 0;
+            p.onGround = true;
+          } else if (p.vy < 0 && prevTop >= plat.y + plat.h - 8 && nextTop <= plat.y + plat.h) {
+            p.y = plat.y + plat.h;
+            p.vy = 0;
+          } else if (p.vx > 0 && p.x + p.w > plat.x && p.x < plat.x + plat.w) {
+            p.x = plat.x - p.w;
+            p.vx = 0;
+          } else if (p.vx < 0 && p.x < plat.x + plat.w && p.x + p.w > plat.x) {
+            p.x = plat.x + plat.w;
+            p.vx = 0;
+          }
+        }
+      }
+
+      if (p.y > state.height + 200) {
+        p.x = 160;
+        p.y = 680;
+        p.vx = 0;
+        p.vy = 0;
+        state.ink = Math.max(10, state.ink - 10);
+        ui.message.textContent = 'A hard fall costs ink. Get back to the ledges.';
+      }
+
+      if (state.player.miningCooldown > 0) state.player.miningCooldown -= 1;
       if (state.player.drawCooldown > 0) state.player.drawCooldown -= 1;
     }
 
-    function mineNearbyRock() {
-      let target = null;
-      let closest = Infinity;
-
-      for (const rock of state.rocks) {
-        const d = dist(state.player.x, state.player.y, rock.x, rock.y);
-        if (d < 58 && d < closest) {
-          target = rock;
-          closest = d;
-        }
-      }
-
-      if (!target || state.player.mineCooldown > 0) return;
-
-      state.player.mineCooldown = 10;
-      target.hp -= 1;
-      addParticles(target.x, target.y, target.color, 12, 2.2);
-
-      if (target.hp <= 0) {
-        state.oreCollected += target.value;
-        state.shards += target.value;
-        addParticles(target.x, target.y, '#fff9d8', 20, 2.8);
-        state.rocks = state.rocks.filter(r => r !== target);
-        ui.message.textContent = `${target.type.toUpperCase()} mined! +${target.value} ore.`;
-      } else {
-        ui.message.textContent = `${target.type.toUpperCase()} hit. ${target.hp}/${target.maxHp} integrity.`;
-      }
-
-      updateHud();
-    }
-
-    function drawInkMark() {
-      if (state.player.drawCooldown > 0 || state.ink <= 0) return;
-      state.player.drawCooldown = 18;
-      state.ink = Math.max(0, state.ink - 10);
-
-      const palette = ['#7cc9ff', '#8fe7bb', '#f2b6ca', '#e3c17c'];
-      const color = palette[Math.floor(Math.random() * palette.length)];
-      let x = state.player.x + rand(-26, 26);
-      let y = state.player.y + rand(-26, 26);
-
-      for (const rock of state.rocks) {
-        const d = dist(state.player.x, state.player.y, rock.x, rock.y);
-        if (d < 90) {
-          x = rock.x;
-          y = rock.y;
-          break;
-        }
-      }
-
-      addMark(x, y, color);
-      addParticles(x, y, color, 16, 2.2);
-      ui.message.textContent = 'Ink sparks across the stone.';
-      updateHud();
-    }
-
-    function handleInteraction() {
-      const inCamp = dist(state.player.x, state.player.y, state.camp.x, state.camp.y) < 110;
-      const inPortal = dist(state.player.x, state.player.y, state.portal.x, state.portal.y) < 90;
-
-      if (inCamp && state.oreCollected > 0) {
-        state.shards += 2;
-        state.ink = Math.min(100, state.ink + 18);
-        state.oreCollected = 0;
-        ui.message.textContent = 'Camp restock complete. The next descent is ready.';
-        updateHud();
-        return;
-      }
-
-      if (inPortal && state.portal.active) {
+    function checkPortal() {
+      const p = state.player;
+      const portalRect = { x: state.portal.x, y: state.portal.y, w: state.portal.w, h: state.portal.h };
+      const playerRect = { x: p.x, y: p.y, w: p.w, h: p.h };
+      if (state.portal.active && rectsIntersect(playerRect, portalRect)) {
         state.depth += 1;
         state.oreGoal += 8;
-        state.player.x = state.camp.x + 30;
-        state.player.y = state.camp.y + 30;
+        state.player.x = 180;
+        state.player.y = 600;
         state.player.vx = 0;
         state.player.vy = 0;
         state.portal.active = false;
-        state.rocks = generateRocks();
+        state.ore = state.ore.concat([
+          { x: 650, y: 620, r: 12, value: 1, color: '#7cc9ff' },
+          { x: 880, y: 500, r: 12, value: 1, color: '#8fe7bb' },
+          { x: 1500, y: 610, r: 12, value: 1, color: '#e3c17c' },
+          { x: 1860, y: 470, r: 12, value: 1, color: '#7cc9ff' },
+          { x: 2280, y: 360, r: 12, value: 1, color: '#8fe7bb' }
+        ]);
         state.ink = Math.min(100, state.ink + 18);
-        ui.message.textContent = `Depth ${state.depth} unlocked. The ore gets richer.`;
+        ui.message.textContent = `Depth ${state.depth} reached. The cave becomes sharper and the ore grows richer.`;
         updateHud();
-        return;
-      }
-
-      if (inCamp) {
-        ui.message.textContent = 'The camp is safe. Gather more ore before moving on.';
-      } else if (state.portal.active) {
-        ui.message.textContent = 'The deep portal awaits.';
       }
     }
 
@@ -647,170 +643,171 @@
       }
     }
 
-    function renderBackground(cameraX, cameraY) {
-      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grad.addColorStop(0, '#0d1419');
-      grad.addColorStop(0.45, '#101a22');
-      grad.addColorStop(1, '#0b1015');
-      ctx.fillStyle = grad;
+    function renderBackground(cameraX) {
+      const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      g.addColorStop(0, '#0d1419');
+      g.addColorStop(0.48, '#101a22');
+      g.addColorStop(1, '#0d1318');
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const tile = 52;
-      for (let x = Math.floor(cameraX / tile) * tile; x < cameraX + canvas.width + tile; x += tile) {
-        for (let y = Math.floor(cameraY / tile) * tile; y < cameraY + canvas.height + tile; y += tile) {
-          const px = x - cameraX;
-          const py = y - cameraY;
-          ctx.fillStyle = ((Math.floor(x / tile) + Math.floor(y / tile)) % 2 === 0) ? 'rgba(255,255,255,0.014)' : 'rgba(255,255,255,0.008)';
-          ctx.fillRect(px, py, tile, tile);
+      for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(33, 48, 58, 0.9)' : 'rgba(26, 39, 48, 0.85)';
+        ctx.moveTo(i * 300 - cameraX * 0.15, canvas.height);
+        ctx.lineTo(i * 300 + 240 - cameraX * 0.15, 180 + (i % 3) * 40);
+        ctx.lineTo(i * 300 + 480 - cameraX * 0.15, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.015)';
+      for (let x = 0; x < canvas.width + 30; x += 52) {
+        ctx.fillRect(x + ((cameraX * 0.1) % 52) - 52, 0, 1, canvas.height);
+      }
+    }
+
+    function renderPlatforms(cameraX) {
+      for (const p of state.platforms) {
+        const x = p.x - cameraX;
+        const y = p.y;
+
+        ctx.fillStyle = p.type === 'ground' ? '#2e3d48' : '#405563';
+        ctx.fillRect(x, y, p.w, p.h);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(x, y, p.w, 4);
+
+        if (p.type === 'ground') {
+          ctx.fillStyle = 'rgba(255,255,255,0.02)';
+          for (let i = 0; i < p.w; i += 18) {
+            ctx.fillRect(x + i, y + 16, 10, 3);
+          }
         }
       }
-
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-      ctx.lineWidth = 1;
-      ctx.rect(state.camp.x - cameraX - state.camp.r, state.camp.y - cameraY - state.camp.r, state.camp.r * 2, state.camp.r * 2);
-      ctx.stroke();
     }
 
-    function renderCamp(cameraX, cameraY) {
-      const cx = state.camp.x - cameraX;
-      const cy = state.camp.y - cameraY;
-
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(227,193,124,0.16)';
-      ctx.arc(cx, cy, state.camp.r, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#e3c17c';
-      ctx.lineWidth = 2;
-      ctx.arc(cx, cy, state.camp.r, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#e3c17c';
-      ctx.font = '600 14px sans-serif';
-      ctx.fillText('CAMP', cx - 20, cy + 4);
-    }
-
-    function renderPortal(cameraX, cameraY) {
-      if (!state.portal.active) return;
-      const px = state.portal.x - cameraX;
-      const py = state.portal.y - cameraY;
-      const t = Date.now() * 0.008;
-
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(124,201,255,0.16)';
-      ctx.arc(px, py, state.portal.r + 14 + Math.sin(t) * 5, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.strokeStyle = '#7cc9ff';
-      ctx.lineWidth = 2;
-      ctx.arc(px, py, state.portal.r + Math.sin(t) * 5, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.fillStyle = '#8fe7bb';
-      ctx.arc(px, py, 12 + Math.sin(t * 2) * 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function renderRocks(cameraX, cameraY) {
-      for (const rock of state.rocks) {
-        const x = rock.x - cameraX;
-        const y = rock.y - cameraY;
+    function renderOre(cameraX) {
+      for (const o of state.ore) {
+        const x = o.x - cameraX;
+        const y = o.y;
 
         ctx.beginPath();
-        ctx.fillStyle = rock.color;
-        ctx.globalAlpha = 0.74 + rock.glow * 0.12;
-        ctx.arc(x, y, rock.r, 0, Math.PI * 2);
+        ctx.fillStyle = o.color;
+        ctx.arc(x, y, o.r, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
 
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255,255,255,0.17)';
-        ctx.lineWidth = 1.2;
-        ctx.arc(x, y, rock.r, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.arc(x, y, o.r + 2, 0, Math.PI * 2);
         ctx.stroke();
-
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,255,255,0.18)';
-        ctx.arc(x - rock.r * 0.22, y - rock.r * 0.2, rock.r * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-
-        const barW = rock.r * 1.7;
-        ctx.fillStyle = 'rgba(0,0,0,0.28)';
-        ctx.fillRect(x - barW / 2, y + rock.r + 8, barW, 5);
-        ctx.fillStyle = '#edf6ff';
-        ctx.fillRect(x - barW / 2, y + rock.r + 8, (rock.hp / rock.maxHp) * barW, 5);
       }
     }
 
-    function renderMarks(cameraX, cameraY) {
-      for (const mark of state.marks) {
-        const x = mark.x - cameraX;
-        const y = mark.y - cameraY;
+    function renderMarks(cameraX) {
+      for (const m of state.marks) {
+        const x = m.x - cameraX;
+        const y = m.y;
         ctx.beginPath();
-        ctx.globalAlpha = clamp(mark.life / 70, 0, 1);
-        ctx.fillStyle = mark.color;
-        ctx.arc(x, y, mark.radius, 0, Math.PI * 2);
+        ctx.fillStyle = m.color;
+        ctx.globalAlpha = clamp(m.life / 72, 0, 1);
+        ctx.arc(x, y, m.r, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
       }
     }
 
-    function renderParticles(cameraX, cameraY) {
+    function renderParticles(cameraX) {
       for (const p of state.particles) {
         ctx.beginPath();
         ctx.fillStyle = p.color;
         ctx.globalAlpha = clamp(p.life / 50, 0, 1);
-        ctx.arc(p.x - cameraX, p.y - cameraY, p.r, 0, Math.PI * 2);
+        ctx.arc(p.x - cameraX, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
     }
 
-    function renderPlayer(cameraX, cameraY) {
-      const px = state.player.x - cameraX;
-      const py = state.player.y - cameraY;
+    function renderPortal(cameraX) {
+      const x = state.portal.x - cameraX;
+      const y = state.portal.y;
+      const t = Date.now() * 0.008;
 
-      ctx.beginPath();
-      ctx.fillStyle = '#edf6ff';
-      ctx.arc(px, py, state.player.radius, 0, Math.PI * 2);
-      ctx.fill();
+      if (!state.portal.active) {
+        ctx.fillStyle = 'rgba(115, 130, 140, 0.22)';
+        ctx.fillRect(x, y, state.portal.w, state.portal.h);
+        return;
+      }
 
-      ctx.beginPath();
-      ctx.fillStyle = '#7cc9ff';
-      ctx.arc(px + 4, py - 2, state.player.radius * 0.4, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.fillStyle = 'rgba(124, 201, 255, 0.14)';
+      ctx.fillRect(x - 14, y - 6, state.portal.w + 28, state.portal.h + 12);
 
-      ctx.beginPath();
-      ctx.strokeStyle = '#e3c17c';
-      ctx.lineWidth = 2.5;
-      ctx.moveTo(px - 11, py + 12);
-      ctx.lineTo(px + 12, py + 12);
-      ctx.stroke();
+      ctx.strokeStyle = '#7cc9ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, state.portal.w, state.portal.h);
+
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(124,201,255,0.3)';
+        ctx.arc(x + state.portal.w / 2 + Math.sin(t + i) * 12, y + 40 + i * 20, 10 + Math.sin(t + i * 1.4) * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    function draw() {
-      const cameraX = clamp(state.player.x - canvas.width / 2, 0, state.worldWidth - canvas.width);
-      const cameraY = clamp(state.player.y - canvas.height / 2, 0, state.worldHeight - canvas.height);
-      state.camera.x += (cameraX - state.camera.x) * 0.1;
-      state.camera.y += (cameraY - state.camera.y) * 0.1;
+    function renderPlayer(cameraX) {
+      const p = state.player;
+      const x = p.x - cameraX;
+      const y = p.y;
 
-      renderBackground(state.camera.x, state.camera.y);
-      renderCamp(state.camera.x, state.camera.y);
-      renderPortal(state.camera.x, state.camera.y);
-      renderRocks(state.camera.x, state.camera.y);
-      renderMarks(state.camera.x, state.camera.y);
-      renderParticles(state.camera.x, state.camera.y);
-      renderPlayer(state.camera.x, state.camera.y);
+      ctx.fillStyle = '#edf6ff';
+      ctx.fillRect(x + 7, y + 2, 12, 14);
+      ctx.fillStyle = '#7cc9ff';
+      ctx.fillRect(x + 5, y + 16, 16, 20);
+      ctx.fillStyle = '#e3c17c';
+      ctx.fillRect(x + 2, y + 32, 8, 12);
+      ctx.fillRect(x + 16, y + 32, 8, 12);
+      ctx.fillStyle = '#f2b6ca';
+      ctx.fillRect(x + 8, y + 8, 10, 6);
+      ctx.fillStyle = '#0d1318';
+      ctx.fillRect(x + 8, y + 10, 3, 3);
+      ctx.fillRect(x + 15, y + 10, 3, 3);
+    }
+
+    function renderCamp(cameraX) {
+      const x = state.camp.x - cameraX;
+      const y = state.camp.y;
+      ctx.fillStyle = '#d5b36c';
+      ctx.fillRect(x, y, state.camp.w, state.camp.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + 18, y + 24, state.camp.w - 36, 18);
+      ctx.fillStyle = '#0d1318';
+      ctx.fillRect(x + 22, y + 62, 14, 32);
+      ctx.fillRect(x + state.camp.w - 36, y + 62, 14, 32);
+      ctx.fillStyle = '#e3c17c';
+      ctx.fillText('CAMP', x + 30, y - 12);
+    }
+
+    function render() {
+      const cameraX = clamp(state.player.x - canvas.width / 2, 0, state.width - canvas.width);
+      state.cameraX += (cameraX - state.cameraX) * 0.12;
+
+      renderBackground(state.cameraX);
+      renderPlatforms(state.cameraX);
+      renderOre(state.cameraX);
+      renderMarks(state.cameraX);
+      renderParticles(state.cameraX);
+      renderCamp(state.cameraX);
+      renderPortal(state.cameraX);
+      renderPlayer(state.cameraX);
     }
 
     function tick() {
-      updatePlayer();
+      handleMovement();
+      applyPhysics();
       updateParticles();
-      draw();
+      render();
+      checkPortal();
       requestAnimationFrame(tick);
     }
 
@@ -818,25 +815,18 @@
       const key = event.key.toLowerCase();
       state.keys[key] = true;
 
-      if (key === 'e') mineNearbyRock();
-      if (key === 'q') drawInkMark();
-      if (key === 'f') handleInteraction();
-
-      if (key === 'r') {
-        state.player.x = state.camp.x + 24;
-        state.player.y = state.camp.y + 24;
-        state.player.vx = 0;
-        state.player.vy = 0;
-        ui.message.textContent = 'Reset to camp.';
-      }
+      if (key === 'e') handleMining();
+      if (key === 'q') handleDraw();
+      if (key === ' ') state.keys[' '] = true;
     });
 
     document.addEventListener('keyup', (event) => {
       const key = event.key.toLowerCase();
       state.keys[key] = false;
+      if (key === ' ') state.keys[' '] = false;
     });
 
-    state.rocks = generateRocks();
+    buildLevel();
     updateHud();
     requestAnimationFrame(tick);
   </script>
