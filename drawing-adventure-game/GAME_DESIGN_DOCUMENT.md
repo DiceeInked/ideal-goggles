@@ -59,7 +59,7 @@ The intended broad loop is:
 1. Start at the Camp.
 2. Prepare, talk to available characters, and access the stash.
 3. Enter the first cave and collect a small amount of ore.
-4. Explore, find and activate a Stronghold, draw its three symbols in under three seconds to earn a shard, then open a hole and jump into a deeper cave level.
+4. Explore and find a Stronghold. Hit it, then draw three symbols; completing all three in under three seconds earns one shard. The Stronghold opens a physical hole to a deeper cave level, but whether the puzzle is required to open the hole and the exact destination rule are still unresolved.
 5. Continue gathering ink and shards, discovering creatures, merchants, structures, and biomes.
 6. Use resources to create or recolor art, buy or build weapons, and improve gear.
 7. Encounter other players naturally, optionally travel with them, and use social actions.
@@ -132,7 +132,7 @@ A Section is a group of cave levels; the letter identifies the Section and the n
 
 ### Strongholds
 
-A Stronghold looks like a shrine with a stone-like floor. To activate it, the player hits it and then draws three symbols. If all three symbols are drawn in under three seconds, the player receives one shard.
+A Stronghold looks like a shrine with a stone-like floor. The player hits it, then draws three symbols. Completing all three in under three seconds earns one shard. Whether the symbol puzzle is required to open the hole or only determines the shard reward is unresolved.
 
 Once opened, a Stronghold emits light, making it easier to find after leaving for the surface and returning. Opening a Stronghold disables mob spawning, including shopkeepers, on that level. Strongholds can spawn inside Water Caves and all other special biomes.
 
@@ -427,7 +427,7 @@ The current direction says deeper layers are more likely to contain merchants, w
 Players tip YAP with any color of ink to try to summon him. Each tip has a 10% chance to spawn him. The PDF says he appears at A1 and lower; what “lower” means must follow the level-numbering rules. Items are bought with shards. The tonic effects and duration are not described.
 
 {DECIDE: What amount of ink counts as one tip?}  
-{DECIDE: Does YAP appear at A1 and lower, and what does “lower” mean in the level numbering system?}  
+{DECIDE: What does “A1 and lower” mean in the A99–Z00 Section/level numbering system?}  
 {DECIDE: What are the prices for the completed weapon, blade, handle, and amulet?}  
 {DECIDE: What do tonics do, how are they applied to a completed weapon, and do they expire?}  
 {DECIDE: Does YAP sell starter gear at the Camp, and does he interact with the player before the first cave?}  
@@ -525,7 +525,7 @@ Each team has a Queen and Workers. The Queen is randomly selected. Everyone star
 The Queen has three lives. When a Queen dies, the game clearly indicates the death, waits a short time, then respawns the Queen at their base and removes one life. Losing all three Queen lives causes the team to lose.
 
 {DECIDE: How many players are on a team, and how many teams are in a match?}  
-{DECIDE: Is Queen selection random from the whole team, or does the player opt in or opt out?}  
+{DECIDE: Can a player opt out of random Queen selection, or is every team member eligible?}  
 {DECIDE: Can a Queen change roles, leave the match, or disconnect?}  
 {DECIDE: What is the match length, arena size, team balancing method, matchmaking method, and tie rule?}  
 {DECIDE: What are the Queen death delay, respawn animation, and temporary protection period?}  
