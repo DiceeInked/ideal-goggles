@@ -25,7 +25,7 @@ The game mixes four main activities:
 - **Build and fight:** combine a blade, handle, and amulet into a weapon, then use ink-powered attacks and abilities.
 - **Connect:** meet players during exploration, build friendships, and use paired gestures and other social actions.
 
-**Inkoff** is the competitive team mode. Each team has a Queen and Workers. A team can win by filling every hole in its base with gel, or by taking all three of the opposing Queen's lives.
+**Inkoff** is the competitive team experience. Each team has a Queen and Workers. A team can win by filling every hole in its base with gel, or by taking all three of the opposing Queen's lives.
 
 The intended feeling is a shared journey: other players should appear along the route and sometimes travel nearby, rather than every social interaction requiring a lobby invitation. The drawing system is a central identity feature, not a side activity.
 
@@ -62,7 +62,7 @@ The intended broad loop is:
 5. Continue gathering ink and shards, discovering creatures, merchants, structures, and biomes.
 6. Use resources to create or recolor art, buy or build weapons, and improve gear.
 7. Encounter other players naturally, optionally travel with them, and use social actions.
-8. Return to the surface or Camp, use the stash or drawing areas, and decide whether to explore again or enter another mode.
+8. Return to the surface or Camp, use the stash or drawing areas, and decide whether to explore again or visit another area or multiplayer activity.
 
 The cave descent is designed to feel continuous even though the game may disconnect the player from one server instance, load another layer, and reconnect during the fall.
 
@@ -72,11 +72,11 @@ The cave descent is designed to feel continuous even though the game may disconn
 **Cave-run length and returning to a known route:** Reaching Z00 from A99 should take at least 3–4 hours when moving as quickly as possible. Run length depends on the cave-reset schedule, which has conflicting answers elsewhere in these notes. Once activated, a Stronghold emits light so it is easier to find after leaving for the surface and returning. Opening a Stronghold disables mob spawning, including shopkeepers, on that level.
 **First five minutes:** Complete the tutorial, then explore the Mines.
 
-### Modes
+### Areas and experiences
 
-- **Planet and caves:** The main exploration experience.
-- **Inkoff:** Competitive team combat with gel delivery and Queen lives.
-- **Personal drawing board:** Persistent space at the Camp for drawing.
+- **Main planet and caves:** The main exploration area.
+- **Inkoff:** Competitive team experience with gel delivery and Queen lives.
+- **Personal drawing board:** A tiny, persistent board at the Camp.
 - **Antenna hub/shared boards:** The latest answers call this planet The Grid and say it provides access to Inkoff and shared boards. Whether The Grid is separate from the main cave planet remains unresolved.
 - **Personal homes and PAL:** Earlier ideas that need confirmation before being treated as current features.
 
@@ -137,7 +137,7 @@ Once opened, a Stronghold emits light, making it easier to find after leaving fo
 
 A Stronghold opens a physical hole that players jump into. It does not take players to a shallower area and does not move an entire party together; players enter the hole individually. The exact destination for the hole is unresolved. The earlier PDF described a random layer destination, while the latest filled answer describes the physical hole but does not specify a destination formula.
 
-{DECIDE: Where exactly does the hole lead? Does it always lead to the next deeper Section, or can it lead to a random deeper level? Provide examples.}
+{DECIDE: What exactly causes the hole to open: hitting the Stronghold, completing the three-symbol puzzle, or both? Does the puzzle's success control the shard reward only, or also whether the hole opens? Where does the hole lead: always to the next deeper Section, or to a random deeper level? Provide examples.}
 
 Cave layouts do not use per-instance seeds. The generated layout is the same for all players.
 
@@ -513,7 +513,7 @@ The current creature overview leaves the full roster open, including which creat
 {DECIDE: Do creatures respawn after being defeated or after players change layers?}  
 {DECIDE: What happens to difficulty if players return to an earlier cave layer?}
 
-## 12. Inkoff: competitive team mode
+## 12. Inkoff: competitive team experience
 
 Inkoff is a team competition with two ways to win: fill the team's base with gel or take all three lives of the opposing Queen. The older core-stone-only win condition is no longer current.
 
@@ -896,7 +896,7 @@ This master document is the main readable specification. Supporting notes provid
 - [Creatures](CREATURES_AI.md): creature and biome reference.
 - [Drawing and Glitch Artifact](DRAWING_AND_GLITCH_AI.md): editor, artifact, stash portal, and drawing planet.
 - [Weapons and Ink](WEAPONS_AND_INK_AI.md): parts, colors, weapons, mining, and economy.
-- [Inkoff](INKOFF_AI.md): competitive mode.
+- [Inkoff](INKOFF_AI.md): competitive team experience.
 - [Social and Friendship](SOCIAL_AND_FRIENDSHIP_AI.md): player encounters and friendship progression.
 - [Passions and Gestures](FRIENDSHIP_ACTIONS_AI.md): paired actions and animation ideas.
 - [Homes and PAL](HOMES_AND_PAL_AI.md): optional older home and art-event concepts.
