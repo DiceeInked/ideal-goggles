@@ -5,6 +5,7 @@ This folder contains smaller browser-based or lightweight game experiments that 
 ## Current contents
 
 - [html/crowded](html/crowded/index.html) — a small HTML experiment or prototype.
+- [html/shock-keepers-deep-ore](html/shock-keepers-deep-ore/index.html) — a mining action prototype with weapon parts and shock keepers.
 
 ## Notes
 

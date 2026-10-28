@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shock Keepers: Deep Ore</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: rgba(15, 20, 32, 0.85);
+        --line: #7dd3fc;
+        --text: #e5f6ff;
+        --muted: #9bb4c6;
+        --blue: #62d6ff;
+        --green: #7ef7b4;
+        --yellow: #fbe26a;
+        --red: #ff7a7a;
+        --purple: #b990ff;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #111b2d, #070d17 55%, #04080d 100%);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .hud {
+        position: fixed;
+        top: 14px;
+        left: 14px;
+        right: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      .title {
+        background: rgba(7, 13, 20, 0.75);
+        border: 1px solid rgba(125, 211, 252, 0.7);
+        border-radius: 12px;
+        padding: 10px 18px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        box-shadow: 0 0 18px rgba(125, 211, 252, 0.2);
+      }
+
+      .stats {
+        background: rgba(7, 13, 20, 0.75);
+        border: 1px solid rgba(125, 211, 252, 0.7);
+        border-radius: 12px;
+        padding: 10px 16px;
+        display: flex;
+        gap: 14px;
+        font-size: 14px;
+        flex-wrap: wrap;
+      }
+
+      .stats span {
+        color: var(--text);
+        opacity: 0.95;
+      }
+
+      #panel {
+        position: fixed;
+        right: 18px;
+        top: 92px;
+        width: 260px;
+        background: var(--panel);
+        border: 1px solid rgba(125, 211, 252, 0.6);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 0 18px rgba(0, 0, 0, 0.4);
+        z-index: 6;
+      }
+
+      #panel h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .weapon-slot {
+        margin-bottom: 10px;
+      }
+
+      .weapon-slot label {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 5px;
+        color: var(--muted);
+      }
+
+      select {
+        width: 100%;
+        background: rgba(9, 17, 27, 0.95);
+        border: 1px solid rgba(125, 211, 252, 0.5);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+
+      .info-box {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(125, 211, 252, 0.4);
+      }
+
+      .info-box strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--blue);
+      }
+
+      .info-box p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(#0e1726, #0b0f16 60%, #090d12);
+      }
+
+      @media (max-width: 760px) {
+        #panel {
+          position: static;
+          width: 100%;
+          max-width: 360px;
+          margin: 80px auto 10px;
+        }
+
+        .hud {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud">
+      <div class="title">Shock Keepers: Deep Ore</div>
+      <div class="stats">
+        <span id="healthStat">Health: 100</span>
+        <span id="inkStat">Ink: 32</span>
+        <span id="shardsStat">Shards: 0</span>
+        <span id="depthStat">Depth: 1</span>
+      </div>
+    </div>
+
+    <aside id="panel">
+      <h3>Weapon Loadout</h3>
+
+      <div class="weapon-slot">
+        <label for="bladeSelect">Blade</label>
+        <select id="bladeSelect">
+          <option value="breaker">Breaker Edge</option>
+          <option value="steady">Steady Blade</option>
+          <option value="rift">Rift Cutter</option>
+        </select>
+      </div>
+
+      <div class="weapon-slot">
+        <label for="handleSelect">Handle</label>
+        <select id="handleSelect">
+          <option value="shock">Shock Grip</option>
+          <option value="hook">Hook Tether</option>
+          <option value="lunge">Arc Lunge</option>
+        </select>
+      </div>
+
+      <div class="weapon-slot">
+        <label for="amuletSelect">Amulet</label>
+        <select id="amuletSelect">
+          <option value="pulse">Pulse Lens</option>
+          <option value="core">Core Sigil</option>
+          <option value="glow">Glow Charm</option>
+        </select>
+      </div>
+
+      <div class="info-box">
+        <strong>Controls</strong>
+        <p>Move with WASD or arrow keys. Mine ore with space or hold left click. Hit E for a shock burst. Watch out for the shock keepers.</p>
+      </div>
+    </aside>
+
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <script>
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+
+      const bladeSelect = document.getElementById('bladeSelect');
+      const handleSelect = document.getElementById('handleSelect');
+      const amuletSelect = document.getElementById('amuletSelect');
+
+      const healthStat = document.getElementById('healthStat');
+      const inkStat = document.getElementById('inkStat');
+      const shardsStat = document.getElementById('shardsStat');
+      const depthStat = document.getElementById('depthStat');
+
+      const weaponProfiles = {
+        breaker: { label: 'Breaker Edge', damage: 18, range: 72, mining: 1.4 },
+        steady: { label: 'Steady Blade', damage: 14, range: 76, mining: 1.1 },
+        rift: { label: 'Rift Cutter', damage: 21, range: 70, mining: 1.7 },
+        shock: { label: 'Shock Grip', pulse: 30, radius: 130 },
+        hook: { label: 'Hook Tether', pulse: 18, radius: 150 },
+        lunge: { label: 'Arc Lunge', pulse: 26, radius: 120 },
+        pulse: { label: 'Pulse Lens', bonus: 0.2 },
+        core: { label: 'Core Sigil', bonus: 0.35 },
+        glow: { label: 'Glow Charm', bonus: 0.25 }
+      };
+
+      const keys = {};
+      const pointer = { x: canvas.width / 2, y: canvas.height / 2, down: false };
+
+      const state = {
+        player: {
+          x: 160,
+          y: 180,
+          radius: 16,
+          speed: 210,
+          health: 100,
+          maxHealth: 100,
+          ink: 32,
+          shards: 0,
+          depth: 1,
+          hitFlash: 0,
+          abilityCooldown: 0,
+          miningCooldown: 0,
+        },
+        ores: [],
+        keepers: [],
+        particles: [],
+        stateText: 'Mine the glowing veins and survive the deep caves.',
+        levelClear: false,
+        gameOver: false,
+      };
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function rand(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function distance(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function spawnOre() {
+        const colors = ['#ff7a7a', '#62d6ff', '#7ef7b4', '#fbe26a'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const radius = rand(18, 28);
+        return {
+          x: rand(70, canvas.width - 70),
+          y: rand(90, canvas.height - 80),
+          radius,
+          hp: 28 + Math.random() * 24,
+          color,
+          value: 8 + Math.random() * 12,
+          glow: rand(0.3, 1.2),
+        };
+      }
+
+      function spawnKeeper() {
+        const side = Math.floor(Math.random() * 4);
+        let x = 0;
+        let y = 0;
+
+        if (side === 0) { x = rand(-30, canvas.width + 30); y = -40; }
+        if (side === 1) { x = canvas.width + 40; y = rand(-30, canvas.height + 30); }
+        if (side === 2) { x = rand(-30, canvas.width + 30); y = canvas.height + 40; }
+        if (side === 3) { x = -40; y = rand(-30, canvas.height + 30); }
+
+        return {
+          x, y,
+          radius: 19,
+          speed: 42 + state.player.depth * 7,
+          hp: 55 + state.player.depth * 15,
+          attackCooldown: rand(0.8, 1.6),
+          hitFlash: 0,
+          color: '#b990ff',
+        };
+      }
+
+      function spawnWave() {
+        const goalDepth = state.player.depth;
+        state.ores = [];
+        const oreCount = 6 + Math.min(12, goalDepth * 2);
+        for (let i = 0; i < oreCount; i += 1) {
+          state.ores.push(spawnOre());
+        }
+
+        const keeperCount = 2 + goalDepth;
+        state.keepers = [];
+        for (let i = 0; i < keeperCount; i += 1) {
+          state.keepers.push(spawnKeeper());
+        }
+
+        state.levelClear = false;
+        state.stateText = `Depth ${goalDepth}: mine the ore, clear the keepers, and keep moving.`;
+      }
+
+      function applyWeaponStats() {
+        const blade = weaponProfiles[bladeSelect.value];
+        const handle = weaponProfiles[handleSelect.value];
+        const amulet = weaponProfiles[amuletSelect.value];
+
+        state.player.miningBonus = (blade.mining || 1) * (1 + (amulet.bonus || 0));
+        state.player.attackDamage = blade.damage || 0;
+        state.player.shockRadius = handle.radius || 140;
+        state.player.shockDamage = handle.pulse || 24;
+      }
+
+      function updateStats() {
+        healthStat.textContent = `Health: ${Math.max(0, Math.ceil(state.player.health))}`;
+        inkStat.textContent = `Ink: ${Math.max(0, Math.ceil(state.player.ink))}`;
+        shardsStat.textContent = `Shards: ${Math.floor(state.player.shards)}`;
+        depthStat.textContent = `Depth: ${state.player.depth}`;
+      }
+
+      function mineOre() {
+        if (state.gameOver) return;
+
+        let target = null;
+        let best = 180;
+
+        for (const ore of state.ores) {
+          const d = distance(state.player, ore);
+          if (d < 75 && d < best) {
+            target = ore;
+            best = d;
+          }
+        }
+
+        if (!target) return;
+
+        const blade = weaponProfiles[bladeSelect.value];
+        const amulet = weaponProfiles[amuletSelect.value];
+        const miningPower = blade.mining || 1;
+        const inkCost = 0.7 + (amulet.bonus || 0) * 1.4;
+
+        if (state.player.ink <= 0) {
+          state.stateText = 'Out of ink. Move and mine smarter.';
+          return;
+        }
+
+        if (state.player.miningCooldown > 0) return;
+
+        const damage = 10 * miningPower * (1 + (amulet.bonus || 0) * 1.5);
+        target.hp -= damage;
+        state.player.ink -= inkCost;
+        state.player.miningCooldown = 0.22;
+
+        state.particles.push({
+          x: target.x,
+          y: target.y,
+          color: target.color,
+          radius: 3,
+          life: 0.4,
+          vx: rand(-20, 20),
+          vy: rand(-20, 20),
+        });
+
+        if (target.hp <= 0) {
+          state.player.shards += 3 + Math.random() * 4;
+          state.player.ink += 4 + Math.random() * 6;
+          state.stateText = 'Ore cracked. Ink and shards recovered.';
+          state.ores = state.ores.filter((ore) => ore !== target);
+
+          if (state.ores.length === 0 && state.keepers.length === 0) {
+            state.player.depth += 1;
+            state.stateText = `Layer cleared. You moved to depth ${state.player.depth}.`;
+            spawnWave();
+          }
+        }
+      }
+
+      function shockPulse() {
+        if (state.player.abilityCooldown > 0 || state.gameOver) return;
+
+        const handle = weaponProfiles[handleSelect.value];
+        const amulet = weaponProfiles[amuletSelect.value];
+        const cost = 8 + (amulet.bonus || 0) * 12;
+
+        if (state.player.ink < cost) {
+          state.stateText = 'Not enough ink for the shock burst.';
+          return;
+        }
+
+        state.player.ink -= cost;
+        state.player.abilityCooldown = 1.4;
+
+        state.particles.push({
+          x: state.player.x,
+          y: state.player.y,
+          color: '#62d6ff',
+          radius: 18,
+          life: 0.5,
+          vx: 0,
+          vy: 0,
+          ring: true,
+        });
+
+        for (const keeper of state.keepers) {
+          const d = distance(state.player, keeper);
+          if (d <= (handle.radius || 140)) {
+            keeper.hp -= state.player.shockDamage || 24;
+            keeper.hitFlash = 0.35;
+            keeper.x += (keeper.x - state.player.x) * 0.08;
+            keeper.y += (keeper.y - state.player.y) * 0.08;
+            state.stateText = 'Shock pulse cracked a keeper guard.';
+          }
+        }
+
+        state.keepers = state.keepers.filter((keeper) => {
+          if (keeper.hp <= 0) {
+            state.player.shards += 8;
+            state.player.ink += 10;
+            return false;
+          }
+          return true;
+        });
+
+        if (state.ores.length === 0 && state.keepers.length === 0) {
+          state.levelClear = true;
+          state.player.depth += 1;
+          state.stateText = `Layer cleared. The next cave opens at depth ${state.player.depth}.`;
+          spawnWave();
+        }
+      }
+
+      function updatePlayer(dt) {
+        const vx = (keys['d'] || keys['arrowright'] ? 1 : 0) - (keys['a'] || keys['arrowleft'] ? 1 : 0);
+        const vy = (keys['s'] || keys['arrowdown'] ? 1 : 0) - (keys['w'] || keys['arrowup'] ? 1 : 0);
+        const length = Math.hypot(vx, vy) || 1;
+
+        state.player.x += (vx / length) * state.player.speed * dt;
+        state.player.y += (vy / length) * state.player.speed * dt;
+
+        state.player.x = clamp(state.player.x, 30, canvas.width - 30);
+        state.player.y = clamp(state.player.y, 46, canvas.height - 30);
+
+        state.player.abilityCooldown = Math.max(0, state.player.abilityCooldown - dt);
+        state.player.miningCooldown = Math.max(0, state.player.miningCooldown - dt);
+        state.player.hitFlash = Math.max(0, state.player.hitFlash - dt);
+
+        if (pointer.down) {
+          mineOre();
+        }
+
+        if (keys['e'] && !keys['ePressed']) {
+          shockPulse();
+          keys['ePressed'] = true;
+        }
+
+        if (!keys['e']) keys['ePressed'] = false;
+      }
+
+      function updateKeepers(dt) {
+        for (const keeper of state.keepers) {
+          const dx = state.player.x - keeper.x;
+          const dy = state.player.y - keeper.y;
+          const dist = Math.hypot(dx, dy) || 1;
+
+          if (dist > 0.1) {
+            keeper.x += (dx / dist) * keeper.speed * dt;
+            keeper.y += (dy / dist) * keeper.speed * dt;
+          }
+
+          keeper.attackCooldown -= dt;
+          keeper.hitFlash = Math.max(0, keeper.hitFlash - dt);
+
+          if (dist < keeper.radius + state.player.radius + 10 && keeper.attackCooldown <= 0) {
+            state.player.health -= 11 + state.player.depth * 0.7;
+            state.player.hitFlash = 0.4;
+            keeper.attackCooldown = rand(0.8, 1.5);
+            state.stateText = 'A shock keeper hit you. Back off and mine around it.';
+          }
+        }
+
+        if (state.player.health <= 0) {
+          state.player.health = state.player.maxHealth;
+          state.player.ink = 25;
+          state.player.shards = Math.max(0, state.player.shards - 4);
+          state.player.x = 160;
+          state.player.y = 180;
+          state.gameOver = true;
+          state.stateText = 'You fell in the mine. Respawned at camp with a lighter cache.';
+          setTimeout(() => {
+            state.gameOver = false;
+          }, 1000);
+        }
+      }
+
+      function updateParticles(dt) {
+        state.particles = state.particles.filter((p) => {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= dt;
+          return p.life > 0;
+        });
+      }
+
+      function update(dt) {
+        if (state.gameOver) {
+          updateStats();
+          return;
+        }
+
+        updatePlayer(dt);
+        updateKeepers(dt);
+        updateParticles(dt);
+
+        state.player.ink = Math.min(state.player.ink + dt * 0.8, 90);
+        state.player.health = clamp(state.player.health + dt * 0.7, 0, state.player.maxHealth);
+        applyWeaponStats();
+        updateStats();
+      }
+
+      function drawBackground() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        g.addColorStop(0, '#111d2d');
+        g.addColorStop(0.5, '#0a1320');
+        g.addColorStop(1, '#070d15');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < 28; i += 1) {
+          const x = (i * 53) % canvas.width;
+          const y = (i * 71) % canvas.height;
+          ctx.fillStyle = 'rgba(125, 211, 252, 0.06)';
+          ctx.fillRect(x, y, 30, 18);
+        }
+      }
+
+      function drawOre(ore) {
+        ctx.beginPath();
+        ctx.fillStyle = ore.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = ore.color;
+        ctx.arc(ore.x, ore.y, ore.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 2;
+        ctx.arc(ore.x, ore.y, ore.radius * 0.8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      function drawKeeper(keeper) {
+        const hpRatio = clamp(keeper.hp / (55 + state.player.depth * 15), 0, 1);
+
+        ctx.beginPath();
+        ctx.fillStyle = keeper.hitFlash > 0 ? '#e0f7ff' : '#9b7af7';
+        ctx.arc(keeper.x, keeper.y, keeper.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#62d6ff';
+        ctx.arc(keeper.x, keeper.y, keeper.radius + 10, -Math.PI / 2, (-Math.PI / 2) + (Math.PI * 2 * hpRatio));
+        ctx.stroke();
+      }
+
+      function drawPlayer() {
+        ctx.beginPath();
+        ctx.fillStyle = state.player.hitFlash > 0 ? '#fff' : '#7ef7b4';
+        ctx.arc(state.player.x, state.player.y, state.player.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#dfeeff';
+        ctx.lineWidth = 2;
+        ctx.arc(state.player.x, state.player.y, state.player.radius + 9, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      function drawParticles() {
+        for (const p of state.particles) {
+          ctx.beginPath();
+          ctx.fillStyle = p.color;
+          if (p.ring) {
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = 3;
+            ctx.arc(p.x, p.y, p.radius * 1.3, 0, Math.PI * 2);
+            ctx.stroke();
+          } else {
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.closePath();
+        }
+      }
+
+      function drawStateText() {
+        ctx.fillStyle = 'rgba(7, 13, 20, 0.65)';
+        ctx.fillRect(20, canvas.height - 72, canvas.width - 40, 46);
+
+        ctx.fillStyle = '#dff9ff';
+        ctx.font = '18px Arial';
+        ctx.fillText(state.stateText, 36, canvas.height - 42);
+      }
+
+      function drawPointerAim() {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.arc(pointer.x, pointer.y, 12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      function draw() {
+        drawBackground();
+
+        for (const ore of state.ores) {
+          drawOre(ore);
+        }
+
+        for (const keeper of state.keepers) {
+          drawKeeper(keeper);
+        }
+
+        drawPlayer();
+        drawParticles();
+        drawPointerAim();
+        drawStateText();
+      }
+
+      function loop(now) {
+        const dt = Math.min((now - (loop.last || now)) / 1000, 0.033);
+        loop.last = now;
+
+        update(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      function attachEvents() {
+        window.addEventListener('keydown', (event) => {
+          keys[event.key.toLowerCase()] = true;
+        });
+
+        window.addEventListener('keyup', (event) => {
+          keys[event.key.toLowerCase()] = false;
+        });
+
+        window.addEventListener('pointermove', (event) => {
+          const rect = canvas.getBoundingClientRect();
+          pointer.x = ((event.clientX - rect.left) / rect.width) * canvas.width;
+          pointer.y = ((event.clientY - rect.top) / rect.height) * canvas.height;
+        });
+
+        window.addEventListener('pointerdown', () => {
+          pointer.down = true;
+        });
+
+        window.addEventListener('pointerup', () => {
+          pointer.down = false;
+        });
+
+        bladeSelect.addEventListener('change', applyWeaponStats);
+        handleSelect.addEventListener('change', applyWeaponStats);
+        amuletSelect.addEventListener('change', applyWeaponStats);
+      }
+
+      function init() {
+        attachEvents();
+        applyWeaponStats();
+        spawnWave();
+        updateStats();
+        requestAnimationFrame(loop);
+      }
+
+      init();
+    </script>
+  </body>
+</html>
