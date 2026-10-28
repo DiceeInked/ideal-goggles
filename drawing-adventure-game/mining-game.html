@@ -3,23 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Drawing Adventure: Platformer Mine</title>
+  <title>Drawing Adventure: Mine Runner</title>
   <style>
     :root {
-      --bg: #0b1015;
-      --bg-2: #111c24;
-      --panel: rgba(16, 22, 28, 0.9);
+      --bg: #0a1015;
+      --bg-2: #101b23;
+      --panel: rgba(16, 22, 28, 0.92);
       --panel-strong: rgba(20, 27, 34, 0.97);
       --line: rgba(177, 196, 210, 0.14);
-      --line-strong: rgba(177, 196, 210, 0.22);
       --text: #edf6ff;
-      --muted: #a9bbc9;
-      --soft: #dfeaf4;
+      --muted: #a8bbca;
       --gold: #e3c17c;
       --blue: #7cc9ff;
       --green: #8fe7bb;
       --rose: #f2b6ca;
-      --shadow: rgba(0, 0, 0, 0.4);
+      --shadow: rgba(0, 0, 0, 0.42);
     }
 
     * { box-sizing: border-box; }
@@ -29,7 +27,7 @@
       width: 100%;
       height: 100%;
       background:
-        radial-gradient(circle at top, rgba(124, 201, 255, 0.12), transparent 36%),
+        radial-gradient(circle at top, rgba(124, 201, 255, 0.12), transparent 30%),
         linear-gradient(180deg, var(--bg), var(--bg-2));
       color: var(--text);
       font-family: Inter, "Segoe UI", sans-serif;
@@ -47,11 +45,11 @@
       height: min(92vh, 820px);
       display: grid;
       grid-template-columns: 320px minmax(0, 1fr);
-      border: 1px solid var(--line);
       background: var(--panel);
-      box-shadow: 0 26px 62px var(--shadow);
+      border: 1px solid var(--line);
       border-radius: 22px;
       overflow: hidden;
+      box-shadow: 0 30px 70px var(--shadow);
       backdrop-filter: blur(12px);
     }
 
@@ -69,7 +67,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(124,201,255,0.04), transparent 30%, rgba(227,193,124,0.04));
+      background: linear-gradient(135deg, rgba(124, 201, 255, 0.04), transparent 34%, rgba(227, 193, 124, 0.05));
       pointer-events: none;
     }
 
@@ -98,8 +96,8 @@
       content: "";
       position: absolute;
       inset: -6px;
-      border: 1px solid rgba(124,201,255,0.26);
       border-radius: 50%;
+      border: 1px solid rgba(124,201,255,0.26);
     }
 
     .panel {
@@ -133,17 +131,17 @@
 
     .stat .label {
       display: block;
+      margin-bottom: 6px;
       font-size: 0.64rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 6px;
     }
 
     .stat .value {
       font-size: 1.32rem;
-      letter-spacing: -0.04em;
       font-weight: 700;
+      letter-spacing: -0.04em;
     }
 
     .objective {
@@ -346,7 +344,7 @@
           </div>
         </div>
         <p class="objective" id="objectiveText">
-          Gather 12 ore, then reach the deep portal high in the caves.
+          Gather 12 ore, then reach the portal high in the caves.
         </p>
       </div>
 
@@ -363,7 +361,7 @@
 
     <main class="game-panel">
       <canvas id="gameCanvas" width="1040" height="760"></canvas>
-      <div class="message" id="messageBox">The camp overlooks the mine. Jump to the ledges, gather ore, and reach the portal.</div>
+      <div class="message" id="messageBox">The camp overlooks the mine. Jump across the ledges, gather ore, and reach the portal.</div>
     </main>
   </div>
 
@@ -384,9 +382,9 @@
       message: document.getElementById('messageBox')
     };
 
-    const state = {
-      width: 2800,
-      height: 1100,
+    const world = {
+      width: 3600,
+      height: 1160,
       depth: 1,
       oreGoal: 12,
       oreCollected: 0,
@@ -396,25 +394,26 @@
       keys: {},
       particles: [],
       marks: [],
-      messageTimer: 0,
+      drawBoost: 0,
       won: false,
       player: {
-        x: 160,
-        y: 680,
+        x: 120,
+        y: 620,
         w: 26,
         h: 40,
         vx: 0,
         vy: 0,
         speed: 3.6,
-        jump: 12.6,
+        jump: 11.5,
         onGround: false,
         miningCooldown: 0,
         drawCooldown: 0,
       },
-      camp: { x: 90, y: 700, w: 150, h: 110 },
-      portal: { x: 2520, y: 440, w: 96, h: 150, active: false },
+      camp: { x: 100, y: 700, w: 150, h: 118 },
+      portal: { x: 3340, y: 454, w: 96, h: 150, active: false },
       platforms: [],
-      ore: []
+      ore: [],
+      hazards: []
     };
 
     function clamp(value, min, max) {
@@ -433,293 +432,351 @@
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const v = rand(0.8, speed + 1.4);
-        state.particles.push({
-          x,
-          y,
-          vx: Math.cos(angle) * v,
-          vy: Math.sin(angle) * v,
-          r: rand(2, 4.5),
-          life: rand(24, 52),
-          color
-        });
+        world.particles.push({ x, y, vx: Math.cos(angle) * v, vy: Math.sin(angle) * v, r: rand(2, 4.6), life: rand(18, 48), color });
       }
     }
 
     function addMark(x, y, color) {
-      state.marks.push({
-        x,
-        y,
-        r: rand(16, 26),
-        life: 72,
-        color
-      });
+      world.marks.push({ x, y, r: rand(16, 30), life: 72, color });
     }
 
     function buildLevel() {
-      state.platforms = [
-        { x: 0, y: 780, w: state.width, h: 320, type: 'ground' },
-        { x: 220, y: 680, w: 180, h: 20, type: 'stone' },
-        { x: 520, y: 620, w: 170, h: 18, type: 'stone' },
-        { x: 790, y: 560, w: 180, h: 18, type: 'stone' },
-        { x: 1100, y: 500, w: 200, h: 18, type: 'stone' },
-        { x: 1460, y: 630, w: 170, h: 18, type: 'stone' },
-        { x: 1720, y: 560, w: 180, h: 18, type: 'stone' },
-        { x: 2030, y: 490, w: 210, h: 18, type: 'stone' },
-        { x: 2280, y: 430, w: 140, h: 18, type: 'stone' },
+      world.platforms = [
+        { x: 0, y: 820, w: 3600, h: 360, type: 'ground' },
+        { x: 220, y: 700, w: 190, h: 18, type: 'stone' },
+        { x: 500, y: 640, w: 170, h: 18, type: 'stone' },
+        { x: 770, y: 565, w: 180, h: 18, type: 'stone' },
+        { x: 1090, y: 500, w: 190, h: 18, type: 'stone' },
+        { x: 1360, y: 620, w: 170, h: 18, type: 'stone' },
+        { x: 1650, y: 560, w: 170, h: 18, type: 'stone' },
+        { x: 2030, y: 480, w: 210, h: 18, type: 'stone' },
+        { x: 2360, y: 420, w: 170, h: 18, type: 'stone' },
+        { x: 2720, y: 520, w: 180, h: 18, type: 'stone' },
+        { x: 3040, y: 600, w: 230, h: 18, type: 'stone' }
       ];
 
-      state.ore = [
-        { x: 260, y: 640, r: 12, value: 1, color: '#7cc9ff' },
-        { x: 590, y: 580, r: 12, value: 1, color: '#7cc9ff' },
-        { x: 865, y: 520, r: 12, value: 1, color: '#8fe7bb' },
-        { x: 1195, y: 460, r: 12, value: 1, color: '#e3c17c' },
-        { x: 1540, y: 590, r: 12, value: 1, color: '#7cc9ff' },
-        { x: 1808, y: 520, r: 12, value: 1, color: '#f2b6ca' },
-        { x: 2120, y: 450, r: 12, value: 1, color: '#e3c17c' },
-        { x: 2350, y: 390, r: 12, value: 1, color: '#8fe7bb' },
-        { x: 760, y: 420, r: 12, value: 1, color: '#7cc9ff' },
-        { x: 1670, y: 420, r: 12, value: 1, color: '#7cc9ff' },
-        { x: 2050, y: 290, r: 12, value: 1, color: '#e3c17c' },
-        { x: 2440, y: 330, r: 12, value: 1, color: '#8fe7bb' }
+      world.hazards = [
+        { x: 350, y: 804, w: 90, h: 18, kind: 'spikes' },
+        { x: 950, y: 804, w: 130, h: 18, kind: 'spikes' },
+        { x: 1880, y: 804, w: 140, h: 18, kind: 'spikes' },
+        { x: 2580, y: 804, w: 160, h: 18, kind: 'spikes' }
+      ];
+
+      world.ore = [
+        { x: 280, y: 660, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 560, y: 600, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 850, y: 525, r: 12, value: 1, color: '#8fe7bb' },
+        { x: 1170, y: 460, r: 12, value: 1, color: '#e3c17c' },
+        { x: 1470, y: 580, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 1730, y: 520, r: 12, value: 1, color: '#f2b6ca' },
+        { x: 2120, y: 440, r: 12, value: 1, color: '#e3c17c' },
+        { x: 2435, y: 380, r: 12, value: 1, color: '#8fe7bb' },
+        { x: 2810, y: 480, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 3115, y: 560, r: 12, value: 1, color: '#7cc9ff' },
+        { x: 3260, y: 360, r: 12, value: 1, color: '#e3c17c' },
+        { x: 940, y: 425, r: 12, value: 1, color: '#8fe7bb' }
       ];
     }
 
     function updateHud() {
-      ui.depth.textContent = String(state.depth);
-      ui.shards.textContent = String(state.shards);
-      ui.ore.textContent = String(state.oreCollected);
-      ui.ink.textContent = String(Math.max(0, Math.floor(state.ink)));
+      ui.depth.textContent = String(world.depth);
+      ui.shards.textContent = String(world.shards);
+      ui.ore.textContent = String(world.oreCollected);
+      ui.ink.textContent = String(Math.max(0, Math.floor(world.ink)));
 
-      const progress = clamp((state.oreCollected / state.oreGoal) * 100, 0, 100);
-      ui.progressText.textContent = `${state.oreCollected} / ${state.oreGoal}`;
+      const progress = clamp((world.oreCollected / world.oreGoal) * 100, 0, 100);
+      ui.progressText.textContent = `${world.oreCollected} / ${world.oreGoal}`;
       ui.progressMeter.style.width = `${progress}%`;
-      ui.inkText.textContent = `${Math.max(0, Math.floor(state.ink))}%`;
-      ui.inkMeter.style.width = `${clamp(state.ink, 0, 100)}%`;
+      ui.inkText.textContent = `${Math.max(0, Math.floor(world.ink))}%`;
+      ui.inkMeter.style.width = `${clamp(world.ink, 0, 100)}%`;
 
-      if (state.oreCollected >= state.oreGoal && !state.portal.active) {
-        state.portal.active = true;
-        ui.message.textContent = 'The deep portal awakens. Climb higher and reach it.';
+      if (world.oreCollected >= world.oreGoal && !world.portal.active) {
+        world.portal.active = true;
+        ui.message.textContent = 'The portal awakens. You can finally climb toward the deeper cave.';
       }
 
-      if (state.oreCollected >= state.oreGoal) {
-        ui.objective.textContent = 'The portal is open. Reach the glowing doorway at the far end of the cave.';
+      if (world.oreCollected >= world.oreGoal) {
+        ui.objective.textContent = 'The portal is open. Reach the glowing gate at the far right.';
       } else {
-        ui.objective.textContent = 'Gather 12 ore, then reach the deep portal high in the caves.';
+        ui.objective.textContent = 'Gather 12 ore, then reach the deep portal high in the cave.';
       }
     }
 
-    function handleMovement() {
-      const left = state.keys['a'] || state.keys['arrowleft'];
-      const right = state.keys['d'] || state.keys['arrowright'];
-      const jump = state.keys['w'] || state.keys['arrowup'] || state.keys[' '];
-
-      if (left) state.player.vx = -state.player.speed;
-      else if (right) state.player.vx = state.player.speed;
-      else state.player.vx *= 0.7;
-
-      if (jump && state.player.onGround) {
-        state.player.vy = -state.player.jump;
-        state.player.onGround = false;
-      }
-
-      state.player.vy += 0.5;
+    function setMessage(text) {
+      ui.message.textContent = text;
     }
 
-    function handleMining() {
-      if (state.player.miningCooldown > 0) return;
-      for (const ore of state.ore) {
-        const dX = Math.abs(state.player.x + state.player.w / 2 - ore.x);
-        const dY = Math.abs(state.player.y + state.player.h / 2 - ore.y);
-        if (dX < 26 && dY < 26) {
-          state.player.miningCooldown = 12;
-          state.oreCollected += ore.value;
-          state.shards += ore.value;
-          state.ore = state.ore.filter(o => o !== ore);
-          addParticles(ore.x, ore.y, ore.color, 18, 2.8);
-          ui.message.textContent = `Ore mined! +${ore.value} ore.`;
-          updateHud();
-          return;
+    function movePlayer() {
+      const p = world.player;
+      const left = world.keys['a'] || world.keys['arrowleft'];
+      const right = world.keys['d'] || world.keys['arrowright'];
+      const jump = world.keys['w'] || world.keys['arrowup'] || world.keys[' '];
+
+      if (left) p.vx = -p.speed;
+      else if (right) p.vx = p.speed;
+      else p.vx *= 0.7;
+
+      if (jump && p.onGround) {
+        p.vy = -p.jump;
+        p.onGround = false;
+      }
+
+      p.vy += 0.48;
+      p.vy = clamp(p.vy, -18, 15);
+
+      if (world.drawBoost > 0) {
+        world.drawBoost -= 1;
+        p.speed = 4.3;
+      } else {
+        p.speed = 3.6;
+      }
+
+      const prevX = p.x;
+      const prevY = p.y;
+      p.x += p.vx;
+      for (const solid of world.platforms) {
+        const a = { x: p.x, y: p.y, w: p.w, h: p.h };
+        const b = { x: solid.x, y: solid.y, w: solid.w, h: solid.h };
+        if (rectsIntersect(a, b)) {
+          if (p.vx > 0 && prevX + p.w <= solid.x + 10) {
+            p.x = solid.x - p.w;
+          } else if (p.vx < 0 && prevX >= solid.x + solid.w - 10) {
+            p.x = solid.x + solid.w;
+          }
+          p.vx = 0;
         }
       }
-    }
 
-    function handleDraw() {
-      if (state.player.drawCooldown > 0 || state.ink <= 0) return;
-      state.player.drawCooldown = 18;
-      state.ink = Math.max(0, state.ink - 8);
-      const color = ['#7cc9ff', '#8fe7bb', '#f2b6ca', '#e3c17c'][Math.floor(Math.random() * 4)];
-      const x = state.player.x + state.player.w / 2 + rand(-18, 18);
-      const y = state.player.y + state.player.h / 2 + rand(-18, 18);
-      addMark(x, y, color);
-      addParticles(x, y, color, 12, 2.1);
-      ui.message.textContent = 'A bright ink glyph flashes across the stone.';
-      updateHud();
-    }
-
-    function applyPhysics() {
-      const p = state.player;
-      p.x += p.vx;
       p.y += p.vy;
-
       p.onGround = false;
-      for (const plat of state.platforms) {
-        const playerBox = { x: p.x, y: p.y, w: p.w, h: p.h };
-        const platformBox = { x: plat.x, y: plat.y, w: plat.w, h: plat.h };
-        if (rectsIntersect(playerBox, platformBox)) {
-          const prevY = p.y - p.vy;
-          const prevBottom = prevY + p.h;
-          const prevTop = prevY;
-          const nextBottom = p.y + p.h;
-          const nextTop = p.y;
-
-          if (p.vy >= 0 && prevBottom <= plat.y + 8 && nextBottom >= plat.y) {
-            p.y = plat.y - p.h;
+      for (const solid of world.platforms) {
+        const a = { x: p.x, y: p.y, w: p.w, h: p.h };
+        const b = { x: solid.x, y: solid.y, w: solid.w, h: solid.h };
+        if (rectsIntersect(a, b)) {
+          const previousBottom = prevY + p.h;
+          const previousTop = prevY;
+          if (p.vy >= 0 && previousBottom <= solid.y + 10) {
+            p.y = solid.y - p.h;
             p.vy = 0;
             p.onGround = true;
-          } else if (p.vy < 0 && prevTop >= plat.y + plat.h - 8 && nextTop <= plat.y + plat.h) {
-            p.y = plat.y + plat.h;
+          } else if (p.vy < 0 && previousTop >= solid.y + solid.h - 10) {
+            p.y = solid.y + solid.h;
             p.vy = 0;
-          } else if (p.vx > 0 && p.x + p.w > plat.x && p.x < plat.x + plat.w) {
-            p.x = plat.x - p.w;
-            p.vx = 0;
-          } else if (p.vx < 0 && p.x < plat.x + plat.w && p.x + p.w > plat.x) {
-            p.x = plat.x + plat.w;
-            p.vx = 0;
           }
         }
       }
 
-      if (p.y > state.height + 200) {
-        p.x = 160;
-        p.y = 680;
+      p.x = clamp(p.x, 0, world.width - p.w);
+      p.y = clamp(p.y, 0, world.height + 220);
+
+      if (p.y > world.height + 80) {
+        p.x = 120;
+        p.y = 620;
         p.vx = 0;
         p.vy = 0;
-        state.ink = Math.max(10, state.ink - 10);
-        ui.message.textContent = 'A hard fall costs ink. Get back to the ledges.';
+        world.ink = Math.max(10, world.ink - 10);
+        setMessage('A hard fall costs ink. Recover and keep climbing.');
       }
 
-      if (state.player.miningCooldown > 0) state.player.miningCooldown -= 1;
-      if (state.player.drawCooldown > 0) state.player.drawCooldown -= 1;
+      if (world.player.miningCooldown > 0) world.player.miningCooldown -= 1;
+      if (world.player.drawCooldown > 0) world.player.drawCooldown -= 1;
+
+      for (const hazard of world.hazards) {
+        if (rectsIntersect({ x: p.x, y: p.y, w: p.w, h: p.h }, hazard)) {
+          p.x = 120;
+          p.y = 620;
+          p.vx = 0;
+          p.vy = 0;
+          world.ink = Math.max(0, world.ink - 15);
+          setMessage('Spikes! The cave bites back.');
+        }
+      }
+    }
+
+    function mineNearbyOre() {
+      const p = world.player;
+      if (p.miningCooldown > 0) return;
+
+      let target = null;
+      let best = Infinity;
+      for (const ore of world.ore) {
+        const dx = Math.abs((p.x + p.w / 2) - ore.x);
+        const dy = Math.abs((p.y + p.h / 2) - ore.y);
+        const d = Math.hypot(dx, dy);
+        if (d < 34 && d < best) {
+          best = d;
+          target = ore;
+        }
+      }
+
+      if (!target) {
+        setMessage('No ore close enough to mine.');
+        return;
+      }
+
+      p.miningCooldown = 14;
+      world.ore = world.ore.filter(o => o !== target);
+      world.oreCollected += 1;
+      world.shards += 1;
+      addParticles(target.x, target.y, target.color, 18, 2.8);
+      setMessage(`Ore mined! +1 ore.`);
+      updateHud();
+    }
+
+    function inkBurst() {
+      const p = world.player;
+      if (world.player.drawCooldown > 0 || world.ink <= 0) return;
+      world.player.drawCooldown = 18;
+      world.ink = Math.max(0, world.ink - 8);
+      world.drawBoost = 32;
+
+      const color = ['#7cc9ff', '#8fe7bb', '#f2b6ca', '#e3c17c'][Math.floor(Math.random() * 4)];
+      const x = p.x + p.w / 2 + rand(-18, 18);
+      const y = p.y + p.h / 2 + rand(-18, 18);
+      addMark(x, y, color);
+      addParticles(x, y, color, 16, 2.1);
+      setMessage('A quick ink burst gives you a brighter stride.');
+      updateHud();
     }
 
     function checkPortal() {
-      const p = state.player;
-      const portalRect = { x: state.portal.x, y: state.portal.y, w: state.portal.w, h: state.portal.h };
+      const p = world.player;
+      const portalRect = { x: world.portal.x, y: world.portal.y, w: world.portal.w, h: world.portal.h };
       const playerRect = { x: p.x, y: p.y, w: p.w, h: p.h };
-      if (state.portal.active && rectsIntersect(playerRect, portalRect)) {
-        state.depth += 1;
-        state.oreGoal += 8;
-        state.player.x = 180;
-        state.player.y = 600;
-        state.player.vx = 0;
-        state.player.vy = 0;
-        state.portal.active = false;
-        state.ore = state.ore.concat([
-          { x: 650, y: 620, r: 12, value: 1, color: '#7cc9ff' },
-          { x: 880, y: 500, r: 12, value: 1, color: '#8fe7bb' },
-          { x: 1500, y: 610, r: 12, value: 1, color: '#e3c17c' },
-          { x: 1860, y: 470, r: 12, value: 1, color: '#7cc9ff' },
-          { x: 2280, y: 360, r: 12, value: 1, color: '#8fe7bb' }
-        ]);
-        state.ink = Math.min(100, state.ink + 18);
-        ui.message.textContent = `Depth ${state.depth} reached. The cave becomes sharper and the ore grows richer.`;
+      if (world.portal.active && rectsIntersect(playerRect, portalRect)) {
+        world.depth += 1;
+        world.oreGoal += 8;
+        world.player.x = 120;
+        world.player.y = 620;
+        world.player.vx = 0;
+        world.player.vy = 0;
+        world.portal.active = false;
+        world.ore = [
+          { x: 620, y: 600, r: 12, value: 1, color: '#7cc9ff' },
+          { x: 910, y: 500, r: 12, value: 1, color: '#8fe7bb' },
+          { x: 1470, y: 560, r: 12, value: 1, color: '#e3c17c' },
+          { x: 1820, y: 470, r: 12, value: 1, color: '#7cc9ff' },
+          { x: 2230, y: 395, r: 12, value: 1, color: '#8fe7bb' },
+          { x: 2800, y: 475, r: 12, value: 1, color: '#7cc9ff' },
+          { x: 3240, y: 560, r: 12, value: 1, color: '#f2b6ca' },
+          { x: 2450, y: 330, r: 12, value: 1, color: '#e3c17c' }
+        ];
+        world.ink = Math.min(100, world.ink + 20);
+        setMessage(`Depth ${world.depth} reached. The cave grows richer.`);
         updateHud();
       }
     }
 
     function updateParticles() {
-      for (let i = state.particles.length - 1; i >= 0; i--) {
-        const p = state.particles[i];
+      for (let i = world.particles.length - 1; i >= 0; i--) {
+        const p = world.particles[i];
         p.x += p.vx;
         p.y += p.vy;
         p.life -= 1;
-        if (p.life <= 0) state.particles.splice(i, 1);
+        if (p.life <= 0) world.particles.splice(i, 1);
       }
 
-      for (let i = state.marks.length - 1; i >= 0; i--) {
-        const m = state.marks[i];
+      for (let i = world.marks.length - 1; i >= 0; i--) {
+        const m = world.marks[i];
         m.life -= 1;
-        if (m.life <= 0) state.marks.splice(i, 1);
+        if (m.life <= 0) world.marks.splice(i, 1);
       }
     }
 
     function renderBackground(cameraX) {
       const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
       g.addColorStop(0, '#0d1419');
-      g.addColorStop(0.48, '#101a22');
+      g.addColorStop(0.5, '#101a22');
       g.addColorStop(1, '#0d1318');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < 7; i++) {
+        const x = i * 350 - cameraX * 0.18;
         ctx.beginPath();
-        ctx.fillStyle = i % 2 === 0 ? 'rgba(33, 48, 58, 0.9)' : 'rgba(26, 39, 48, 0.85)';
-        ctx.moveTo(i * 300 - cameraX * 0.15, canvas.height);
-        ctx.lineTo(i * 300 + 240 - cameraX * 0.15, 180 + (i % 3) * 40);
-        ctx.lineTo(i * 300 + 480 - cameraX * 0.15, canvas.height);
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(40, 57, 68, 0.9)' : 'rgba(30, 45, 54, 0.85)';
+        ctx.moveTo(x, canvas.height);
+        ctx.lineTo(x + 220, 180 + (i % 3) * 55);
+        ctx.lineTo(x + 420, canvas.height);
         ctx.closePath();
         ctx.fill();
       }
 
       ctx.fillStyle = 'rgba(255,255,255,0.015)';
-      for (let x = 0; x < canvas.width + 30; x += 52) {
+      for (let x = 0; x < canvas.width + 60; x += 52) {
         ctx.fillRect(x + ((cameraX * 0.1) % 52) - 52, 0, 1, canvas.height);
       }
     }
 
+    function renderCamp(cameraX) {
+      const x = world.camp.x - cameraX;
+      const y = world.camp.y;
+      ctx.fillStyle = '#d5b36c';
+      ctx.fillRect(x, y, world.camp.w, world.camp.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + 18, y + 24, world.camp.w - 36, 18);
+      ctx.fillStyle = '#0d1318';
+      ctx.fillRect(x + 22, y + 62, 14, 32);
+      ctx.fillRect(x + world.camp.w - 36, y + 62, 14, 32);
+      ctx.fillStyle = '#e3c17c';
+      ctx.font = '600 14px sans-serif';
+      ctx.fillText('CAMP', x + 30, y - 12);
+    }
+
     function renderPlatforms(cameraX) {
-      for (const p of state.platforms) {
+      for (const p of world.platforms) {
         const x = p.x - cameraX;
-        const y = p.y;
-
-        ctx.fillStyle = p.type === 'ground' ? '#2e3d48' : '#405563';
-        ctx.fillRect(x, y, p.w, p.h);
-
+        ctx.fillStyle = p.type === 'ground' ? '#2c3d4b' : '#405563';
+        ctx.fillRect(x, p.y, p.w, p.h);
         ctx.fillStyle = 'rgba(255,255,255,0.04)';
-        ctx.fillRect(x, y, p.w, 4);
+        ctx.fillRect(x, p.y, p.w, 4);
+      }
+    }
 
-        if (p.type === 'ground') {
-          ctx.fillStyle = 'rgba(255,255,255,0.02)';
-          for (let i = 0; i < p.w; i += 18) {
-            ctx.fillRect(x + i, y + 16, 10, 3);
-          }
+    function renderHazards(cameraX) {
+      for (const h of world.hazards) {
+        const x = h.x - cameraX;
+        ctx.fillStyle = '#d86d6d';
+        for (let i = 0; i < h.w; i += 14) {
+          ctx.beginPath();
+          ctx.moveTo(x + i, h.y + h.h);
+          ctx.lineTo(x + i + 7, h.y + 2);
+          ctx.lineTo(x + i + 14, h.y + h.h);
+          ctx.closePath();
+          ctx.fill();
         }
       }
     }
 
     function renderOre(cameraX) {
-      for (const o of state.ore) {
-        const x = o.x - cameraX;
-        const y = o.y;
-
+      for (const ore of world.ore) {
+        const x = ore.x - cameraX;
         ctx.beginPath();
-        ctx.fillStyle = o.color;
-        ctx.arc(x, y, o.r, 0, Math.PI * 2);
+        ctx.fillStyle = ore.color;
+        ctx.arc(x, ore.y, ore.r, 0, Math.PI * 2);
         ctx.fill();
-
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.arc(x, y, o.r + 2, 0, Math.PI * 2);
+        ctx.lineWidth = 1.2;
+        ctx.arc(x, ore.y, ore.r + 2, 0, Math.PI * 2);
         ctx.stroke();
       }
     }
 
     function renderMarks(cameraX) {
-      for (const m of state.marks) {
+      for (const m of world.marks) {
         const x = m.x - cameraX;
-        const y = m.y;
         ctx.beginPath();
         ctx.fillStyle = m.color;
         ctx.globalAlpha = clamp(m.life / 72, 0, 1);
-        ctx.arc(x, y, m.r, 0, Math.PI * 2);
+        ctx.arc(x, m.y, m.r, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1;
       }
+      ctx.globalAlpha = 1;
     }
 
     function renderParticles(cameraX) {
-      for (const p of state.particles) {
+      for (const p of world.particles) {
         ctx.beginPath();
         ctx.fillStyle = p.color;
         ctx.globalAlpha = clamp(p.life / 50, 0, 1);
@@ -730,33 +787,30 @@
     }
 
     function renderPortal(cameraX) {
-      const x = state.portal.x - cameraX;
-      const y = state.portal.y;
+      const x = world.portal.x - cameraX;
+      const y = world.portal.y;
       const t = Date.now() * 0.008;
-
-      if (!state.portal.active) {
-        ctx.fillStyle = 'rgba(115, 130, 140, 0.22)';
-        ctx.fillRect(x, y, state.portal.w, state.portal.h);
+      if (!world.portal.active) {
+        ctx.fillStyle = 'rgba(124, 201, 255, 0.10)';
+        ctx.fillRect(x, y, world.portal.w, world.portal.h);
+        ctx.strokeStyle = 'rgba(140, 160, 172, 0.4)';
+        ctx.strokeRect(x, y, world.portal.w, world.portal.h);
         return;
       }
 
-      ctx.fillStyle = 'rgba(124, 201, 255, 0.14)';
-      ctx.fillRect(x - 14, y - 6, state.portal.w + 28, state.portal.h + 12);
-
+      ctx.fillStyle = 'rgba(124, 201, 255, 0.16)';
+      ctx.fillRect(x - 12, y - 8, world.portal.w + 24, world.portal.h + 16);
       ctx.strokeStyle = '#7cc9ff';
       ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, state.portal.w, state.portal.h);
-
-      for (let i = 0; i < 4; i++) {
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(124,201,255,0.3)';
-        ctx.arc(x + state.portal.w / 2 + Math.sin(t + i) * 12, y + 40 + i * 20, 10 + Math.sin(t + i * 1.4) * 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.strokeRect(x, y, world.portal.w, world.portal.h);
+      ctx.beginPath();
+      ctx.fillStyle = '#8fe7bb';
+      ctx.arc(x + world.portal.w / 2, y + 62 + Math.sin(t * 2) * 10, 12 + Math.sin(t) * 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function renderPlayer(cameraX) {
-      const p = state.player;
+      const p = world.player;
       const x = p.x - cameraX;
       const y = p.y;
 
@@ -774,56 +828,41 @@
       ctx.fillRect(x + 15, y + 10, 3, 3);
     }
 
-    function renderCamp(cameraX) {
-      const x = state.camp.x - cameraX;
-      const y = state.camp.y;
-      ctx.fillStyle = '#d5b36c';
-      ctx.fillRect(x, y, state.camp.w, state.camp.h);
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(x + 18, y + 24, state.camp.w - 36, 18);
-      ctx.fillStyle = '#0d1318';
-      ctx.fillRect(x + 22, y + 62, 14, 32);
-      ctx.fillRect(x + state.camp.w - 36, y + 62, 14, 32);
-      ctx.fillStyle = '#e3c17c';
-      ctx.fillText('CAMP', x + 30, y - 12);
-    }
-
     function render() {
-      const cameraX = clamp(state.player.x - canvas.width / 2, 0, state.width - canvas.width);
-      state.cameraX += (cameraX - state.cameraX) * 0.12;
+      const cameraX = clamp(world.player.x - canvas.width / 2, 0, world.width - canvas.width);
+      world.cameraX += (cameraX - world.cameraX) * 0.12;
 
-      renderBackground(state.cameraX);
-      renderPlatforms(state.cameraX);
-      renderOre(state.cameraX);
-      renderMarks(state.cameraX);
-      renderParticles(state.cameraX);
-      renderCamp(state.cameraX);
-      renderPortal(state.cameraX);
-      renderPlayer(state.cameraX);
+      renderBackground(world.cameraX);
+      renderCamp(world.cameraX);
+      renderPlatforms(world.cameraX);
+      renderHazards(world.cameraX);
+      renderOre(world.cameraX);
+      renderMarks(world.cameraX);
+      renderParticles(world.cameraX);
+      renderPortal(world.cameraX);
+      renderPlayer(world.cameraX);
     }
 
     function tick() {
-      handleMovement();
-      applyPhysics();
+      movePlayer();
       updateParticles();
-      render();
       checkPortal();
+      render();
       requestAnimationFrame(tick);
     }
 
     document.addEventListener('keydown', (event) => {
       const key = event.key.toLowerCase();
-      state.keys[key] = true;
-
-      if (key === 'e') handleMining();
-      if (key === 'q') handleDraw();
-      if (key === ' ') state.keys[' '] = true;
+      world.keys[key] = true;
+      if (key === 'e') mineNearbyOre();
+      if (key === 'q') inkBurst();
+      if (key === ' ') world.keys[' '] = true;
     });
 
     document.addEventListener('keyup', (event) => {
       const key = event.key.toLowerCase();
-      state.keys[key] = false;
-      if (key === ' ') state.keys[' '] = false;
+      world.keys[key] = false;
+      if (key === ' ') world.keys[' '] = false;
     });
 
     buildLevel();
