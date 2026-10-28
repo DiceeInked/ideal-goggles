@@ -1,73 +1,32 @@
-# OneLine Open Decisions and Roadmap
+# OneLine Roadmap
 
-**Status:** Draft, version 0.1
+The canonical design baseline is [SPECIFICATION.md](SPECIFICATION.md), with parser details in [GRAMMAR.md](GRAMMAR.md) and expected test behavior in [CONFORMANCE.md](CONFORMANCE.md).
 
-This document separates decisions already established in conversation from proposals that still need confirmation. It prevents a provisional example from accidentally becoming a permanent rule.
+## Settled design
 
-## Established decisions
+- Core is the flexible, general-purpose form with near-zero Raw-specific restrictions.
+- Raw uses the same syntax and adds strict rules for predictable behavior and practical portability.
+- Mixed files use one mixd()[...] root with explicit, non-nested core()[...] and rawb()[...] regions.
+- Ordinary built-ins use three-letter tokens; block tokens use four letters, with and/or as boolean operators.
+- Text literals are quoted inside txt(...).
+- Semicolons separate simple statements; newlines do not.
+- Source order controls ordinary execution. Numeric block priority labels are removed.
+- func defines, fun calls, and par reads parameters.
+- Raw requires explicit types and return types, rejects implicit conversions, and defines numeric/error behavior.
+- A local cannot share a global's name, but separate functions can reuse local names.
+- Invalid or ambiguous code must be rejected rather than guessed.
 
-- The project has two forms: **OneLine Core** and **OneLine Raw**.
-- Core is the flexible base representation used by the translator.
-- Raw is the strict, directly writable form intended to maximize practical portability.
-- Syntax should be explicit and translator-friendly; invalid or ambiguous code should error rather than guess.
-- Block priority numbers are removed. Source order is the default.
-- Functions must be defined before they are called.
-- Function parameter types and return types are explicit.
-- The colon `:` is the division operator.
-- In Raw, division always returns a floating-point result and division by zero is a runtime error.
-- A local variable cannot reuse a global variable's name.
-- Different functions may reuse the same local variable name.
-- A function is defined with `func`, called with `fun`, and reads parameters with `par`.
-- Text literals use double quotes inside `txt(...)`.
-- The token family includes `glo`, `loc`, `set`, `var`, `val`, `boo`, `nul`, `txt`, `num`, `int`, `flo`, `cal`, `com`, `and`, `or`, and `not`.
-- Four-letter block tokens are the intended convention; ordinary built-ins should generally be three letters.
+## Implementation phases
 
-## Proposals requiring a final syntax pass
+1. Implement lexical rules and grammar.
+2. Build an AST with source spans and parser diagnostics.
+3. Implement Raw type, scope, return-path, arithmetic, and boolean checks.
+4. Implement Core semantic metadata and richer value support.
+5. Implement mixed-mode regions and boundary validation.
+6. Add one source-language frontend and one target generator.
+7. Add behavior-preservation tests and compatibility diagnostics.
+8. Expand language and platform support only when semantics can be verified.
 
-1. **Identifier spelling:** decide whether identifiers such as function and variable names are bare identifiers or quoted names. Quotation marks should remain reserved for text literals.
-2. **Function call grammar:** specify one canonical argument-list form. The function declaration's parameter type/name pairs are established conceptually, but call syntax must match them consistently.
-3. **Return token:** use `ret` to follow the three-letter convention, replacing the earlier `return` spelling.
-4. **Output token:** use lowercase `say` to follow the convention, replacing earlier `SAY`.
-5. **Conditional block:** finalize the four-letter block token and its condition/then/else delimiters.
-6. **No-return functions:** decide whether the return type is written as `nul` or another explicit type.
-7. **Multiple values:** do not treat adjacent returned values as an implicit list. Define an explicit tuple/collection type if needed.
-8. **Argument separators:** define how adjacent expressions are distinguished and validate that the grammar has no ambiguity.
-9. **Numeric representation:** fix integer range, floating-point representation, overflow, and rounding rules for Raw.
-10. **Boolean evaluation:** confirm short-circuit behavior for `and` and `or`.
-11. **Top-level execution:** define how multiple `flag` blocks and recurring `reap` blocks register and execute.
-12. **Runtime services:** define what happens when code uses frame-based `reap` in a runtime without frames.
+## Stability rule
 
-## Recommended implementation roadmap
-
-### Phase 1: Language definition
-- Finish the grammar and identifier rules.
-- Define the type system, scopes, function calls, returns, and control flow.
-- Specify all Raw arithmetic and boolean edge cases.
-- Create positive and negative syntax examples.
-
-### Phase 2: OneLine Raw parser
-- Parse the documented grammar.
-- Produce clear syntax and type errors.
-- Enforce declarations, scopes, function order, argument counts, and return types.
-- Add automated tests for valid and invalid examples.
-
-### Phase 3: OneLine Core representation
-- Define a structured AST/IR independent of source text.
-- Add semantic annotations for language-specific behavior.
-- Keep source locations for diagnostics.
-
-### Phase 4: First translator prototype
-- Select a small subset of one source language and one target language.
-- Support only features whose behavior can be verified.
-- Generate direct, adapted, blocked, or unverified compatibility reports.
-- Add behavior-preservation tests.
-
-### Phase 5: Editor and wider support
-- Show diagnostics with actionable explanations.
-- Offer automatic transformations only when their behavior is tested.
-- Add language adapters gradually.
-- Never claim universal portability without evidence.
-
-## Release rule
-
-Do not label the specification stable until the grammar, numeric semantics, function-call form, and control-flow rules are no longer provisional and are covered by tests.
+Version 0.2 is a coherent design baseline, not yet a stable implementation. Call it stable only after the grammar is implemented, conformance tests pass, and runtime behavior has been validated. The documentation must not claim the compiler exists until it does.
