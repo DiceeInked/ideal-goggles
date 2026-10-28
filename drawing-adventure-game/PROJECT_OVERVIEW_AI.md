@@ -65,6 +65,7 @@ The creator's latest explicit answers take priority, followed by the uploaded Ga
 
 - Confirm whether the global cave reset is weekly or bi-weekly.
 - Clarify whether The Grid is separate from the main cave planet.
+- Clarify whether The Grid is the same place as the older drawing planet reached with the glitch artifact and large antenna.
 - Clarify the access route between The Pit and The Grid for Inkoff.
 - Clarify whether the Stronghold symbol puzzle controls hole opening or only the shard reward, and set the hole's destination rule.
 - Clarify whether every player is eligible for random Queen selection or can opt out.
