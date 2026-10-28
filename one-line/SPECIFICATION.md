@@ -22,7 +22,7 @@ Raw cannot guarantee every program will run on every language or platform. A tar
 - Identifiers use ASCII in version 0.2 and match [A-Za-z_][A-Za-z0-9_]*. Identifiers are case-sensitive.
 - Function names are double-quoted strings in the function declaration and call syntax. Variable and parameter names are bare identifiers.
 - Boolean literal spellings are exactly TRUE and FALSE.
-- Integer literals are decimal whole numbers. Floating-point literals contain a decimal point, such as 0.1; an exponent may follow a decimal floating-point literal, for example 1.25e-3.
+- Integer literals are decimal whole numbers. Floating-point literals contain a decimal point, such as 0.1; an exponent may follow a decimal floating-point literal, for example 1.25e-3. Numeric wrappers accept unsigned literals only; write negative numeric values with unary signs inside `cal(...)`, for example `cal(-int(5))`.
 - Text is written as txt("text"). Text literals cannot contain an unescaped double quote, backslash, or raw line break. The only supported escapes are `\\` for a backslash, `\"` for a double quote, `\n` for a newline, `\r` for a carriage return, and `\t` for a tab. Unknown escapes are errors. Other Unicode text characters are allowed.
 - // begins a comment that ends at the line break.
 - Whitespace and line breaks are ignored except inside text literals and comments.
@@ -95,7 +95,7 @@ Canonical declarations:
     set((total)cal(var(total)+var(step)));
     say(var(total));
 
-A declaration supplies type, identifier, and initial value. Raw requires explicit types and initializers. The initializer must match the declared type; for `num`, either int or flo is compatible with the numeric union. Assignment updates an existing variable and does not change its declared type.
+A declaration supplies type, identifier, and initial value. Raw requires explicit types and initializers. Initializers and later assignments must be compatible with the declared type; `num` accepts either `int` or `flo` as a member of its union. Assignment never changes the declared variable type.
 
 Scope rules:
 - A local variable cannot reuse a global variable's name.
@@ -120,7 +120,7 @@ Canonical declaration and call:
 
 Structure:
 - func defines a function.
-- The quoted string is the function name.
+- The quoted string is the function name. Names are compared after escape decoding and are case-sensitive. Function names must be unique within a program; overloading is not defined in version 0.2.
 - Each parameter is a repeated type-name pair, such as (num)(x).
 - The final type group declares the return type.
 - fun calls a function.

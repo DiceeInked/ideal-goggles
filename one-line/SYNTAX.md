@@ -38,7 +38,7 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
     or(boo(TRUE)boo(FALSE))
     not(boo(FALSE))
 
-`cal(...)` supports `+`, `-`, `*`, `:` (division), and `^` (exponentiation). Nested `cal(...)` calls group expressions. Raw division always returns `flo`; division by zero is a runtime error.
+`cal(...)` supports `+`, `-`, `*`, `:` (division), and `^` (exponentiation). Nested `cal(...)` calls group expressions. Negative values use unary signs, such as `cal(-int(5))`. Raw division always returns `flo`; division by zero is a runtime error.
 
 ## Conditions
 

@@ -28,7 +28,7 @@ Identifiers are ASCII and case-sensitive in version 0.2. Built-ins are lowercase
     ExecutionBlock   = FlagBlock | ReapBlock ;
     FlagBlock        = "flag" "()" "[" BodyStatement* "]" ;
     ReapBlock        = "reap" "(" Rate? ")" "[" BodyStatement* "]" ;
-    Rate             = Expression ;
+    Rate             = Value ;
 
 A regular Core or Raw file contains top-level function definitions and execution blocks. Bare executable statements are not allowed at the top level. A mixed file is instead exactly one MixedProgram and cannot contain material before or after it. A file must be either a regular program or a mixed program, never both.
 
@@ -93,7 +93,7 @@ val(value) and a bare parenthesized value are transparent wrappers: they preserv
     Atom              = NumericValue | VariableRead | ParameterRead | FunctionCall
                       | Arithmetic | "(" NumericExpression ")" ;
 
-Exponentiation is right-associative. Precedence from highest to lowest is grouping, exponentiation, unary sign, multiplication/division, addition/subtraction. The colon is division.
+Exponentiation is right-associative. Precedence from highest to lowest is grouping, exponentiation, unary sign, multiplication/division, addition/subtraction. Numeric wrappers accept unsigned literals; negative values are written with the unary sign inside `cal(...)`. The colon is division.
 
 ## Functions
 
