@@ -904,6 +904,6 @@ This master document is the main readable specification. Supporting notes provid
 - [Trap](TRAP_AI.md): Trap merchant challenge.
 - [Inspirations](INSPIRATIONS_AI.md): reference games and originality guidance.
 - [Design Decisions and Open Questions](DECISIONS_AND_OPEN_QUESTIONS_AI.md): shorter decision tracker.
-- [Merchant Reference](MERCHANTS.md): current summary of YAP and Trap, using the PDF and latest creator clarifications.
+- [Merchant and Character Reference](MERCHANTS.md): current notes for YAP, Trap, Liv, Que, the Grid merchant, and the droplet character.
 
 When the master document and an older supporting note disagree, follow the source-of-truth rules at the beginning of this document: the creator's latest explicit clarification comes first, followed by the uploaded PDF, then older repository notes. Keep curly-brace prompts only where the authoritative material does not specify the answer.
