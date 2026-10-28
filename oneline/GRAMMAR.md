@@ -10,7 +10,10 @@ The canonical syntax and semantics are defined in [SPECIFICATION.md](SPECIFICATI
     StringLiteral = double-quote, { Character | Escape }, double-quote ;
     Escape        = backslash | escaped-quote | newline | carriage-return | tab ;
     Boolean       = "TRUE" | "FALSE" ;
-    Type          = "int" | "flo" | "num" | "txt" | "boo" | "nul" ;
+    BuiltinType   = "int" | "flo" | "num" | "txt" | "boo" | "nul" ;
+    Type          = BuiltinType | Identifier | TupleType ;
+    TupleType     = "tup" "(" TypeList? ")" ;
+    TypeList      = Type, { Type } ;
     Exponent      = ("e" | "E"), [ "+" | "-" ], Digit, { Digit } ;
     IntegerLiteral = Digit, { Digit } ;
     FloatLiteral   = Digit, { Digit }, ".", Digit, { Digit }, [ Exponent ] ;
@@ -120,7 +123,7 @@ Function names are quoted. Variable and parameter names are bare identifiers. Fu
     Region        = "core" "()" "[" TopLevelItem* "]"
                   | "rawb" "()" "[" TopLevelItem* "]" ;
 
-A condition must be boolean in Raw. A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only. Every top-level item belongs to exactly one region.
+A condition must be boolean in Raw. A mixed file has exactly one outer mixd root; its direct children are non-nested core or rawb regions only. Every top-level item belongs to exactly one region. Core may use custom or tuple types where defined. Raw profile validation restricts types to the six built-in types.
 
 ## Parser obligations
 
