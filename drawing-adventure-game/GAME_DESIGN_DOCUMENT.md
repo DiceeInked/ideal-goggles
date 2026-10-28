@@ -12,6 +12,7 @@
 1. **The creator's latest explicit clarification wins.** A direct correction from the creator overrides older notes and the uploaded PDF.
 2. **The uploaded Games.pdf is the authoritative source when it conflicts with older repository documents.** Use the PDF's version of a rule instead of an older conflicting version in a repository file.
 3. **Repository notes fill in details the PDF does not address.** If the PDF itself is ambiguous or does not specify a detail, leave a curly-brace prompt rather than inventing an answer.
+4. **If two direct creator answers contradict one another, ask the creator rather than choosing one.** Keep the conflict clearly marked until it is resolved.
 
 The PDF's separate-game material is outside this document's scope.
 
