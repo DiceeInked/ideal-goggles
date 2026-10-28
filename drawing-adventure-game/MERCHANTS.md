@@ -1,8 +1,8 @@
-# Merchant Reference
+# Merchant and Character Reference
 
-This file is the current concise reference for merchants. For specific rules, the creator's latest explicit clarification comes first, then the uploaded PDF, then older repository notes.
+For specific rules, the creator's latest explicit clarification comes first, then the uploaded Games.pdf, then older repository notes. If two direct creator answers conflict, the conflict stays open until the creator resolves it.
 
-Merchants are special characters who offer items or services. The original idea says the merchants know one another, though it is not clear whether they want to talk about it. The first cave has no shopkeepers, and merchants become more likely the deeper players travel.
+Merchants are special characters players can interact with to buy items or services. The original idea says merchants know each other, though it is not clear whether they want to talk about that. The first cave has no shopkeepers, and merchants become more likely the deeper players travel.
 
 ## YAP
 
@@ -19,8 +19,8 @@ YAP sells:
 ### Summoning and spawn depth
 The uploaded PDF says YAP appears at A1 and lower. The player can tip him with any color of ink to attempt to summon him; each tip has a 10% chance to spawn him. Items are purchased with shards.
 
-{DECIDE: How much ink counts as one tip?}  
-{DECIDE: What does “A1 and lower” mean in the level-numbering system?}  
+{DECIDE: How much ink counts as one tip?}
+{DECIDE: What does “A1 and lower” mean in the level-numbering system?}
 {DECIDE: What are the prices of the four items, and what effects and durations can tonics have?}
 
 ## Trap
@@ -40,9 +40,31 @@ Trap can attempt to separate a locked weapon into its three parts. The player pl
 
 The older repository draft's 60-second deadline, five ticks spaced ten seconds apart, and guaranteed fatal shot are superseded by the PDF.
 
-{DECIDE: Give a worked example of the number puzzle.}  
-{DECIDE: How many shots can occur, what ends the challenge, and what happens if the player survives?}  
+{DECIDE: Give a worked example of the number puzzle.}
+{DECIDE: How many shots can occur, what ends the challenge, and what happens if the player survives?}
 {DECIDE: What happens to the weapon if the player fails either of the two rounds?}
 
-## Source of truth
-If this file disagrees with the uploaded PDF, use the PDF unless the creator has given a newer explicit correction. The latest explicit creator correction states that YAP's four items are a blade, handle, amulet, and completed weapon; some completed weapons can have a tonic, but the separate parts cannot have buffs.
+## Liv
+
+Liv is a merchant at the Camp who lets players create and edit weapons as long as the weapons are not locked.
+
+{DECIDE: What does Liv sell or charge for, if anything beyond weapon creation/editing?}
+{DECIDE: What is Liv's appearance, personality, dialogue, and relationship to other merchants?}
+
+## Que
+
+Que is a quest merchant in the caves. Meeting Que unlocks The Pit, described as the entrance to Inkoff.
+
+{DECIDE: What quest or conversation must the player complete with Que to unlock The Pit?}
+{DECIDE: What are Que's appearance, personality, dialogue, and other functions?}
+
+## The Grid's merchant and the droplet character
+
+The latest notes describe an unnamed merchant at the top of The Grid. The merchant lets the player join other boards and worlds, and should seem mysterious, knowledgeable, and boastful about its ability to do its job.
+
+A droplet character is positioned beside the antenna. Its identity and purpose are not specified.
+
+{DECIDE: What are the Grid merchant's name, appearance, exact functions, and dialogue?}
+{DECIDE: What is the droplet character's name and purpose?}
+
+The Grid and The Pit are both described as access points for multiplayer features. The current notes do not yet clarify how their roles fit together.
