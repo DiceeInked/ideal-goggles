@@ -2,7 +2,7 @@
 
 **What if your art wasn't just something you made, but part of the world you explored?**
 
-This is a 2D multiplayer adventure built around drawing, discovery, and the people you meet along the way. Set out from the Camp and descend into a huge network of caves, where strange places, hidden paths, valuable ores, and other players are waiting to be found.
+This is a 2D multiplayer adventure built around drawing, discovery, and the people you meet along the way. Set out from the Camp and descend into a huge network of caves, where strange places, valuable ores, and other players are waiting to be found.
 
 ## Draw your own identity
 
@@ -10,7 +10,7 @@ Your character doesn't have to look like everyone else's. Draw your own appearan
 
 ## Keep going deeper
 
-The caves start quiet, but the deeper you travel, the more the world can change. New creatures and merchants may appear, rare biomes could turn familiar tunnels into something unexpected, and hidden passages can send you plunging into another layer. The journey should feel like a shared adventure, with other players appearing along the way rather than waiting for you in a lobby.
+The caves start quiet, but the deeper you travel, the more the world can change. New creatures and merchants may appear, and rare biomes could make familiar tunnels feel completely different. The deeper cave details are still being developed, so there should always be more to discover. The journey should feel like a shared adventure, with other players appearing along the way rather than waiting for you in a lobby.
 
 ## Build a weapon that's yours
 
