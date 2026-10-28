@@ -50,7 +50,7 @@ A regular Core or Raw file contains top-level function definitions and execution
     VariableRead     = "var" "(" Identifier ")" ;
     ParameterRead    = "par" "(" Identifier ")" ;
 
-A semicolon before a closing bracket is optional. A semicolon is mandatory between adjacent simple statements. Newlines alone never separate statements. Function definitions and execution blocks are top-level items, not body statements. Function definitions cannot be nested.
+Every simple statement must end with a semicolon, including the final simple statement before a closing bracket. Self-delimiting conditionals and blocks do not take a trailing semicolon. Newlines alone never separate statements. Function definitions and execution blocks are top-level items, not body statements. Function definitions cannot be nested.
 
 ## Values and operations
 
