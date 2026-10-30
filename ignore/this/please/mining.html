@@ -5,153 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mine Descent & Weapon Smith</title>
   <style>
-    body {
+    :root {
+      --bg: #0a0d12;
+      --bg-2: #171b22;
+      --panel: rgba(18, 22, 28, 0.95);
+      --panel-alt: rgba(33, 38, 44, 0.95);
+      --line: rgba(255,255,255,0.12);
+      --line-strong: rgba(255,255,255,0.2);
+      --text: #eef7ff;
+      --muted: #aab9c9;
+      --gold: #f6d67a;
+      --gold-2: #d89326;
+      --blue: #81d4ff;
+      --green: #8fe7b1;
+      --red: #ff5d5d;
+      --shadow: rgba(0,0,0,0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
       margin: 0;
-      padding: 0;
-      background: #111;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at top, rgba(129,212,255,0.1), transparent 30%),
+        linear-gradient(180deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Tahoma, sans-serif;
       overflow: hidden;
       user-select: none;
     }
 
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
     #game-container {
       position: relative;
-      width: 800px;
-      height: 600px;
-      margin: 20px auto;
-      border: 4px solid #444;
-      background: #222;
+      width: min(1100px, calc(100vw - 32px));
+      height: min(760px, calc(100vh - 32px));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(10,13,18,0.96), rgba(20,25,31,0.96));
+      box-shadow: 0 24px 80px var(--shadow);
     }
 
     canvas {
       display: block;
-      background: #1a1a1a;
-    }
-
-    .ui-panel {
-      position: absolute;
-      background: rgba(20, 20, 20, 0.95);
-      border: 2px solid #555;
-      padding: 15px;
-      display: none;
-      box-sizing: border-box;
-    }
-
-    #shop-ui {
-      top: 50px;
-      left: 50px;
-      width: 700px;
-      height: 500px;
-      z-index: 10;
-    }
-
-    .shop-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid #444;
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-
-    .shop-layout {
-      display: flex;
-      gap: 20px;
-      height: 380px;
-    }
-
-    .shop-column {
-      flex: 1;
-      background: #2a2a2a;
-      padding: 10px;
-      border-radius: 5px;
-      overflow-y: auto;
-    }
-
-    .part-item {
-      background: #3a3a3a;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid transparent;
-    }
-
-    .part-item:hover {
-      background: #4a4a4a;
-    }
-
-    .part-item.equipped {
-      border-color: #4caf50;
-      background: #2e4430;
-    }
-
-    .part-item.owned {
-      border-color: #2196f3;
-    }
-
-    .stat-diff {
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    .stat-up {
-      color: #4caf50;
-    }
-
-    .stat-down {
-      color: #f44336;
-    }
-
-    .close-btn {
-      background: #f44336;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #puzzle-ui {
-      top: 100px;
-      left: 200px;
-      width: 400px;
-      height: 420px;
-      text-align: center;
-      z-index: 10;
-    }
-
-    #puzzle-canvas {
-      background: #000;
-      border: 2px dashed #888;
-      cursor: crosshair;
-      margin: 15px 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #111a22 0%, #0e1419 100%);
     }
 
     #hud {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 20, 25, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 180px;
       pointer-events: none;
-      font-weight: bold;
-      text-shadow: 2px 2px 2px #000;
-      font-size: 16px;
-      line-height: 1.4;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.16);
+      z-index: 3;
+    }
+
+    #hud .title {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.17em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    #hud .row {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
     }
 
     .prompt {
       position: absolute;
-      bottom: 50px;
-      left: 0;
-      width: 800px;
-      text-align: center;
-      font-size: 18px;
-      color: #ffd700;
-      text-shadow: 2px 2px 2px #000;
-      pointer-events: none;
-      animation: pulse 1.5s infinite;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(246, 214, 122, 0.4);
+      background: rgba(20, 18, 14, 0.7);
+      color: var(--gold);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      font-weight: 700;
+      letter-spacing: 0.04em;
       display: none;
+      animation: pulse 1.5s infinite;
+      z-index: 3;
+      pointer-events: none;
     }
 
     @keyframes pulse {
@@ -159,19 +115,299 @@
       50% { opacity: 1; }
       100% { opacity: 0.6; }
     }
+
+    .ui-panel {
+      position: absolute;
+      background: rgba(14, 18, 22, 0.96);
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+      display: none;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+
+    #shop-ui {
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(760px, calc(100% - 60px));
+      height: min(560px, calc(100% - 120px));
+      padding: 18px;
+    }
+
+    .shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .shop-header h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .close-btn {
+      background: linear-gradient(180deg, #f46d6d, #d64747);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(214,71,71,0.2);
+    }
+
+    .shop-balance {
+      margin-bottom: 12px;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .shop-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      height: calc(100% - 84px);
+    }
+
+    .shop-column {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      overflow: hidden;
+    }
+
+    .shop-column h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: var(--gold);
+    }
+
+    .shop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: calc(100% - 28px);
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .part-item {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .part-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(129, 212, 255, 0.5);
+      background: rgba(129, 212, 255, 0.04);
+    }
+
+    .part-item.equipped {
+      border-color: rgba(143, 231, 177, 0.85);
+      background: rgba(143, 231, 177, 0.08);
+    }
+
+    .part-item.owned {
+      border-color: rgba(129, 212, 255, 0.5);
+    }
+
+    .part-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-weight: 700;
+    }
+
+    .part-tag {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .part-price {
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .stat-diff {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .stat-up { color: var(--green); }
+    .stat-down { color: var(--red); }
+
+    #puzzle-ui {
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440px;
+      padding: 18px 18px 14px;
+    }
+
+    #puzzle-ui h3 {
+      margin: 0 0 10px;
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    #puzzle-ui p {
+      margin: 0 0 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    #puzzle-canvas {
+      width: 100%;
+      height: 260px;
+      display: block;
+      background: #05090b;
+      border: 2px dashed rgba(255,255,255,0.22);
+      border-radius: 12px;
+      margin: 12px 0 10px;
+      cursor: crosshair;
+    }
+
+    #puzzle-ui .close-btn {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+      border: 1px solid var(--line);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 8, 11, 0.72);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .start-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .start-card {
+      width: min(620px, calc(100% - 42px));
+      background: rgba(17, 22, 27, 0.9);
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      padding: 26px 26px 22px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+
+    .start-tag {
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .start-card h2 {
+      margin: 0 0 14px;
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      letter-spacing: -0.06em;
+    }
+
+    .start-card p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .instruction-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .inst {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .inst strong {
+      display: block;
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .start-btn {
+      appearance: none;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      color: #1a1208;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 13px 18px;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(246,214,122,0.3);
+    }
+
+    @media (max-width: 820px) {
+      .shop-layout,
+      .instruction-list {
+        grid-template-columns: 1fr;
+      }
+
+      #shop-ui {
+        width: calc(100% - 24px);
+        height: calc(100% - 32px);
+      }
+    }
   </style>
 </head>
 <body>
   <div id="game-container">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas" width="1100" height="760"></canvas>
 
     <div id="hud">
-      Depth: <span id="hud-depth">1</span>F<br>
-      Gold: $<span id="hud-gold">0</span><br>
-      Weapon Stats:<br>
-      • DMG: <span id="stat-dmg">10</span><br>
-      • CD: <span id="stat-cd">0.40</span>s<br>
-      • Range: <span id="stat-range">60</span>px
+      <span class="title">Mine Descent</span>
+      <div class="row">Depth: <span id="hud-depth">1</span>F</div>
+      <div class="row">Gold: $<span id="hud-gold">0</span></div>
+      <div class="row">Ore: <span id="hud-ore">0</span> / <span id="hud-ore-goal">10</span></div>
+      <div class="row">Weapon: <span id="stat-dmg">10</span> DMG</div>
+      <div class="row">CD: <span id="stat-cd">0.40</span>s</div>
+      <div class="row">Range: <span id="stat-range">60</span>px</div>
     </div>
 
     <div id="shop-prompt" class="prompt">Press [E] to talk to the Weapon Smith</div>
@@ -179,117 +415,64 @@
 
     <div id="shop-ui" class="ui-panel">
       <div class="shop-header">
-        <h2>Weapon Smith & Modification Station</h2>
+        <h2>Weapon Smith &amp; Modification Station</h2>
         <button class="close-btn" onclick="closeShop()">X</button>
       </div>
-      <div style="margin-bottom: 10px; color: #ffd700; font-weight: bold;">Your Balance: $<span id="shop-gold">0</span></div>
+      <div class="shop-balance">Your Balance: $<span id="shop-gold">0</span></div>
       <div class="shop-layout">
         <div class="shop-column">
-          <h3>Available Parts (Market)</h3>
-          <div id="market-list"></div>
+          <h3>Market</h3>
+          <div id="market-list" class="shop-list"></div>
         </div>
         <div class="shop-column">
-          <h3>Your Inventory & Assembly</h3>
-          <div id="inventory-list"></div>
+          <h3>Inventory</h3>
+          <div id="inventory-list" class="shop-list"></div>
         </div>
       </div>
     </div>
 
     <div id="puzzle-ui" class="ui-panel">
-      <h3>Trace the Rune to Descend</h3>
-      <p style="font-size: 13px; color: #aaa; margin: 0;">Click and drag to connect all green circles without leaving the box!</p>
-      <canvas id="puzzle-canvas" width="300" height="250"></canvas>
-      <button class="close-btn" style="background:#555;" onclick="closePuzzle()">Abandon Puzzle</button>
+      <h3>Trace the Rune</h3>
+      <p>Click and drag through the green nodes in order to open the stronghold gate.</p>
+      <canvas id="puzzle-canvas" width="340" height="220"></canvas>
+      <button class="close-btn" onclick="closePuzzle()">Abandon</button>
+    </div>
+
+    <div class="start-overlay" id="startOverlay">
+      <div class="start-card">
+        <div class="start-tag">Drawing Adventure</div>
+        <h2>Mine Descent</h2>
+        <p>Dig through the caves, gather ore, buy better weapon parts, and use the rune lock to descend deeper. The deeper you go, the harder the mine becomes.</p>
+
+        <div class="instruction-list">
+          <div class="inst"><strong>Move</strong>A / D or Left / Right</div>
+          <div class="inst"><strong>Jump</strong>W, ↑, or Space</div>
+          <div class="inst"><strong>Mine</strong>Press E near ore</div>
+          <div class="inst"><strong>Fight</strong>Click to swing your weapon</div>
+        </div>
+
+        <button class="start-btn" id="startButton">Start Run</button>
+      </div>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const startOverlay = document.getElementById('startOverlay');
+    const startButton = document.getElementById('startButton');
 
     const TILE_SIZE = 40;
-    const GRID_WIDTH = 40;
+    const GRID_WIDTH = 42;
     const GRID_HEIGHT = 15;
-    const VIEW_WIDTH = 800;
-    const VIEW_HEIGHT = 600;
-
-    let currentDepth = 1;
-    let gold = 0;
-
-    const player = {
-      x: 100,
-      y: 100,
-      vx: 0,
-      vy: 0,
-      width: 24,
-      height: 38,
-      speed: 4,
-      jumpForce: 11,
-      grounded: false,
-      facing: 1,
-      lastAttackTime: 0,
-      isAttacking: false,
-      attackAnimFrame: 0
-    };
-
-    const keys = {};
-    let mouseWorldX = 0;
-    let mouseWorldY = 0;
-    let cameraX = 0;
-
-    let worldGrid = [];
-    let shopkeeper = { x: 180, y: 0, width: 32, height: 45 };
-    let stronghold = { x: 1400, y: 0, width: 60, height: 80 };
-
-    function generateLevel() {
-      worldGrid = [];
-      for (let x = 0; x < GRID_WIDTH; x++) {
-        worldGrid[x] = [];
-        for (let y = 0; y < GRID_HEIGHT; y++) {
-          if (y < 4) {
-            worldGrid[x][y] = 0;
-          } else if (y === 4) {
-            worldGrid[x][y] = (x > 2 && x < 8) ? 0 : 1;
-          } else {
-            const rand = Math.random();
-            if (rand < 0.12) {
-              worldGrid[x][y] = 3;
-            } else if (rand < 0.25) {
-              worldGrid[x][y] = 2;
-            } else {
-              worldGrid[x][y] = 1;
-            }
-          }
-        }
-      }
-
-      for (let x = 2; x < 10; x++) {
-        for (let y = 2; y <= 5; y++) worldGrid[x][y] = 0;
-      }
-
-      for (let x = 33; x < 38; x++) {
-        for (let y = 4; y < GRID_HEIGHT; y++) worldGrid[x][y] = 1;
-        for (let y = 1; y <= 3; y++) worldGrid[x][y] = 0;
-      }
-
-      shopkeeper.x = 180;
-      shopkeeper.y = 4 * TILE_SIZE - shopkeeper.height;
-
-      stronghold.x = 34 * TILE_SIZE;
-      stronghold.y = 4 * TILE_SIZE - stronghold.height;
-
-      worldGrid[34][4] = 1;
-      worldGrid[35][4] = 1;
-      worldGrid[36][4] = 1;
-    }
+    const VIEW_WIDTH = 1100;
+    const VIEW_HEIGHT = 760;
 
     const blockTypes = {
-      1: { name: 'Dirt', hp: 20, color: '#654321', ore: false },
-      2: { name: 'Stone', hp: 50, color: '#555555', ore: false },
-      3: { name: 'Gold Ore', hp: 35, color: '#8a7300', ore: true, value: 25 }
+      1: { name: 'Dirt', hp: 18, color: '#6d4b2d', ore: false },
+      2: { name: 'Stone', hp: 42, color: '#4b5158', ore: false },
+      3: { name: 'Gold Ore', hp: 28, color: '#c9a544', ore: true, value: 25 }
     };
-
-    let blockDamageMap = {};
 
     const partsCatalog = [
       { id: 'blade_heavy', name: 'Heavy Titanium Blade', slot: 'blade', cost: 40, stats: { dmg: 15, cd: 0.2, range: 10 }, owned: false },
@@ -299,33 +482,75 @@
       { id: 'core_overclock', name: 'Overclock Core Mod', slot: 'core', cost: 60, stats: { dmg: 20, cd: 0.15, range: 0 }, owned: false }
     ];
 
-    let equippedParts = {
-      blade: { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } },
-      grip: null,
-      core: null
+    const state = {
+      started: false,
+      currentDepth: 1,
+      gold: 0,
+      oreGoal: 10,
+      oreCollected: 0,
+      keys: {},
+      cameraX: 0,
+      particles: [],
+      sparks: [],
+      worldGrid: [],
+      blockDamageMap: {},
+      shopkeeper: { x: 180, y: 0, width: 36, height: 52 },
+      stronghold: { x: 34 * TILE_SIZE, y: 0, width: 72, height: 84 },
+      player: {
+        x: 120,
+        y: 120,
+        width: 26,
+        height: 40,
+        vx: 0,
+        vy: 0,
+        speed: 4,
+        jumpForce: 11,
+        grounded: false,
+        facing: 1,
+        lastAttackTime: 0,
+        isAttacking: false,
+        attackAnimFrame: 0,
+        miningCooldown: 0
+      },
+      shopOpen: false,
+      puzzleActive: false,
+      puzzlePoints: [],
+      playerTracePath: [],
+      isDrawing: false,
+      mouseWorldX: 0,
+      mouseWorldY: 0,
+      equippedParts: {
+        blade: { id: 'base_blade', name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } },
+        grip: null,
+        core: null
+      }
     };
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
 
     function getWeaponStats() {
       let dmg = 10;
       let cd = 0.4;
       let range = 60;
 
-      if (equippedParts.blade && equippedParts.blade.id) {
-        dmg += equippedParts.blade.stats.dmg;
-        cd += equippedParts.blade.stats.cd;
-        range += equippedParts.blade.stats.range;
+      if (state.equippedParts.blade && state.equippedParts.blade.id) {
+        dmg += state.equippedParts.blade.stats.dmg;
+        cd += state.equippedParts.blade.stats.cd;
+        range += state.equippedParts.blade.stats.range;
       }
 
-      if (equippedParts.grip) {
-        dmg += equippedParts.grip.stats.dmg;
-        cd += equippedParts.grip.stats.cd;
-        range += equippedParts.grip.stats.range;
+      if (state.equippedParts.grip) {
+        dmg += state.equippedParts.grip.stats.dmg;
+        cd += state.equippedParts.grip.stats.cd;
+        range += state.equippedParts.grip.stats.range;
       }
 
-      if (equippedParts.core) {
-        dmg += equippedParts.core.stats.dmg;
-        cd += equippedParts.core.stats.cd;
-        range += equippedParts.core.stats.range;
+      if (state.equippedParts.core) {
+        dmg += state.equippedParts.core.stats.dmg;
+        cd += state.equippedParts.core.stats.cd;
+        range += state.equippedParts.core.stats.range;
       }
 
       return {
@@ -336,24 +561,16 @@
     }
 
     function updateHUD() {
-      document.getElementById('hud-depth').innerText = currentDepth;
-      document.getElementById('hud-gold').innerText = gold;
-      document.getElementById('shop-gold').innerText = gold;
+      document.getElementById('hud-depth').innerText = state.currentDepth;
+      document.getElementById('hud-gold').innerText = state.gold;
+      document.getElementById('shop-gold').innerText = state.gold;
+      document.getElementById('hud-ore').innerText = state.oreCollected;
+      document.getElementById('hud-ore-goal').innerText = state.oreGoal;
 
       const stats = getWeaponStats();
       document.getElementById('stat-dmg').innerText = stats.dmg;
       document.getElementById('stat-cd').innerText = stats.cd.toFixed(2);
       document.getElementById('stat-range').innerText = stats.range;
-    }
-
-    function openShop() {
-      document.getElementById('shop-ui').style.display = 'block';
-      keys['e'] = false;
-      renderShop();
-    }
-
-    function closeShop() {
-      document.getElementById('shop-ui').style.display = 'none';
     }
 
     function getStatPreviewText(partStats) {
@@ -380,8 +597,14 @@
         if (!part.owned) {
           const itemDiv = document.createElement('div');
           itemDiv.className = 'part-item';
-          itemDiv.innerHTML =
-            `<strong>${part.name}</strong> (${part.slot.toUpperCase()})<br>Cost: $${part.cost}<br><div class="stat-diff">${getStatPreviewText(part.stats)}</div>`;
+          itemDiv.innerHTML = `
+            <div class="part-top">
+              <span>${part.name}</span>
+              <span class="part-tag">${part.slot}</span>
+            </div>
+            <div class="part-price">$${part.cost}</div>
+            <div class="stat-diff">${getStatPreviewText(part.stats)}</div>
+          `;
           itemDiv.onclick = () => buyPart(part);
           marketList.appendChild(itemDiv);
         }
@@ -392,33 +615,36 @@
       appendInventoryRow(invList, { id: 'base_core', name: 'No Core Slot Mod', slot: 'core', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'core');
 
       partsCatalog.forEach((part) => {
-        if (part.owned) {
-          appendInventoryRow(invList, part, part.slot);
-        }
+        if (part.owned) appendInventoryRow(invList, part, part.slot);
       });
     }
 
     function appendInventoryRow(container, part, slot) {
-      const isEquipped =
-        equippedParts[slot] &&
-        (equippedParts[slot].id === part.id ||
-          (part.id.startsWith('base_') && !equippedParts[slot].id));
+      const isEquipped = state.equippedParts[slot] && (
+        state.equippedParts[slot].id === part.id ||
+        (part.id.startsWith('base_') && !state.equippedParts[slot].id)
+      );
 
       const itemDiv = document.createElement('div');
       itemDiv.className = `part-item ${isEquipped ? 'equipped' : ''} ${part.owned ? 'owned' : ''}`;
-      itemDiv.innerHTML =
-        `<strong>${part.name}</strong> ${isEquipped ? '<span style="float:right; color:#4caf50;">[ACTIVE]</span>' : ''}<br><span style="font-size:11px; color:#aaa;">Slot Type: ${slot.toUpperCase()}</span><br>${getStatPreviewText(part.stats)}`;
+      itemDiv.innerHTML = `
+        <div class="part-top">
+          <span>${part.name}</span>
+          ${isEquipped ? '<span class="part-tag" style="color: var(--green)">Active</span>' : '<span class="part-tag">' + slot + '</span>'}
+        </div>
+        <div class="stat-diff">${getStatPreviewText(part.stats)}</div>
+      `;
 
       if (!isEquipped) {
         itemDiv.onclick = () => {
           if (part.id.startsWith('base_')) {
             if (slot === 'blade') {
-              equippedParts[slot] = { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } };
+              state.equippedParts[slot] = { id: 'base_blade', name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } };
             } else {
-              equippedParts[slot] = null;
+              state.equippedParts[slot] = null;
             }
           } else {
-            equippedParts[slot] = part;
+            state.equippedParts[slot] = part;
           }
           renderShop();
           updateHUD();
@@ -429,8 +655,8 @@
     }
 
     function buyPart(part) {
-      if (gold >= part.cost) {
-        gold -= part.cost;
+      if (state.gold >= part.cost) {
+        state.gold -= part.cost;
         part.owned = true;
         renderShop();
         updateHUD();
@@ -439,191 +665,252 @@
       }
     }
 
-    const pCanvas = document.getElementById('puzzle-canvas');
-    const pCtx = pCanvas.getContext('2d');
-    let puzzleActive = false;
-    let puzzlePoints = [];
-    let playerTracePath = [];
-    let isDrawing = false;
+    function openShop() {
+      state.shopOpen = true;
+      document.getElementById('shop-ui').style.display = 'block';
+      state.keys.e = false;
+      renderShop();
+    }
+
+    function closeShop() {
+      state.shopOpen = false;
+      document.getElementById('shop-ui').style.display = 'none';
+    }
 
     function initPuzzle() {
-      puzzleActive = true;
+      state.puzzleActive = true;
       document.getElementById('puzzle-ui').style.display = 'block';
-      keys['e'] = false;
+      state.keys.e = false;
 
-      puzzlePoints = [
+      state.puzzlePoints = [
         { x: 50, y: 50, hit: false },
-        { x: 250, y: 50, hit: false },
-        { x: 250, y: 200, hit: false },
-        { x: 50, y: 200, hit: false },
-        { x: 150, y: 125, hit: false }
+        { x: 290, y: 55, hit: false },
+        { x: 290, y: 180, hit: false },
+        { x: 50, y: 180, hit: false },
+        { x: 170, y: 115, hit: false }
       ];
-      playerTracePath = [];
-      isDrawing = false;
+      state.playerTracePath = [];
+      state.isDrawing = false;
       drawPuzzleCanvas();
     }
 
     function closePuzzle() {
-      puzzleActive = false;
+      state.puzzleActive = false;
       document.getElementById('puzzle-ui').style.display = 'none';
     }
 
+    const pCanvas = document.getElementById('puzzle-canvas');
+    const pCtx = pCanvas.getContext('2d');
+
+    function getCanvasMousePos(canvasElem, event) {
+      const rect = canvasElem.getBoundingClientRect();
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      };
+    }
+
     function drawPuzzleCanvas() {
-      pCtx.fillStyle = '#111';
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      pCtx.fillStyle = '#0d1115';
       pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
 
-      pCtx.strokeStyle = '#333';
-      pCtx.lineWidth = 6;
+      pCtx.strokeStyle = '#37424a';
+      pCtx.lineWidth = 5;
       pCtx.beginPath();
-      for (let i = 0; i < puzzlePoints.length; i++) {
-        if (i === 0) pCtx.moveTo(puzzlePoints[i].x, puzzlePoints[i].y);
-        else pCtx.lineTo(puzzlePoints[i].x, puzzlePoints[i].y);
-      }
+      state.puzzlePoints.forEach((pt, idx) => {
+        if (idx === 0) pCtx.moveTo(pt.x, pt.y);
+        else pCtx.lineTo(pt.x, pt.y);
+      });
       pCtx.stroke();
 
-      if (playerTracePath.length > 0) {
-        pCtx.strokeStyle = '#00ffff';
+      if (state.playerTracePath.length > 0) {
+        pCtx.strokeStyle = '#58d1ff';
         pCtx.lineWidth = 4;
         pCtx.beginPath();
-        pCtx.moveTo(playerTracePath[0].x, playerTracePath[0].y);
-        for (let i = 1; i < playerTracePath.length; i++) {
-          pCtx.lineTo(playerTracePath[i].x, playerTracePath[i].y);
+        pCtx.moveTo(state.playerTracePath[0].x, state.playerTracePath[0].y);
+        for (let i = 1; i < state.playerTracePath.length; i++) {
+          pCtx.lineTo(state.playerTracePath[i].x, state.playerTracePath[i].y);
         }
         pCtx.stroke();
       }
 
-      puzzlePoints.forEach((pt, idx) => {
-        pCtx.fillStyle = pt.hit ? '#00ff00' : '#ff3333';
+      state.puzzlePoints.forEach((pt, idx) => {
         pCtx.beginPath();
+        pCtx.fillStyle = pt.hit ? '#4fe38d' : '#ff5d5d';
         pCtx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
         pCtx.fill();
-        pCtx.fillStyle = '#fff';
-        pCtx.font = '10px sans-serif';
-        pCtx.fillText(idx + 1, pt.x - 3, pt.y + 3);
+        pCtx.fillStyle = '#ffffff';
+        pCtx.font = '11px sans-serif';
+        pCtx.fillText(String(idx + 1), pt.x - 3, pt.y + 4);
       });
     }
 
-    function getCanvasMousePos(canvasElem, e) {
-      const rect = canvasElem.getBoundingClientRect();
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-    }
-
-    pCanvas.addEventListener('mousedown', (e) => {
-      if (!puzzleActive) return;
-      isDrawing = true;
-      playerTracePath = [getCanvasMousePos(pCanvas, e)];
-      puzzlePoints.forEach((p) => p.hit = false);
-      checkPuzzleIntersection(playerTracePath[0]);
-      drawPuzzleCanvas();
-    });
-
-    pCanvas.addEventListener('mousemove', (e) => {
-      if (!puzzleActive || !isDrawing) return;
-      const pos = getCanvasMousePos(pCanvas, e);
-      playerTracePath.push(pos);
-      checkPuzzleIntersection(pos);
-      drawPuzzleCanvas();
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (!puzzleActive || !isDrawing) return;
-      isDrawing = false;
-
-      const allHit = puzzlePoints.every((p) => p.hit);
-      if (allHit) {
-        alert('Rune Synced! Descending deeper into the mines...');
-        currentDepth++;
-        generateLevel();
-        player.x = 100;
-        player.y = 100;
-        player.vx = 0;
-        player.vy = 0;
-        blockDamageMap = {};
-        closePuzzle();
-        updateHUD();
-      } else {
-        playerTracePath = [];
-        puzzlePoints.forEach((p) => p.hit = false);
-        drawPuzzleCanvas();
-      }
-    });
-
     function checkPuzzleIntersection(pos) {
-      for (let i = 0; i < puzzlePoints.length; i++) {
-        const pt = puzzlePoints[i];
+      for (let i = 0; i < state.puzzlePoints.length; i++) {
+        const pt = state.puzzlePoints[i];
         const dist = Math.hypot(pos.x - pt.x, pos.y - pt.y);
-        if (dist < 12) {
-          if (i === 0 || puzzlePoints[i - 1].hit) {
+        if (dist < 15) {
+          if (i === 0 || state.puzzlePoints[i - 1].hit) {
             pt.hit = true;
           }
         }
       }
     }
 
-    window.addEventListener('keydown', (e) => {
-      keys[e.key.toLowerCase()] = true;
+    pCanvas.addEventListener('mousedown', (e) => {
+      if (!state.puzzleActive) return;
+      state.isDrawing = true;
+      state.playerTracePath = [getCanvasMousePos(pCanvas, e)];
+      state.puzzlePoints.forEach((p) => p.hit = false);
+      checkPuzzleIntersection(state.playerTracePath[0]);
+      drawPuzzleCanvas();
     });
 
-    window.addEventListener('keyup', (e) => {
-      keys[e.key.toLowerCase()] = false;
+    pCanvas.addEventListener('mousemove', (e) => {
+      if (!state.puzzleActive || !state.isDrawing) return;
+      const pos = getCanvasMousePos(pCanvas, e);
+      state.playerTracePath.push(pos);
+      checkPuzzleIntersection(pos);
+      drawPuzzleCanvas();
     });
 
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      mouseWorldX = mx + cameraX;
-      mouseWorldY = my;
-    });
-
-    canvas.addEventListener('mousedown', (e) => {
-      if (document.getElementById('shop-ui').style.display === 'block' || puzzleActive) return;
-      const now = performance.now();
-      const stats = getWeaponStats();
-      if (now - player.lastAttackTime > stats.cd * 1000) {
-        player.lastAttackTime = now;
-        player.isAttacking = true;
-        player.attackAnimFrame = 0;
-        executeWeaponSwing();
+    window.addEventListener('mouseup', () => {
+      if (!state.puzzleActive || !state.isDrawing) return;
+      state.isDrawing = false;
+      const allHit = state.puzzlePoints.every((p) => p.hit);
+      if (allHit) {
+        alert('Rune Synced! Descending deeper into the mines...');
+        state.currentDepth += 1;
+        generateLevel();
+        state.player.x = 120;
+        state.player.y = 120;
+        state.player.vx = 0;
+        state.player.vy = 0;
+        state.blockDamageMap = {};
+        closePuzzle();
+        updateHUD();
+      } else {
+        state.playerTracePath = [];
+        state.puzzlePoints.forEach((p) => p.hit = false);
+        drawPuzzleCanvas();
       }
     });
 
+    function generateLevel() {
+      state.worldGrid = [];
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        state.worldGrid[x] = [];
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+          if (y < 4) {
+            state.worldGrid[x][y] = 0;
+          } else if (y === 4) {
+            state.worldGrid[x][y] = (x > 2 && x < 8) ? 0 : 1;
+          } else {
+            const rand = Math.random();
+            if (rand < 0.12) state.worldGrid[x][y] = 3;
+            else if (rand < 0.28) state.worldGrid[x][y] = 2;
+            else state.worldGrid[x][y] = 1;
+          }
+        }
+      }
+
+      for (let x = 2; x < 10; x++) {
+        for (let y = 2; y <= 5; y++) state.worldGrid[x][y] = 0;
+      }
+
+      for (let x = 33; x < 38; x++) {
+        for (let y = 4; y < GRID_HEIGHT; y++) state.worldGrid[x][y] = 1;
+        for (let y = 1; y <= 3; y++) state.worldGrid[x][y] = 0;
+      }
+
+      state.shopkeeper.x = 180;
+      state.shopkeeper.y = 4 * TILE_SIZE - state.shopkeeper.height;
+      state.stronghold.x = 34 * TILE_SIZE;
+      state.stronghold.y = 4 * TILE_SIZE - state.stronghold.height;
+      state.worldGrid[34][4] = 1;
+      state.worldGrid[35][4] = 1;
+      state.worldGrid[36][4] = 1;
+
+      state.blockDamageMap = {};
+      state.oreGoal = 10 + (state.currentDepth - 1) * 2;
+      state.oreCollected = 0;
+    }
+
+    function nearShop() {
+      const cx = state.player.x + state.player.width / 2;
+      const cy = state.player.y + state.player.height / 2;
+      return Math.abs(cx - (state.shopkeeper.x + state.shopkeeper.width / 2)) < 48 &&
+             Math.abs(cy - (state.shopkeeper.y + state.shopkeeper.height / 2)) < 62;
+    }
+
+    function nearStronghold() {
+      const cx = state.player.x + state.player.width / 2;
+      const cy = state.player.y + state.player.height / 2;
+      return Math.abs(cx - (state.stronghold.x + state.stronghold.width / 2)) < 58 &&
+             Math.abs(cy - (state.stronghold.y + state.stronghold.height / 2)) < 75;
+    }
+
+    function handleActionInputs() {
+      if (state.shopOpen || state.puzzleActive) return;
+
+      if (nearShop()) {
+        document.getElementById('shop-prompt').style.display = 'block';
+        if (state.keys.e) openShop();
+      } else {
+        document.getElementById('shop-prompt').style.display = 'none';
+      }
+
+      if (nearStronghold()) {
+        document.getElementById('stronghold-prompt').style.display = 'block';
+        if (state.keys.e) initPuzzle();
+      } else {
+        document.getElementById('stronghold-prompt').style.display = 'none';
+      }
+    }
+
+    function createImpactSpark(x, y) {
+      for (let i = 0; i < 8; i++) {
+        state.sparks.push({
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 14,
+          maxLife: 14
+        });
+      }
+    }
+
     function executeWeaponSwing() {
       const stats = getWeaponStats();
-      const pCenterX = player.x + player.width / 2;
-      const pCenterY = player.y + player.height / 2;
-      const angle = Math.atan2(mouseWorldY - pCenterY, mouseWorldX - pCenterX);
-
+      const pCenterX = state.player.x + state.player.width / 2;
+      const pCenterY = state.player.y + state.player.height / 2;
+      const angle = Math.atan2(state.mouseWorldY - pCenterY, state.mouseWorldX - pCenterX);
       const reachX = pCenterX + Math.cos(angle) * stats.range;
       const reachY = pCenterY + Math.sin(angle) * stats.range;
 
-      const checkPoints = 4;
-      for (let i = 1; i <= checkPoints; i++) {
-        const t = i / checkPoints;
+      for (let i = 1; i <= 5; i++) {
+        const t = i / 5;
         const targetX = pCenterX + (reachX - pCenterX) * t;
         const targetY = pCenterY + (reachY - pCenterY) * t;
         const gX = Math.floor(targetX / TILE_SIZE);
         const gY = Math.floor(targetY / TILE_SIZE);
 
         if (gX >= 0 && gX < GRID_WIDTH && gY >= 0 && gY < GRID_HEIGHT) {
-          const type = worldGrid[gX][gY];
+          const type = state.worldGrid[gX][gY];
           if (type > 0) {
             const key = `${gX},${gY}`;
-            if (!blockDamageMap[key]) {
-              blockDamageMap[key] = blockTypes[type].hp;
-            }
-            blockDamageMap[key] -= stats.dmg;
+            if (!state.blockDamageMap[key]) state.blockDamageMap[key] = blockTypes[type].hp;
+            state.blockDamageMap[key] -= stats.dmg;
             createImpactSpark(targetX, targetY);
 
-            if (blockDamageMap[key] <= 0) {
+            if (state.blockDamageMap[key] <= 0) {
               if (blockTypes[type].ore) {
-                gold += blockTypes[type].value;
+                state.gold += blockTypes[type].value;
                 updateHUD();
               }
-              worldGrid[gX][gY] = 0;
+              state.worldGrid[gX][gY] = 0;
             }
             break;
           }
@@ -631,110 +918,66 @@
       }
     }
 
-    let sparks = [];
+    function mineNearbyOre() {
+      if (!state.started || state.shopOpen || state.puzzleActive) return;
+      if (state.player.miningCooldown > 0) return;
 
-    function createImpactSpark(x, y) {
-      for (let i = 0; i < 8; i++) {
-        sparks.push({
-          x: x,
-          y: y,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
-          life: 15,
-          maxLife: 15
-        });
-      }
-    }
+      const centerX = state.player.x + state.player.width / 2;
+      const centerY = state.player.y + state.player.height / 2;
+      let target = null;
+      let best = Infinity;
 
-    function updatePhysics() {
-      if (puzzleActive || document.getElementById('shop-ui').style.display === 'block') return;
-
-      if (keys['a'] || keys['arrowleft']) {
-        player.vx = -player.speed;
-        player.facing = -1;
-      } else if (keys['d'] || keys['arrowright']) {
-        player.vx = player.speed;
-        player.facing = 1;
-      } else {
-        player.vx = 0;
-      }
-
-      if ((keys['w'] || keys[' ']) && player.grounded) {
-        player.vy = -player.jumpForce;
-        player.grounded = false;
-      }
-
-      player.vy += 0.5;
-      if (player.vy > 12) player.vy = 12;
-
-      player.x += player.vx;
-      handleTileCollisions('x');
-
-      player.y += player.vy;
-      handleTileCollisions('y');
-
-      if (player.x < 0) player.x = 0;
-      if (player.x > GRID_WIDTH * TILE_SIZE - player.width) player.x = GRID_WIDTH * TILE_SIZE - player.width;
-
-      if (player.isAttacking) {
-        player.attackAnimFrame++;
-        if (player.attackAnimFrame > 10) {
-          player.isAttacking = false;
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+          const tile = state.worldGrid[x][y];
+          if (tile === 3) {
+            const oreX = x * TILE_SIZE + TILE_SIZE / 2;
+            const oreY = y * TILE_SIZE + TILE_SIZE / 2;
+            const d = Math.hypot(centerX - oreX, centerY - oreY);
+            if (d < 50 && d < best) {
+              best = d;
+              target = { x, y };
+            }
+          }
         }
       }
 
-      const centerPlayerX = player.x + player.width / 2;
-      const centerPlayerY = player.y + player.height / 2;
-
-      if (Math.abs(centerPlayerX - (shopkeeper.x + shopkeeper.width / 2)) < 50 &&
-          Math.abs(centerPlayerY - (shopkeeper.y + shopkeeper.height / 2)) < 60) {
-        document.getElementById('shop-prompt').style.display = 'block';
-        if (keys['e']) openShop();
-      } else {
-        document.getElementById('shop-prompt').style.display = 'none';
+      if (!target) {
+        return;
       }
 
-      if (Math.abs(centerPlayerX - (stronghold.x + stronghold.width / 2)) < 60 &&
-          Math.abs(centerPlayerY - (stronghold.y + stronghold.height / 2)) < 80) {
-        document.getElementById('stronghold-prompt').style.display = 'block';
-        if (keys['e']) initPuzzle();
-      } else {
-        document.getElementById('stronghold-prompt').style.display = 'none';
-      }
-
-      cameraX = player.x - VIEW_WIDTH / 2;
-      if (cameraX < 0) cameraX = 0;
-      if (cameraX > GRID_WIDTH * TILE_SIZE - VIEW_WIDTH) cameraX = GRID_WIDTH * TILE_SIZE - VIEW_WIDTH;
-
-      sparks.forEach((s) => {
-        s.x += s.vx;
-        s.y += s.vy;
-        s.life--;
-      });
-      sparks = sparks.filter((s) => s.life > 0);
+      const key = `${target.x},${target.y}`;
+      if (!state.blockDamageMap[key]) state.blockDamageMap[key] = blockTypes[3].hp;
+      state.blockDamageMap[key] -= 999;
+      state.worldGrid[target.x][target.y] = 0;
+      state.gold += 25;
+      state.oreCollected += 1;
+      state.player.miningCooldown = 30;
+      state.blockDamageMap[key] = 0;
+      updateHUD();
     }
 
-    function handleTileCollisions(dir) {
-      const left = Math.floor(player.x / TILE_SIZE);
-      const right = Math.floor((player.x + player.width) / TILE_SIZE);
-      const top = Math.floor(player.y / TILE_SIZE);
-      const bottom = Math.floor((player.y + player.height) / TILE_SIZE);
+    function handleTileCollisions(axis) {
+      const left = Math.floor(state.player.x / TILE_SIZE);
+      const right = Math.floor((state.player.x + state.player.width) / TILE_SIZE);
+      const top = Math.floor(state.player.y / TILE_SIZE);
+      const bottom = Math.floor((state.player.y + state.player.height) / TILE_SIZE);
 
       for (let x = left; x <= right; x++) {
         for (let y = top; y <= bottom; y++) {
           if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
-            if (worldGrid[x][y] > 0) {
-              if (dir === 'x') {
-                if (player.vx > 0) player.x = x * TILE_SIZE - player.width;
-                if (player.vx < 0) player.x = (x + 1) * TILE_SIZE;
-              } else if (dir === 'y') {
-                if (player.vy > 0) {
-                  player.y = y * TILE_SIZE - player.height;
-                  player.vy = 0;
-                  player.grounded = true;
-                } else if (player.vy < 0) {
-                  player.y = (y + 1) * TILE_SIZE;
-                  player.vy = 0;
+            if (state.worldGrid[x][y] > 0) {
+              if (axis === 'x') {
+                if (state.player.vx > 0) state.player.x = x * TILE_SIZE - state.player.width;
+                if (state.player.vx < 0) state.player.x = (x + 1) * TILE_SIZE;
+              } else if (axis === 'y') {
+                if (state.player.vy > 0) {
+                  state.player.y = y * TILE_SIZE - state.player.height;
+                  state.player.vy = 0;
+                  state.player.grounded = true;
+                } else if (state.player.vy < 0) {
+                  state.player.y = (y + 1) * TILE_SIZE;
+                  state.player.vy = 0;
                 }
               }
             }
@@ -742,100 +985,237 @@
         }
       }
 
-      if (dir === 'y' && player.vy > 0) {
-        player.grounded = false;
+      if (axis === 'y' && state.player.vy > 0) {
+        state.player.grounded = false;
       }
     }
 
-    function renderGame() {
-      ctx.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-      ctx.save();
-      ctx.translate(-cameraX, 0);
+    function updatePhysics() {
+      if (!state.started || state.shopOpen || state.puzzleActive) return;
 
-      ctx.fillStyle = '#261c14';
-      ctx.fillRect(0, 0, GRID_WIDTH * TILE_SIZE, 4 * TILE_SIZE);
-      ctx.fillStyle = '#140f0b';
-      ctx.fillRect(0, 4 * TILE_SIZE, GRID_WIDTH * TILE_SIZE, (GRID_HEIGHT - 4) * TILE_SIZE);
+      const p = state.player;
+      if (state.keys.a || state.keys.arrowleft) {
+        p.vx = -p.speed;
+        p.facing = -1;
+      } else if (state.keys.d || state.keys.arrowright) {
+        p.vx = p.speed;
+        p.facing = 1;
+      } else {
+        p.vx *= 0.7;
+      }
+
+      if ((state.keys.w || state.keys[' '] || state.keys.arrowup) && p.grounded) {
+        p.vy = -p.jumpForce;
+        p.grounded = false;
+      }
+
+      p.vy += 0.5;
+      if (p.vy > 12) p.vy = 12;
+
+      p.x += p.vx;
+      handleTileCollisions('x');
+
+      p.y += p.vy;
+      handleTileCollisions('y');
+
+      if (p.x < 0) p.x = 0;
+      if (p.x > GRID_WIDTH * TILE_SIZE - p.width) p.x = GRID_WIDTH * TILE_SIZE - p.width;
+      if (p.y > GRID_HEIGHT * TILE_SIZE + 80) {
+        p.x = 120;
+        p.y = 120;
+        p.vx = 0;
+        p.vy = 0;
+      }
+
+      if (p.isAttacking) {
+        p.attackAnimFrame++;
+        if (p.attackAnimFrame > 8) p.isAttacking = false;
+      }
+
+      if (state.player.miningCooldown > 0) state.player.miningCooldown--;
+
+      state.cameraX = p.x - VIEW_WIDTH / 2;
+      if (state.cameraX < 0) state.cameraX = 0;
+      if (state.cameraX > GRID_WIDTH * TILE_SIZE - VIEW_WIDTH) state.cameraX = GRID_WIDTH * TILE_SIZE - VIEW_WIDTH;
+
+      state.sparks.forEach((spark) => {
+        spark.x += spark.vx;
+        spark.y += spark.vy;
+        spark.life--;
+      });
+      state.sparks = state.sparks.filter((spark) => spark.life > 0);
+    }
+
+    function renderBackground() {
+      ctx.fillStyle = '#141d24';
+      ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+      const gradient = ctx.createLinearGradient(0, 0, 0, VIEW_HEIGHT);
+      gradient.addColorStop(0, '#1a2430');
+      gradient.addColorStop(0.7, '#0f1b22');
+      gradient.addColorStop(1, '#0b1117');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+      for (let i = 0; i < 9; i++) {
+        const x = i * 220 - (state.cameraX * 0.18) % 220;
+        ctx.beginPath();
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(60,80,90,0.7)' : 'rgba(40,60,72,0.75)';
+        ctx.moveTo(x, VIEW_HEIGHT);
+        ctx.lineTo(x + 180, 200 + (i % 3) * 60);
+        ctx.lineTo(x + 360, VIEW_HEIGHT);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      for (let x = 0; x < VIEW_WIDTH + 60; x += 40) {
+        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillRect(x - (state.cameraX * 0.12) % 40, 0, 1, VIEW_HEIGHT);
+      }
+    }
+
+    function renderWorld() {
+      ctx.save();
+      ctx.translate(-state.cameraX, 0);
 
       for (let x = 0; x < GRID_WIDTH; x++) {
         for (let y = 0; y < GRID_HEIGHT; y++) {
-          const type = worldGrid[x][y];
+          const type = state.worldGrid[x][y];
           if (type > 0) {
             ctx.fillStyle = blockTypes[type].color;
             ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = '#222';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(0,0,0,0.22)';
             ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
             const key = `${x},${y}`;
-            if (blockDamageMap[key] && blockDamageMap[key] < blockTypes[type].hp) {
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-              const ratio = blockDamageMap[key] / blockTypes[type].hp;
-              if (ratio < 0.6) ctx.fillText('//', x * TILE_SIZE + 10, y * TILE_SIZE + 25);
+            if (state.blockDamageMap[key] && state.blockDamageMap[key] < blockTypes[type].hp) {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+              const ratio = state.blockDamageMap[key] / blockTypes[type].hp;
+              if (ratio < 0.68) ctx.fillText('//', x * TILE_SIZE + 12, y * TILE_SIZE + 24);
             }
           }
         }
       }
 
-      ctx.fillStyle = '#8b5a2b';
-      ctx.fillRect(shopkeeper.x - 10, shopkeeper.y + shopkeeper.height - 5, shopkeeper.width + 20, 5);
-      ctx.fillStyle = '#9400d3';
-      ctx.fillRect(shopkeeper.x, shopkeeper.y, shopkeeper.width, shopkeeper.height);
-      ctx.fillStyle = '#ffdead';
-      ctx.fillRect(shopkeeper.x + 6, shopkeeper.y + 6, 20, 15);
+      ctx.fillStyle = '#7a4d2e';
+      ctx.fillRect(state.shopkeeper.x - 10, state.shopkeeper.y + state.shopkeeper.height - 4, state.shopkeeper.width + 20, 6);
+      ctx.fillStyle = '#8d5be6';
+      ctx.fillRect(state.shopkeeper.x, state.shopkeeper.y, state.shopkeeper.width, state.shopkeeper.height);
+      ctx.fillStyle = '#f2d7a9';
+      ctx.fillRect(state.shopkeeper.x + 7, state.shopkeeper.y + 8, 16, 14);
       ctx.fillStyle = '#fff';
       ctx.font = '10px sans-serif';
-      ctx.fillText('SMITHY', shopkeeper.x - 4, shopkeeper.y - 8);
+      ctx.fillText('SMITH', state.shopkeeper.x - 2, state.shopkeeper.y - 8);
 
-      ctx.fillStyle = '#444';
-      ctx.fillRect(stronghold.x, stronghold.y, stronghold.width, stronghold.height);
-      ctx.strokeStyle = '#ffd700';
+      ctx.fillStyle = '#50555b';
+      ctx.fillRect(state.stronghold.x, state.stronghold.y, state.stronghold.width, state.stronghold.height);
+      ctx.strokeStyle = '#f6d67a';
       ctx.lineWidth = 3;
-      ctx.strokeRect(stronghold.x + 5, stronghold.y + 5, stronghold.width - 10, stronghold.height - 10);
+      ctx.strokeRect(state.stronghold.x + 5, state.stronghold.y + 5, state.stronghold.width - 10, state.stronghold.height - 10);
       ctx.beginPath();
-      ctx.arc(stronghold.x + stronghold.width / 2, stronghold.y + stronghold.height / 2, 18, 0, Math.PI * 2);
+      ctx.arc(state.stronghold.x + state.stronghold.width / 2, state.stronghold.y + state.stronghold.height / 2, 18, 0, Math.PI * 2);
       ctx.stroke();
       ctx.fillStyle = '#fff';
-      ctx.fillText('STRONGHOLD', stronghold.x - 8, stronghold.y - 10);
+      ctx.fillText('STRONGHOLD', state.stronghold.x - 6, state.stronghold.y - 10);
 
-      sparks.forEach((s) => {
-        ctx.fillStyle = `rgba(255, ${150 + Math.random() * 105}, 0, ${s.life / s.maxLife})`;
-        ctx.fillRect(s.x, s.y, 3, 3);
+      state.sparks.forEach((spark) => {
+        ctx.fillStyle = `rgba(255, ${150 + Math.random() * 100}, 0, ${spark.life / spark.maxLife})`;
+        ctx.fillRect(spark.x, spark.y, 3, 3);
       });
 
-      ctx.fillStyle = '#00ffcc';
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+      const p = state.player;
+      ctx.fillStyle = '#8fe7b1';
+      ctx.fillRect(p.x, p.y, p.width, p.height);
 
-      ctx.fillStyle = '#000';
-      if (player.facing === 1) {
-        ctx.fillRect(player.x + player.width - 8, player.y + 6, 6, 4);
+      ctx.fillStyle = '#1a1c22';
+      if (p.facing === 1) {
+        ctx.fillRect(p.x + p.width - 8, p.y + 8, 6, 4);
       } else {
-        ctx.fillRect(player.x + 2, player.y + 6, 6, 4);
+        ctx.fillRect(p.x + 2, p.y + 8, 6, 4);
       }
 
-      if (player.isAttacking) {
+      if (p.isAttacking) {
         const stats = getWeaponStats();
         ctx.strokeStyle = 'rgba(255,255,255,0.7)';
         ctx.lineWidth = 4;
         ctx.beginPath();
-        const pX = player.x + player.width / 2;
-        const pY = player.y + player.height / 2;
-        const targetAngle = Math.atan2(mouseWorldY - pY, mouseWorldX - pX);
-        ctx.arc(pX, pY, stats.range, targetAngle - 0.5, targetAngle + 0.5);
+        const pX = p.x + p.width / 2;
+        const pY = p.y + p.height / 2;
+        const angle = Math.atan2(state.mouseWorldY - pY, state.mouseWorldX - pX);
+        ctx.arc(pX, pY, stats.range, angle - 0.6, angle + 0.6);
         ctx.stroke();
       }
 
       ctx.restore();
     }
 
+    function render() {
+      renderBackground();
+      renderWorld();
+    }
+
     function loop() {
       updatePhysics();
-      renderGame();
+      handleActionInputs();
+      render();
       requestAnimationFrame(loop);
     }
 
+    function bindInput() {
+      window.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        state.keys[key] = true;
+
+        if (event.key === ' ') {
+          state.keys[' '] = true;
+        }
+
+        if (key === 'e') {
+          if (!state.shopOpen && !state.puzzleActive && nearShop()) openShop();
+          if (!state.shopOpen && !state.puzzleActive && nearStronghold()) initPuzzle();
+          if (!state.shopOpen && !state.puzzleActive) mineNearbyOre();
+        }
+      });
+
+      window.addEventListener('keyup', (event) => {
+        const key = event.key.toLowerCase();
+        state.keys[key] = false;
+        if (event.key === ' ') state.keys[' '] = false;
+      });
+
+      window.addEventListener('mousemove', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = event.clientX - rect.left;
+        const my = event.clientY - rect.top;
+        state.mouseWorldX = mx + state.cameraX;
+        state.mouseWorldY = my;
+      });
+
+      canvas.addEventListener('mousedown', (event) => {
+        if (state.shopOpen || state.puzzleActive) return;
+        const stats = getWeaponStats();
+        const now = performance.now();
+        if (now - state.player.lastAttackTime > stats.cd * 1000) {
+          state.player.lastAttackTime = now;
+          state.player.isAttacking = true;
+          state.player.attackAnimFrame = 0;
+          executeWeaponSwing();
+        }
+      });
+    }
+
+    function startGame() {
+      state.started = true;
+      startOverlay.classList.add('hidden');
+      updateHUD();
+    }
+
+    startButton.addEventListener('click', startGame);
+
     generateLevel();
+    renderShop();
     updateHUD();
+    bindInput();
     loop();
   </script>
 </body>
