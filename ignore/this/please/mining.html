@@ -1,797 +1,842 @@
-Here is a complete, single-file HTML5 game that implements all of your requested mechanics: side-scrolling movement, mining blocks with a weapon, a shopkeeper to buy and swap weapon parts (which dynamically updates damage, cooldown, and range stats), and a stronghold that triggers a drawing puzzle to descend deeper into the mines.
-Save the code below as an .html file (e.g., mine_game.html) and open it in any web browser to play.
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mine Descent & Weapon Smith</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #111;
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            user-select: none;
-        }
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 600px;
-            margin: 20px auto;
-            border: 4px solid #444;
-            background: #222;
-        }
-        canvas {
-            display: block;
-            background: #1a1a1a;
-        }
-        .ui-panel {
-            position: absolute;
-            background: rgba(20, 20, 20, 0.95);
-            border: 2px solid #555;
-            padding: 15px;
-            display: none;
-            box-sizing: border-box;
-        }
-        /* Shop UI */
-        #shop-ui {
-            top: 50px;
-            left: 50px;
-            width: 700px;
-            height: 500px;
-            z-index: 10;
-        }
-        .shop-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #444;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        .shop-layout {
-            display: flex;
-            gap: 20px;
-            height: 380px;
-        }
-        .shop-column {
-            flex: 1;
-            background: #2a2a2a;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-y: auto;
-        }
-        .part-item {
-            background: #3a3a3a;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-        .part-item:hover {
-            background: #4a4a4a;
-        }
-        .part-item.equipped {
-            border-color: #4caf50;
-            background: #2e4430;
-        }
-        .part-item.owned {
-            border-color: #2196f3;
-        }
-        .stat-diff {
-            font-size: 12px;
-            margin-top: 4px;
-        }
-        .stat-up { color: #4caf50; }
-        .stat-down { color: #f44336; }
-        .close-btn {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        /* Puzzle UI */
-        #puzzle-ui {
-            top: 100px;
-            left: 200px;
-            width: 400px;
-            height: 420px;
-            text-align: center;
-            z-index: 10;
-        }
-        #puzzle-canvas {
-            background: #000;
-            border: 2px dashed #888;
-            cursor: crosshair;
-            margin: 15px 0;
-        }
-        /* HUD */
-        #hud {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-            font-weight: bold;
-            text-shadow: 2px 2px 2px #000;
-            font-size: 16px;
-            line-height: 1.4;
-        }
-        .prompt {
-            position: absolute;
-            bottom: 50px;
-            left: 0;
-            width: 800px;
-            text-align: center;
-            font-size: 18px;
-            color: #ffd700;
-            text-shadow: 2px 2px 2px #000;
-            pointer-events: none;
-            animation: pulse 1.5s infinite;
-            display: none;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mine Descent & Weapon Smith</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #game-container {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      margin: 20px auto;
+      border: 4px solid #444;
+      background: #222;
+    }
+
+    canvas {
+      display: block;
+      background: #1a1a1a;
+    }
+
+    .ui-panel {
+      position: absolute;
+      background: rgba(20, 20, 20, 0.95);
+      border: 2px solid #555;
+      padding: 15px;
+      display: none;
+      box-sizing: border-box;
+    }
+
+    #shop-ui {
+      top: 50px;
+      left: 50px;
+      width: 700px;
+      height: 500px;
+      z-index: 10;
+    }
+
+    .shop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #444;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .shop-layout {
+      display: flex;
+      gap: 20px;
+      height: 380px;
+    }
+
+    .shop-column {
+      flex: 1;
+      background: #2a2a2a;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-y: auto;
+    }
+
+    .part-item {
+      background: #3a3a3a;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .part-item:hover {
+      background: #4a4a4a;
+    }
+
+    .part-item.equipped {
+      border-color: #4caf50;
+      background: #2e4430;
+    }
+
+    .part-item.owned {
+      border-color: #2196f3;
+    }
+
+    .stat-diff {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .stat-up {
+      color: #4caf50;
+    }
+
+    .stat-down {
+      color: #f44336;
+    }
+
+    .close-btn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #puzzle-ui {
+      top: 100px;
+      left: 200px;
+      width: 400px;
+      height: 420px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    #puzzle-canvas {
+      background: #000;
+      border: 2px dashed #888;
+      cursor: crosshair;
+      margin: 15px 0;
+    }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      pointer-events: none;
+      font-weight: bold;
+      text-shadow: 2px 2px 2px #000;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .prompt {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      width: 800px;
+      text-align: center;
+      font-size: 18px;
+      color: #ffd700;
+      text-shadow: 2px 2px 2px #000;
+      pointer-events: none;
+      animation: pulse 1.5s infinite;
+      display: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+  </style>
 </head>
 <body>
-
-<div id="game-container">
+  <div id="game-container">
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    
-    <!-- HUD -->
+
     <div id="hud">
-        Depth: <span id="hud-depth">1</span>F<br>
-        Gold: $<span id="hud-gold">0</span><br>
-        Weapon Stats:<br>
-        • DMG: <span id="stat-dmg">10</span><br>
-        • CD: <span id="stat-cd">0.4</span>s<br>
-        • Range: <span id="stat-range">60</span>px
+      Depth: <span id="hud-depth">1</span>F<br>
+      Gold: $<span id="hud-gold">0</span><br>
+      Weapon Stats:<br>
+      • DMG: <span id="stat-dmg">10</span><br>
+      • CD: <span id="stat-cd">0.40</span>s<br>
+      • Range: <span id="stat-range">60</span>px
     </div>
 
-    <!-- Context Prompts -->
     <div id="shop-prompt" class="prompt">Press [E] to talk to the Weapon Smith</div>
     <div id="stronghold-prompt" class="prompt">Press [E] to crack the Stronghold Door Lock</div>
 
-    <!-- Shop UI -->
     <div id="shop-ui" class="ui-panel">
-        <div class="shop-header">
-            <h2>Weapon Smith & Modification Station</h2>
-            <button class="close-btn" onclick="closeShop()">X</button>
+      <div class="shop-header">
+        <h2>Weapon Smith & Modification Station</h2>
+        <button class="close-btn" onclick="closeShop()">X</button>
+      </div>
+      <div style="margin-bottom: 10px; color: #ffd700; font-weight: bold;">Your Balance: $<span id="shop-gold">0</span></div>
+      <div class="shop-layout">
+        <div class="shop-column">
+          <h3>Available Parts (Market)</h3>
+          <div id="market-list"></div>
         </div>
-        <div style="margin-bottom: 10px; color: #ffd700; font-weight: bold;">Your Balance: $<span id="shop-gold">0</span></div>
-        <div class="shop-layout">
-            <div class="shop-column">
-                <h3>Available Parts (Market)</h3>
-                <div id="market-list"></div>
-            </div>
-            <div class="shop-column">
-                <h3>Your Inventory & Assembly</h3>
-                <div id="inventory-list"></div>
-            </div>
+        <div class="shop-column">
+          <h3>Your Inventory & Assembly</h3>
+          <div id="inventory-list"></div>
         </div>
+      </div>
     </div>
 
-    <!-- Puzzle UI -->
     <div id="puzzle-ui" class="ui-panel">
-        <h3>Trace the Rune to Descend</h3>
-        <p style="font-size: 13px; color: #aaa; margin: 0;">Click and drag to connect all green circles without leaving the box!</p>
-        <canvas id="puzzle-canvas" width="300" height="250"></canvas>
-        <button class="close-btn" style="background:#555;" onclick="closePuzzle()">Abandon Puzzle</button>
+      <h3>Trace the Rune to Descend</h3>
+      <p style="font-size: 13px; color: #aaa; margin: 0;">Click and drag to connect all green circles without leaving the box!</p>
+      <canvas id="puzzle-canvas" width="300" height="250"></canvas>
+      <button class="close-btn" style="background:#555;" onclick="closePuzzle()">Abandon Puzzle</button>
     </div>
-</div>
+  </div>
 
-<script>
+  <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    // --- GAME STATE & CONSTANTS ---
     const TILE_SIZE = 40;
-    const GRID_WIDTH = 40; // Total world width
-    const GRID_HEIGHT = 15; // Total world height
+    const GRID_WIDTH = 40;
+    const GRID_HEIGHT = 15;
     const VIEW_WIDTH = 800;
     const VIEW_HEIGHT = 600;
 
     let currentDepth = 1;
     let gold = 0;
 
-    // Player Object
     const player = {
-        x: 100,
-        y: 100,
-        vx: 0,
-        vy: 0,
-        width: 24,
-        height: 38,
-        speed: 4,
-        jumpForce: 11,
-        grounded: false,
-        facing: 1, // 1 = Right, -1 = Left
-        lastAttackTime: 0,
-        isAttacking: false,
-        attackAnimFrame: 0
+      x: 100,
+      y: 100,
+      vx: 0,
+      vy: 0,
+      width: 24,
+      height: 38,
+      speed: 4,
+      jumpForce: 11,
+      grounded: false,
+      facing: 1,
+      lastAttackTime: 0,
+      isAttacking: false,
+      attackAnimFrame: 0
     };
 
-    // Global Input State
     const keys = {};
     let mouseWorldX = 0;
     let mouseWorldY = 0;
-
-    // Camera offset tracking
     let cameraX = 0;
 
-    // --- WORLD GRID MECHANICS ---
     let worldGrid = [];
     let shopkeeper = { x: 180, y: 0, width: 32, height: 45 };
     let stronghold = { x: 1400, y: 0, width: 60, height: 80 };
 
     function generateLevel() {
-        worldGrid = [];
-        for (let x = 0; x < GRID_WIDTH; x++) {
-            worldGrid[x] = [];
-            for (let y = 0; y < GRID_HEIGHT; y++) {
-                // Surface layers vs underground
-                if (y < 4) {
-                    worldGrid[x][y] = 0; // Air
-                } else if (y === 4) {
-                    worldGrid[x][y] = (x > 2 && x < 8) ? 0 : 1; // Basic grass/dirt ledge
-                } else {
-                    // Random generation layout: blocks, ores, or hard walls
-                    let rand = Math.random();
-                    if (rand < 0.12) {
-                        worldGrid[x][y] = 3; // Gold Ore block
-                    } else if (rand < 0.25) {
-                        worldGrid[x][y] = 2; // Hard Stone block
-                    } else {
-                        worldGrid[x][y] = 1; // Standard dirt block
-                    }
-                }
+      worldGrid = [];
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        worldGrid[x] = [];
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+          if (y < 4) {
+            worldGrid[x][y] = 0;
+          } else if (y === 4) {
+            worldGrid[x][y] = (x > 2 && x < 8) ? 0 : 1;
+          } else {
+            const rand = Math.random();
+            if (rand < 0.12) {
+              worldGrid[x][y] = 3;
+            } else if (rand < 0.25) {
+              worldGrid[x][y] = 2;
+            } else {
+              worldGrid[x][y] = 1;
             }
+          }
         }
+      }
 
-        // Keep local spawn paths safe and clear
-        for (let x = 2; x < 10; x++) {
-            for (let y = 2; y <= 5; y++) worldGrid[x][y] = 0;
-        }
-        // Secure areas for structures
-        for (let x = 33; x < 38; x++) {
-            for (let y = 4; y < GRID_HEIGHT; y++) worldGrid[x][y] = 1; // Stronghold foundation
-            for (let y = 1; y <= 3; y++) worldGrid[x][y] = 0; // Headroom
-        }
+      for (let x = 2; x < 10; x++) {
+        for (let y = 2; y <= 5; y++) worldGrid[x][y] = 0;
+      }
 
-        // Position key interactive markers securely onto terrain floor
-        shopkeeper.x = 180;
-        shopkeeper.y = 4 * TILE_SIZE - shopkeeper.height;
+      for (let x = 33; x < 38; x++) {
+        for (let y = 4; y < GRID_HEIGHT; y++) worldGrid[x][y] = 1;
+        for (let y = 1; y <= 3; y++) worldGrid[x][y] = 0;
+      }
 
-        stronghold.x = 34 * TILE_SIZE;
-        stronghold.y = 4 * TILE_SIZE - stronghold.height;
-        
-        // Wipe terrain block markers blocking stronghold structure access
-        worldGrid[34][4] = 1; worldGrid[35][4] = 1; worldGrid[36][4] = 1;
+      shopkeeper.x = 180;
+      shopkeeper.y = 4 * TILE_SIZE - shopkeeper.height;
+
+      stronghold.x = 34 * TILE_SIZE;
+      stronghold.y = 4 * TILE_SIZE - stronghold.height;
+
+      worldGrid[34][4] = 1;
+      worldGrid[35][4] = 1;
+      worldGrid[36][4] = 1;
     }
 
-    // Block Definitions (HP, Colors)
     const blockTypes = {
-        1: { name: 'Dirt', hp: 20, color: '#654321', ore: false },
-        2: { name: 'Stone', hp: 50, color: '#555555', ore: false },
-        3: { name: 'Gold Ore', hp: 35, color: '#8a7300', ore: true, value: 25 }
+      1: { name: 'Dirt', hp: 20, color: '#654321', ore: false },
+      2: { name: 'Stone', hp: 50, color: '#555555', ore: false },
+      3: { name: 'Gold Ore', hp: 35, color: '#8a7300', ore: true, value: 25 }
     };
-    let blockDamageMap = {}; // Key: "x,y", Value: remaining HP
 
-    // --- ITEM CATALOG & WEAPON MODIFICATION ENGINE ---
+    let blockDamageMap = {};
+
     const partsCatalog = [
-        { id: 'blade_heavy', name: 'Heavy Titanium Blade', slot: 'blade', cost: 40, stats: { dmg: 15, cd: 0.2, range: 10 }, owned: false },
-        { id: 'blade_laser', name: 'Plasma Cutter Edge', slot: 'blade', cost: 100, stats: { dmg: 35, cd: -0.1, range: 25 }, owned: false },
-        { id: 'grip_extended', name: 'Long Carbon Grip', slot: 'grip', cost: 30, stats: { dmg: -2, cd: 0.05, range: 40 }, owned: false },
-        { id: 'grip_motor', name: 'Hypersonic Auto-Hilt', slot: 'grip', cost: 90, stats: { dmg: 5, cd: -0.25, range: -5 }, owned: false },
-        { id: 'core_overclock', name: 'Overclock Core Mod', slot: 'core', cost: 60, stats: { dmg: 20, cd: 0.15, range: 0 }, owned: false }
+      { id: 'blade_heavy', name: 'Heavy Titanium Blade', slot: 'blade', cost: 40, stats: { dmg: 15, cd: 0.2, range: 10 }, owned: false },
+      { id: 'blade_laser', name: 'Plasma Cutter Edge', slot: 'blade', cost: 100, stats: { dmg: 35, cd: -0.1, range: 25 }, owned: false },
+      { id: 'grip_extended', name: 'Long Carbon Grip', slot: 'grip', cost: 30, stats: { dmg: -2, cd: 0.05, range: 40 }, owned: false },
+      { id: 'grip_motor', name: 'Hypersonic Auto-Hilt', slot: 'grip', cost: 90, stats: { dmg: 5, cd: -0.25, range: -5 }, owned: false },
+      { id: 'core_overclock', name: 'Overclock Core Mod', slot: 'core', cost: 60, stats: { dmg: 20, cd: 0.15, range: 0 }, owned: false }
     ];
 
-    // Active configuration state
     let equippedParts = {
-        blade: { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } }, // Base values implicitly derived here
-        grip: null,
-        core: null
+      blade: { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } },
+      grip: null,
+      core: null
     };
 
-    // Calculate effective aggregate weapon system stats dynamically
     function getWeaponStats() {
-        let dmg = 10;
-        let cd = 0.4;
-        let range = 60;
+      let dmg = 10;
+      let cd = 0.4;
+      let range = 60;
 
-Use code with caution.
-if (equippedParts.blade) {
-if (equippedParts.blade.id) { // If it's a modded bought item
-dmg += equippedParts.blade.stats.dmg;
-cd += equippedParts.blade.stats.cd;
-range += equippedParts.blade.stats.range;
-}
-}
-if (equippedParts.grip) {
-dmg += equippedParts.grip.stats.dmg;
-cd += equippedParts.grip.stats.cd;
-range += equippedParts.grip.stats.range;
-}
-if (equippedParts.core) {
-dmg += equippedParts.core.stats.dmg;
-cd += equippedParts.core.stats.cd;
-range += equippedParts.core.stats.range;
-}
-return { dmg: Math.max(1, dmg), cd: Math.max(0.1, cd), range: Math.max(20, range) };
-}
-function updateHUD() {
-document.getElementById('hud-depth').innerText = currentDepth;
-document.getElementById('hud-gold').innerText = gold;
-document.getElementById('shop-gold').innerText = gold;
-const stats = getWeaponStats();
-document.getElementById('stat-dmg').innerText = stats.dmg;
-document.getElementById('stat-cd').innerText = stats.cd.toFixed(2);
-document.getElementById('stat-range').innerText = stats.range;
-}
-// --- INTERACTIVE SHOP UI GENERATION ---
-function openShop() {
-document.getElementById('shop-ui').style.display = 'block';
-keys['e'] = false; // Reset action key state
-renderShop();
-}
-function closeShop() {
-document.getElementById('shop-ui').style.display = 'none';
-}
-function renderShop() {
-const marketList = document.getElementById('market-list');
-const invList = document.getElementById('inventory-list');
-marketList.innerHTML = '';
-invList.innerHTML = '';
-const current = getWeaponStats();
-// Populate buying index side panel
-partsCatalog.forEach(part => {
-if (!part.owned) {
-const itemDiv = document.createElement('div');
-itemDiv.className = 'part-item';
-itemDiv.innerHTML = <strong>${part.name}</strong> (${part.slot.toUpperCase()})<br> Cost: $${part.cost}<br> <div class="stat-diff">${getStatPreviewText(part.stats)}</div>;
-itemDiv.onclick = () => buyPart(part);
-marketList.appendChild(itemDiv);
-}
-});
-// Base structural default item options
-appendInventoryRow(invList, { id: 'base_blade', name: 'Standard Pick-Edge', slot: 'blade', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'blade');
-appendInventoryRow(invList, { id: 'base_grip', name: 'Bare Wooden Grip', slot: 'grip', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'grip');
-appendInventoryRow(invList, { id: 'base_core', name: 'No Core Slot Mod', slot: 'core', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'core');
-// Append remaining custom user gear holdings matching profile ownership rules
-partsCatalog.forEach(part => {
-if (part.owned) {
-appendInventoryRow(invList, part, part.slot);
-}
-});
-}
-function appendInventoryRow(container, part, slot) {
-const isEquipped = equippedParts[slot] && (equippedParts[slot].id === part.id || (part.id.startsWith('base_') && !equippedParts[slot].id));
-const itemDiv = document.createElement('div');
-itemDiv.className = part-item owned ${isEquipped ? 'equipped' : ''};
-itemDiv.innerHTML = <strong>${part.name}</strong> ${isEquipped ? '<span style="float:right; color:#4caf50;">[ACTIVE]</span>' : ''}<br> <span style="font-size:11px; color:#aaa;">Slot Type: ${slot.toUpperCase()}</span>;
-if (!isEquipped) {
-itemDiv.onclick = () => {
-if (part.id.startsWith('base_')) {
-equippedParts[slot] = slot === 'blade' ? { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } } : null;
-} else {
-equippedParts[slot] = part;
-}
-renderShop();
-updateHUD();
-};
-}
-container.appendChild(itemDiv);
-}
-function getStatPreviewText(partStats) {
-let out = "";
-if(partStats.dmg) out += <span class="${partStats.dmg > 0 ? 'stat-up' : 'stat-down'}">DMG: ${partStats.dmg > 0 ? '+' : ''}${partStats.dmg}</span> ;
-if(partStats.cd) out += <span class="${partStats.cd < 0 ? 'stat-up' : 'stat-down'}">CD: ${partStats.cd > 0 ? '+' : ''}${partStats.cd}s</span> ;
-if(partStats.range) out += <span class="${partStats.range > 0 ? 'stat-up' : 'stat-down'}">RNG: ${partStats.range > 0 ? '+' : ''}${partStats.range}px</span>;
-return out;
-}
-function buyPart(part) {
-if (gold >= part.cost) {
-gold -= part.cost;
-part.owned = true;
-renderShop();
-updateHUD();
-} else {
-alert("Not enough gold!");
-}
-}
-// --- RETICULE TRACING DOOR PUZZLE MECHANICS ---
-const pCanvas = document.getElementById('puzzle-canvas');
-const pCtx = pCanvas.getContext('2d');
-let puzzleActive = false;
-let puzzlePoints = [];
-let playerTracePath = [];
-let isDrawing = false;
-function initPuzzle() {
-puzzleActive = true;
-document.getElementById('puzzle-ui').style.display = 'block';
-keys['e'] = false;
-// Create standard node coordinate sequence paths for lock validation
-puzzlePoints = [
-{ x: 50, y: 50, hit: false },
-{ x: 250, y: 50, hit: false },
-{ x: 250, y: 200, hit: false },
-{ x: 50, y: 200, hit: false },
-{ x: 150, y: 125, hit: false }
-];
-playerTracePath = [];
-isDrawing = false;
-drawPuzzleCanvas();
-}
-function closePuzzle() {
-puzzleActive = false;
-document.getElementById('puzzle-ui').style.display = 'none';
-}
-function drawPuzzleCanvas() {
-pCtx.fillStyle = '#111';
-pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
-// Draw intended line path configuration mapping
-pCtx.strokeStyle = '#333';
-pCtx.lineWidth = 6;
-pCtx.beginPath();
-for(let i=0; i<puzzlePoints.length; i++) {
-if(i===0) pCtx.moveTo(puzzlePoints[i].x, puzzlePoints[i].y);
-else pCtx.lineTo(puzzlePoints[i].x, puzzlePoints[i].y);
-}
-pCtx.stroke();
-// Draw player drawn input line arrays
-if (playerTracePath.length > 0) {
-pCtx.strokeStyle = '#00ffff';
-pCtx.lineWidth = 4;
-pCtx.beginPath();
-pCtx.moveTo(playerTracePath[0].x, playerTracePath[0].y);
-for (let i = 1; i < playerTracePath.length; i++) {
-pCtx.lineTo(playerTracePath[i].x, playerTracePath[i].y);
-}
-pCtx.stroke();
-}
-// Render point node goals
-puzzlePoints.forEach((pt, idx) => {
-pCtx.fillStyle = pt.hit ? '#00ff00' : '#ff3333';
-pCtx.beginPath();
-pCtx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
-pCtx.fill();
-pCtx.fillStyle = '#fff';
-pCtx.font = '10px sans-serif';
-pCtx.fillText(idx + 1, pt.x - 3, pt.y + 3);
-});
-}
-function getCanvasMousePos(canvasElem, e) {
-const rect = canvasElem.getBoundingClientRect();
-return {
-x: e.clientX - rect.left,
-y: e.clientY - rect.top
-};
-}
-pCanvas.addEventListener('mousedown', (e) => {
-if (!puzzleActive) return;
-isDrawing = true;
-playerTracePath = [getCanvasMousePos(pCanvas, e)];
-puzzlePoints.forEach(p => p.hit = false);
-checkPuzzleIntersection(playerTracePath[0]);
-drawPuzzleCanvas();
-});
-pCanvas.addEventListener('mousemove', (e) => {
-if (!puzzleActive || !isDrawing) return;
-const pos = getCanvasMousePos(pCanvas, e);
-playerTracePath.push(pos);
-checkPuzzleIntersection(pos);
-drawPuzzleCanvas();
-});
-window.addEventListener('mouseup', () => {
-if (!puzzleActive || !isDrawing) return;
-isDrawing = false;
-// Evaluate completion rule criteria logic state
-const allHit = puzzlePoints.every(p => p.hit);
-if (allHit) {
-alert("Rune Synced! Descending deeper into the mines...");
-currentDepth++;
-generateLevel();
-player.x = 100;
-player.y = 100;
-player.vx = 0;
-player.vy = 0;
-blockDamageMap = {};
-closePuzzle();
-updateHUD();
-} else {
-// Failed execution resets canvas state
-playerTracePath = [];
-puzzlePoints.forEach(p => p.hit = false);
-drawPuzzleCanvas();
-}
-});
-function checkPuzzleIntersection(pos) {
-// Enforce progressive point order constraint matching sequence indices
-for (let i = 0; i < puzzlePoints.length; i++) {
-const pt = puzzlePoints[i];
-const dist = Math.hypot(pos.x - pt.x, pos.y - pt.y);
-if (dist < 12) {
-if (i === 0 || puzzlePoints[i - 1].hit) {
-pt.hit = true;
-}
-}
-}
-}
-// --- CORE GAME ENGINE ENGINE & PHYSICS LOOP ---
-window.addEventListener('keydown', (e) => {
-keys[e.key.toLowerCase()] = true;
-});
-window.addEventListener('keyup', (e) => {
-keys[e.key.toLowerCase()] = false;
-});
-canvas.addEventListener('mousemove', (e) => {
-const rect = canvas.getBoundingClientRect();
-const mx = e.clientX - rect.left;
-const my = e.clientY - rect.top;
-mouseWorldX = mx + cameraX;
-mouseWorldY = my;
-});
-canvas.addEventListener('mousedown', (e) => {
-if (shop-ui.style.display === 'block' || puzzleActive) return;
-const now = performance.now();
-const stats = getWeaponStats();
-if (now - player.lastAttackTime > stats.cd * 1000) {
-player.lastAttackTime = now;
-player.isAttacking = true;
-player.attackAnimFrame = 0;
-executeWeaponSwing();
-}
-});
-function executeWeaponSwing() {
-const stats = getWeaponStats();
-// Determine vector angle profile towards target pointer click location
-const pCenterX = player.x + player.width / 2;
-const pCenterY = player.y + player.height / 2;
-const angle = Math.atan2(mouseWorldY - pCenterY, mouseWorldX - pCenterX);
-// Compute attack hitbox coordinates extending outward along arc paths
-const reachX = pCenterX + Math.cos(angle) * stats.range;
-const reachY = pCenterY + Math.sin(angle) * stats.range;
-// Map checking targeting vectors against spatial tile block dimensions
-const checkPoints = 4;
-for (let i = 1; i <= checkPoints; i++) {
-const t = i / checkPoints;
-const targetX = pCenterX + (reachX - pCenterX) * t;
-const targetY = pCenterY + (reachY - pCenterY) * t;
-const gX = Math.floor(targetX / TILE_SIZE);
-const gY = Math.floor(targetY / TILE_SIZE);
-if (gX >= 0 && gX < GRID_WIDTH && gY >= 0 && gY < GRID_HEIGHT) {
-const type = worldGrid[gX][gY];
-if (type > 0) { // Solid minable structure block discovered
-const key = ${gX},${gY};
-if (!blockDamageMap[key]) {
-blockDamageMap[key] = blockTypes[type].hp;
-}
-blockDamageMap[key] -= stats.dmg;
-// Flash impact particle visual anchor indicator cue
-createImpactSpark(targetX, targetY);
-if (blockDamageMap[key] <= 0) {
-if (blockTypes[type].ore) {
-gold += blockTypes[type].value;
-updateHUD();
-}
-worldGrid[gX][gY] = 0; // Destroy and empty block space marker
-}
-break; // Action collision absorbed along line-of-sight propagation vector paths
-}
-}
-}
-}
-let sparks = [];
-function createImpactSpark(x, y) {
-for(let i=0; i<8; i++) {
-sparks.push({
-x: x, y: y,
-vx: (Math.random() - 0.5) * 6,
-vy: (Math.random() - 0.5) * 6,
-life: 15, maxLife: 15
-});
-}
-}
-function updatePhysics() {
-if (puzzleActive || document.getElementById('shop-ui').style.display === 'block') return;
-// X Axis Movement Steering Logic Rules
-if (keys['a'] || keys['arrowleft']) {
-player.vx = -player.speed;
-player.facing = -1;
-} else if (keys['d'] || keys['arrowright']) {
-player.vx = player.speed;
-player.facing = 1;
-} else {
-player.vx = 0;
-}
-// Jump Execution
-if ((keys['w'] || keys[' ']) && player.grounded) {
-player.vy = -player.jumpForce;
-player.grounded = false;
-}
-// Gravity Engine Forces
-player.vy += 0.5; // Constant falling rate acceleration adjustments
-if (player.vy > 12) player.vy = 12;
-// Move Phase - Horizontal Collision Constraints Analysis
-player.x += player.vx;
-handleTileCollisions('x');
-// Move Phase - Vertical Collision Constraints Analysis
-player.y += player.vy;
-handleTileCollisions('y');
-// World Bound Clamping Box Constraints
-if (player.x < 0) player.x = 0;
-if (player.x > GRID_WIDTH * TILE_SIZE - player.width) player.x = GRID_WIDTH * TILE_SIZE - player.width;
-// Handle Animation Timers
-if (player.isAttacking) {
-player.attackAnimFrame++;
-if (player.attackAnimFrame > 10) {
-player.isAttacking = false;
-}
-}
-// Manage Interactive Proximity Prompts
-const centerPlayerX = player.x + player.width/2;
-const centerPlayerY = player.y + player.height/2;
-// Shop Prompt Check Rules
-if (Math.abs(centerPlayerX - (shopkeeper.x + shopkeeper.width/2)) < 50 && Math.abs(centerPlayerY - (shopkeeper.y + shopkeeper.height/2)) < 60) {
-document.getElementById('shop-prompt').style.display = 'block';
-if (keys['e']) openShop();
-} else {
-document.getElementById('shop-prompt').style.display = 'none';
-}
-// Stronghold Door Prompt Check Rules
-if (Math.abs(centerPlayerX - (stronghold.x + stronghold.width/2)) < 60 && Math.abs(centerPlayerY - (stronghold.y + stronghold.height/2)) < 80) {
-document.getElementById('stronghold-prompt').style.display = 'block';
-if (keys['e']) initPuzzle();
-} else {
-document.getElementById('stronghold-prompt').style.display = 'none';
-}
-// Update Camera interpolation targeting trackers smoothly sliding along focal pathways
-cameraX = player.x - VIEW_WIDTH / 2;
-if (cameraX < 0) cameraX = 0;
-if (cameraX > GRID_WIDTH * TILE_SIZE - VIEW_WIDTH) cameraX = GRID_WIDTH * TILE_SIZE - VIEW_WIDTH;
-// Spark Management Array Processing Cycles
-sparks.forEach(s => { s.x += s.vx; s.y += s.vy; s.life--; });
-sparks = sparks.filter(s => s.life > 0);
-}
-function handleTileCollisions(dir) {
-const left = Math.floor(player.x / TILE_SIZE);
-const right = Math.floor((player.x + player.width) / TILE_SIZE);
-const top = Math.floor(player.y / TILE_SIZE);
-const bottom = Math.floor((player.y + player.height) / TILE_SIZE);
-for (let x = left; x <= right; x++) {
-for (let y = top; y <= bottom; y++) {
-if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
-if (worldGrid[x][y] > 0) { // Solid hit collision block
-if (dir === 'x') {
-if (player.vx > 0) player.x = x * TILE_SIZE - player.width;
-if (player.vx < 0) player.x = (x + 1) * TILE_SIZE;
-} else if (dir === 'y') {
-if (player.vy > 0) {
-player.y = y * TILE_SIZE - player.height;
-player.vy = 0;
-player.grounded = true;
-} else if (player.vy < 0) {
-player.y = (y + 1) * TILE_SIZE;
-player.vy = 0;
-}
-}
-}
-}
-}
-}
-if (dir === 'y' && player.vy > 0) {
-// Edge case confirmation rule tracking safe ground contact values
-player.grounded = false;
-}
-}
-function renderGame() {
-ctx.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-ctx.save();
-ctx.translate(-cameraX, 0); // Apply shifting camera frame translation vectors
-// Render Background Sky/Layer Elements
-ctx.fillStyle = '#261c14';
-ctx.fillRect(0, 0, GRID_WIDTH * TILE_SIZE, 4 * TILE_SIZE);
-ctx.fillStyle = '#140f0b';
-ctx.fillRect(0, 4 * TILE_SIZE, GRID_WIDTH * TILE_SIZE, (GRID_HEIGHT-4) * TILE_SIZE);
-// Render World Block Terrain Elements
-for (let x = 0; x < GRID_WIDTH; x++) {
-for (let y = 0; y < GRID_HEIGHT; y++) {
-const type = worldGrid[x][y];
-if (type > 0) {
-ctx.fillStyle = blockTypes[type].color;
-ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-// Render subtle outline highlights framing block borders nicely
-ctx.strokeStyle = '#222';
-ctx.lineWidth = 1;
-ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-// If damaged, display fracture line graphics overlay
-const key = ${x},${y};
-if (blockDamageMap[key] && blockDamageMap[key] < blockTypes[type].hp) {
-ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-const ratio = blockDamageMap[key] / blockTypes[type].hp;
-if(ratio < 0.6) ctx.fillText("//", xTILE_SIZE + 10, yTILE_SIZE + 25);
-}
-}
-}
-}
-// Render Shopkeeper Assembly Stand Structure
-ctx.fillStyle = '#8b5a2b';
-ctx.fillRect(shopkeeper.x - 10, shopkeeper.y + shopkeeper.height - 5, shopkeeper.width + 20, 5); // Stand counter
-ctx.fillStyle = '#9400d3'; // Wizard/Blacksmith outfit purple tint mapping
-ctx.fillRect(shopkeeper.x, shopkeeper.y, shopkeeper.width, shopkeeper.height);
-ctx.fillStyle = '#ffdead';
-ctx.fillRect(shopkeeper.x + 6, shopkeeper.y + 6, 20, 15); // Head region area
-ctx.fillStyle = '#fff';
-ctx.font = '10px sans-serif';
-ctx.fillText("SMITHY", shopkeeper.x - 4, shopkeeper.y - 8);
-// Render Stronghold Vault Hatchway Asset
-ctx.fillStyle = '#444';
-ctx.fillRect(stronghold.x, stronghold.y, stronghold.width, stronghold.height);
-ctx.strokeStyle = '#ffd700';
-ctx.lineWidth = 3;
-ctx.strokeRect(stronghold.x + 5, stronghold.y + 5, stronghold.width - 10, stronghold.height - 10);
-// Round runic inner seal lock design graphics
-ctx.beginPath();
-ctx.arc(stronghold.x + stronghold.width/2, stronghold.y + stronghold.height/2, 18, 0, Math.PI*2);
-ctx.stroke();
-ctx.fillStyle = '#fff';
-ctx.fillText("STRONGHOLD", stronghold.x - 8, stronghold.y - 10);
-// Render Active Spark Elements Particle Arrays
-sparks.forEach(s => {
-ctx.fillStyle = rgba(255, ${150 + Math.random()*105}, 0, ${s.life / s.maxLife});
-ctx.fillRect(s.x, s.y, 3, 3);
-});
-// Render Player Avatar Entity
-ctx.fillStyle = '#00ffcc';
-ctx.fillRect(player.x, player.y, player.width, player.height);
-// Draw decorative alignment visor indicating structural facing direction choices
-ctx.fillStyle = '#000';
-if (player.facing === 1) {
-ctx.fillRect(player.x + player.width - 8, player.y + 6, 6, 4);
-} else {
-ctx.fillRect(player.x + 2, player.y + 6, 6, 4);
-}
-// Render Melee Weapon Attack Swinging Slash Visualization Arc Paths
-if (player.isAttacking) {
-const stats = getWeaponStats();
-ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-ctx.lineWidth = 4;
-ctx.beginPath();
-const pX = player.x + player.width / 2;
-const pY = player.y + player.height / 2;
-const targetAngle = Math.atan2(mouseWorldY - pY, mouseWorldX - pX);
-// Generate visual sweeping arc slice segments swinging outwards
-ctx.arc(pX, pY, stats.range, targetAngle - 0.5, targetAngle + 0.5);
-ctx.stroke();
-}
-ctx.restore();
-}
-// --- MAIN ENGINE HEARTBEAT REGISTRATION SYSTEM ---
-function loop() {
-updatePhysics();
-renderGame();
-requestAnimationFrame(loop);
-}
-// Initialize Game Ecosystem Frame Initialization Sequence
-generateLevel();
-updateHUD();
-loop();
+      if (equippedParts.blade && equippedParts.blade.id) {
+        dmg += equippedParts.blade.stats.dmg;
+        cd += equippedParts.blade.stats.cd;
+        range += equippedParts.blade.stats.range;
+      }
 
-### 🎮 Game Features & Controls
-* **Movement:** Use **A / D** (or **Left / Right Arrow keys**) to run around. Use **W** (or **Spacebar**) to jump.
-* **Mining & Combat:** **Left-Click** anywhere with your mouse to swing your mining tool. It swings a slash radius in the direction you clicked. Hold or tap click while facing blocks to break down Dirt, Stone, and Gold Ore.
-* **Gold Collection:** Destroying **Gold Ore (dark yellow blocks)** adds money straight into your balance wallet.
-* **Weapon Smith Upgrades:** Walk up to the Purple Wizard Merchant on the surface floor and press **E**. This opens up a split weapon upgrade inventory view. You can see stats dynamically update (**Damage, Attack Cooldown Speed, and Swing Range**), purchase new parts, and equip/swap components out into active item assembly slots.
-* **Stronghold Lock Puzzle:** Head to the far right side of the map to find the massive dark iron vault door. Press **E** to view the runic drawing matrix. **Click and trace your path smoothly through nodes 1 ➔ 2 ➔ 3 ➔ 4 ➔ 5** without breaking your click to open the locking seals, generate a fresh floor layer, and descend deeper into the mines!
+      if (equippedParts.grip) {
+        dmg += equippedParts.grip.stats.dmg;
+        cd += equippedParts.grip.stats.cd;
+        range += equippedParts.grip.stats.range;
+      }
 
-Would you like help expanding this game with features like **enemy monsters**, **more weapon part types**, or **different ore tiers** as you get deeper?
+      if (equippedParts.core) {
+        dmg += equippedParts.core.stats.dmg;
+        cd += equippedParts.core.stats.cd;
+        range += equippedParts.core.stats.range;
+      }
+
+      return {
+        dmg: Math.max(1, dmg),
+        cd: Math.max(0.1, cd),
+        range: Math.max(20, range)
+      };
+    }
+
+    function updateHUD() {
+      document.getElementById('hud-depth').innerText = currentDepth;
+      document.getElementById('hud-gold').innerText = gold;
+      document.getElementById('shop-gold').innerText = gold;
+
+      const stats = getWeaponStats();
+      document.getElementById('stat-dmg').innerText = stats.dmg;
+      document.getElementById('stat-cd').innerText = stats.cd.toFixed(2);
+      document.getElementById('stat-range').innerText = stats.range;
+    }
+
+    function openShop() {
+      document.getElementById('shop-ui').style.display = 'block';
+      keys['e'] = false;
+      renderShop();
+    }
+
+    function closeShop() {
+      document.getElementById('shop-ui').style.display = 'none';
+    }
+
+    function getStatPreviewText(partStats) {
+      let out = '';
+      if (partStats.dmg) {
+        out += `<span class="${partStats.dmg > 0 ? 'stat-up' : 'stat-down'}">DMG: ${partStats.dmg > 0 ? '+' : ''}${partStats.dmg}</span> `;
+      }
+      if (partStats.cd) {
+        out += `<span class="${partStats.cd < 0 ? 'stat-up' : 'stat-down'}">CD: ${partStats.cd > 0 ? '+' : ''}${partStats.cd}s</span> `;
+      }
+      if (partStats.range) {
+        out += `<span class="${partStats.range > 0 ? 'stat-up' : 'stat-down'}">RNG: ${partStats.range > 0 ? '+' : ''}${partStats.range}px</span>`;
+      }
+      return out;
+    }
+
+    function renderShop() {
+      const marketList = document.getElementById('market-list');
+      const invList = document.getElementById('inventory-list');
+      marketList.innerHTML = '';
+      invList.innerHTML = '';
+
+      partsCatalog.forEach((part) => {
+        if (!part.owned) {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'part-item';
+          itemDiv.innerHTML =
+            `<strong>${part.name}</strong> (${part.slot.toUpperCase()})<br>Cost: $${part.cost}<br><div class="stat-diff">${getStatPreviewText(part.stats)}</div>`;
+          itemDiv.onclick = () => buyPart(part);
+          marketList.appendChild(itemDiv);
+        }
+      });
+
+      appendInventoryRow(invList, { id: 'base_blade', name: 'Standard Pick-Edge', slot: 'blade', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'blade');
+      appendInventoryRow(invList, { id: 'base_grip', name: 'Bare Wooden Grip', slot: 'grip', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'grip');
+      appendInventoryRow(invList, { id: 'base_core', name: 'No Core Slot Mod', slot: 'core', stats: { dmg: 0, cd: 0, range: 0 }, owned: true }, 'core');
+
+      partsCatalog.forEach((part) => {
+        if (part.owned) {
+          appendInventoryRow(invList, part, part.slot);
+        }
+      });
+    }
+
+    function appendInventoryRow(container, part, slot) {
+      const isEquipped =
+        equippedParts[slot] &&
+        (equippedParts[slot].id === part.id ||
+          (part.id.startsWith('base_') && !equippedParts[slot].id));
+
+      const itemDiv = document.createElement('div');
+      itemDiv.className = `part-item ${isEquipped ? 'equipped' : ''} ${part.owned ? 'owned' : ''}`;
+      itemDiv.innerHTML =
+        `<strong>${part.name}</strong> ${isEquipped ? '<span style="float:right; color:#4caf50;">[ACTIVE]</span>' : ''}<br><span style="font-size:11px; color:#aaa;">Slot Type: ${slot.toUpperCase()}</span><br>${getStatPreviewText(part.stats)}`;
+
+      if (!isEquipped) {
+        itemDiv.onclick = () => {
+          if (part.id.startsWith('base_')) {
+            if (slot === 'blade') {
+              equippedParts[slot] = { name: 'Standard Pick-Edge', stats: { dmg: 10, cd: 0.4, range: 60 } };
+            } else {
+              equippedParts[slot] = null;
+            }
+          } else {
+            equippedParts[slot] = part;
+          }
+          renderShop();
+          updateHUD();
+        };
+      }
+
+      container.appendChild(itemDiv);
+    }
+
+    function buyPart(part) {
+      if (gold >= part.cost) {
+        gold -= part.cost;
+        part.owned = true;
+        renderShop();
+        updateHUD();
+      } else {
+        alert('Not enough gold!');
+      }
+    }
+
+    const pCanvas = document.getElementById('puzzle-canvas');
+    const pCtx = pCanvas.getContext('2d');
+    let puzzleActive = false;
+    let puzzlePoints = [];
+    let playerTracePath = [];
+    let isDrawing = false;
+
+    function initPuzzle() {
+      puzzleActive = true;
+      document.getElementById('puzzle-ui').style.display = 'block';
+      keys['e'] = false;
+
+      puzzlePoints = [
+        { x: 50, y: 50, hit: false },
+        { x: 250, y: 50, hit: false },
+        { x: 250, y: 200, hit: false },
+        { x: 50, y: 200, hit: false },
+        { x: 150, y: 125, hit: false }
+      ];
+      playerTracePath = [];
+      isDrawing = false;
+      drawPuzzleCanvas();
+    }
+
+    function closePuzzle() {
+      puzzleActive = false;
+      document.getElementById('puzzle-ui').style.display = 'none';
+    }
+
+    function drawPuzzleCanvas() {
+      pCtx.fillStyle = '#111';
+      pCtx.fillRect(0, 0, pCanvas.width, pCanvas.height);
+
+      pCtx.strokeStyle = '#333';
+      pCtx.lineWidth = 6;
+      pCtx.beginPath();
+      for (let i = 0; i < puzzlePoints.length; i++) {
+        if (i === 0) pCtx.moveTo(puzzlePoints[i].x, puzzlePoints[i].y);
+        else pCtx.lineTo(puzzlePoints[i].x, puzzlePoints[i].y);
+      }
+      pCtx.stroke();
+
+      if (playerTracePath.length > 0) {
+        pCtx.strokeStyle = '#00ffff';
+        pCtx.lineWidth = 4;
+        pCtx.beginPath();
+        pCtx.moveTo(playerTracePath[0].x, playerTracePath[0].y);
+        for (let i = 1; i < playerTracePath.length; i++) {
+          pCtx.lineTo(playerTracePath[i].x, playerTracePath[i].y);
+        }
+        pCtx.stroke();
+      }
+
+      puzzlePoints.forEach((pt, idx) => {
+        pCtx.fillStyle = pt.hit ? '#00ff00' : '#ff3333';
+        pCtx.beginPath();
+        pCtx.arc(pt.x, pt.y, 10, 0, Math.PI * 2);
+        pCtx.fill();
+        pCtx.fillStyle = '#fff';
+        pCtx.font = '10px sans-serif';
+        pCtx.fillText(idx + 1, pt.x - 3, pt.y + 3);
+      });
+    }
+
+    function getCanvasMousePos(canvasElem, e) {
+      const rect = canvasElem.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    }
+
+    pCanvas.addEventListener('mousedown', (e) => {
+      if (!puzzleActive) return;
+      isDrawing = true;
+      playerTracePath = [getCanvasMousePos(pCanvas, e)];
+      puzzlePoints.forEach((p) => p.hit = false);
+      checkPuzzleIntersection(playerTracePath[0]);
+      drawPuzzleCanvas();
+    });
+
+    pCanvas.addEventListener('mousemove', (e) => {
+      if (!puzzleActive || !isDrawing) return;
+      const pos = getCanvasMousePos(pCanvas, e);
+      playerTracePath.push(pos);
+      checkPuzzleIntersection(pos);
+      drawPuzzleCanvas();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!puzzleActive || !isDrawing) return;
+      isDrawing = false;
+
+      const allHit = puzzlePoints.every((p) => p.hit);
+      if (allHit) {
+        alert('Rune Synced! Descending deeper into the mines...');
+        currentDepth++;
+        generateLevel();
+        player.x = 100;
+        player.y = 100;
+        player.vx = 0;
+        player.vy = 0;
+        blockDamageMap = {};
+        closePuzzle();
+        updateHUD();
+      } else {
+        playerTracePath = [];
+        puzzlePoints.forEach((p) => p.hit = false);
+        drawPuzzleCanvas();
+      }
+    });
+
+    function checkPuzzleIntersection(pos) {
+      for (let i = 0; i < puzzlePoints.length; i++) {
+        const pt = puzzlePoints[i];
+        const dist = Math.hypot(pos.x - pt.x, pos.y - pt.y);
+        if (dist < 12) {
+          if (i === 0 || puzzlePoints[i - 1].hit) {
+            pt.hit = true;
+          }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      mouseWorldX = mx + cameraX;
+      mouseWorldY = my;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (document.getElementById('shop-ui').style.display === 'block' || puzzleActive) return;
+      const now = performance.now();
+      const stats = getWeaponStats();
+      if (now - player.lastAttackTime > stats.cd * 1000) {
+        player.lastAttackTime = now;
+        player.isAttacking = true;
+        player.attackAnimFrame = 0;
+        executeWeaponSwing();
+      }
+    });
+
+    function executeWeaponSwing() {
+      const stats = getWeaponStats();
+      const pCenterX = player.x + player.width / 2;
+      const pCenterY = player.y + player.height / 2;
+      const angle = Math.atan2(mouseWorldY - pCenterY, mouseWorldX - pCenterX);
+
+      const reachX = pCenterX + Math.cos(angle) * stats.range;
+      const reachY = pCenterY + Math.sin(angle) * stats.range;
+
+      const checkPoints = 4;
+      for (let i = 1; i <= checkPoints; i++) {
+        const t = i / checkPoints;
+        const targetX = pCenterX + (reachX - pCenterX) * t;
+        const targetY = pCenterY + (reachY - pCenterY) * t;
+        const gX = Math.floor(targetX / TILE_SIZE);
+        const gY = Math.floor(targetY / TILE_SIZE);
+
+        if (gX >= 0 && gX < GRID_WIDTH && gY >= 0 && gY < GRID_HEIGHT) {
+          const type = worldGrid[gX][gY];
+          if (type > 0) {
+            const key = `${gX},${gY}`;
+            if (!blockDamageMap[key]) {
+              blockDamageMap[key] = blockTypes[type].hp;
+            }
+            blockDamageMap[key] -= stats.dmg;
+            createImpactSpark(targetX, targetY);
+
+            if (blockDamageMap[key] <= 0) {
+              if (blockTypes[type].ore) {
+                gold += blockTypes[type].value;
+                updateHUD();
+              }
+              worldGrid[gX][gY] = 0;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    let sparks = [];
+
+    function createImpactSpark(x, y) {
+      for (let i = 0; i < 8; i++) {
+        sparks.push({
+          x: x,
+          y: y,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 15,
+          maxLife: 15
+        });
+      }
+    }
+
+    function updatePhysics() {
+      if (puzzleActive || document.getElementById('shop-ui').style.display === 'block') return;
+
+      if (keys['a'] || keys['arrowleft']) {
+        player.vx = -player.speed;
+        player.facing = -1;
+      } else if (keys['d'] || keys['arrowright']) {
+        player.vx = player.speed;
+        player.facing = 1;
+      } else {
+        player.vx = 0;
+      }
+
+      if ((keys['w'] || keys[' ']) && player.grounded) {
+        player.vy = -player.jumpForce;
+        player.grounded = false;
+      }
+
+      player.vy += 0.5;
+      if (player.vy > 12) player.vy = 12;
+
+      player.x += player.vx;
+      handleTileCollisions('x');
+
+      player.y += player.vy;
+      handleTileCollisions('y');
+
+      if (player.x < 0) player.x = 0;
+      if (player.x > GRID_WIDTH * TILE_SIZE - player.width) player.x = GRID_WIDTH * TILE_SIZE - player.width;
+
+      if (player.isAttacking) {
+        player.attackAnimFrame++;
+        if (player.attackAnimFrame > 10) {
+          player.isAttacking = false;
+        }
+      }
+
+      const centerPlayerX = player.x + player.width / 2;
+      const centerPlayerY = player.y + player.height / 2;
+
+      if (Math.abs(centerPlayerX - (shopkeeper.x + shopkeeper.width / 2)) < 50 &&
+          Math.abs(centerPlayerY - (shopkeeper.y + shopkeeper.height / 2)) < 60) {
+        document.getElementById('shop-prompt').style.display = 'block';
+        if (keys['e']) openShop();
+      } else {
+        document.getElementById('shop-prompt').style.display = 'none';
+      }
+
+      if (Math.abs(centerPlayerX - (stronghold.x + stronghold.width / 2)) < 60 &&
+          Math.abs(centerPlayerY - (stronghold.y + stronghold.height / 2)) < 80) {
+        document.getElementById('stronghold-prompt').style.display = 'block';
+        if (keys['e']) initPuzzle();
+      } else {
+        document.getElementById('stronghold-prompt').style.display = 'none';
+      }
+
+      cameraX = player.x - VIEW_WIDTH / 2;
+      if (cameraX < 0) cameraX = 0;
+      if (cameraX > GRID_WIDTH * TILE_SIZE - VIEW_WIDTH) cameraX = GRID_WIDTH * TILE_SIZE - VIEW_WIDTH;
+
+      sparks.forEach((s) => {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life--;
+      });
+      sparks = sparks.filter((s) => s.life > 0);
+    }
+
+    function handleTileCollisions(dir) {
+      const left = Math.floor(player.x / TILE_SIZE);
+      const right = Math.floor((player.x + player.width) / TILE_SIZE);
+      const top = Math.floor(player.y / TILE_SIZE);
+      const bottom = Math.floor((player.y + player.height) / TILE_SIZE);
+
+      for (let x = left; x <= right; x++) {
+        for (let y = top; y <= bottom; y++) {
+          if (x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT) {
+            if (worldGrid[x][y] > 0) {
+              if (dir === 'x') {
+                if (player.vx > 0) player.x = x * TILE_SIZE - player.width;
+                if (player.vx < 0) player.x = (x + 1) * TILE_SIZE;
+              } else if (dir === 'y') {
+                if (player.vy > 0) {
+                  player.y = y * TILE_SIZE - player.height;
+                  player.vy = 0;
+                  player.grounded = true;
+                } else if (player.vy < 0) {
+                  player.y = (y + 1) * TILE_SIZE;
+                  player.vy = 0;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (dir === 'y' && player.vy > 0) {
+        player.grounded = false;
+      }
+    }
+
+    function renderGame() {
+      ctx.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      ctx.fillStyle = '#261c14';
+      ctx.fillRect(0, 0, GRID_WIDTH * TILE_SIZE, 4 * TILE_SIZE);
+      ctx.fillStyle = '#140f0b';
+      ctx.fillRect(0, 4 * TILE_SIZE, GRID_WIDTH * TILE_SIZE, (GRID_HEIGHT - 4) * TILE_SIZE);
+
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        for (let y = 0; y < GRID_HEIGHT; y++) {
+          const type = worldGrid[x][y];
+          if (type > 0) {
+            ctx.fillStyle = blockTypes[type].color;
+            ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+            const key = `${x},${y}`;
+            if (blockDamageMap[key] && blockDamageMap[key] < blockTypes[type].hp) {
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+              const ratio = blockDamageMap[key] / blockTypes[type].hp;
+              if (ratio < 0.6) ctx.fillText('//', x * TILE_SIZE + 10, y * TILE_SIZE + 25);
+            }
+          }
+        }
+      }
+
+      ctx.fillStyle = '#8b5a2b';
+      ctx.fillRect(shopkeeper.x - 10, shopkeeper.y + shopkeeper.height - 5, shopkeeper.width + 20, 5);
+      ctx.fillStyle = '#9400d3';
+      ctx.fillRect(shopkeeper.x, shopkeeper.y, shopkeeper.width, shopkeeper.height);
+      ctx.fillStyle = '#ffdead';
+      ctx.fillRect(shopkeeper.x + 6, shopkeeper.y + 6, 20, 15);
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('SMITHY', shopkeeper.x - 4, shopkeeper.y - 8);
+
+      ctx.fillStyle = '#444';
+      ctx.fillRect(stronghold.x, stronghold.y, stronghold.width, stronghold.height);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(stronghold.x + 5, stronghold.y + 5, stronghold.width - 10, stronghold.height - 10);
+      ctx.beginPath();
+      ctx.arc(stronghold.x + stronghold.width / 2, stronghold.y + stronghold.height / 2, 18, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText('STRONGHOLD', stronghold.x - 8, stronghold.y - 10);
+
+      sparks.forEach((s) => {
+        ctx.fillStyle = `rgba(255, ${150 + Math.random() * 105}, 0, ${s.life / s.maxLife})`;
+        ctx.fillRect(s.x, s.y, 3, 3);
+      });
+
+      ctx.fillStyle = '#00ffcc';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      ctx.fillStyle = '#000';
+      if (player.facing === 1) {
+        ctx.fillRect(player.x + player.width - 8, player.y + 6, 6, 4);
+      } else {
+        ctx.fillRect(player.x + 2, player.y + 6, 6, 4);
+      }
+
+      if (player.isAttacking) {
+        const stats = getWeaponStats();
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        const pX = player.x + player.width / 2;
+        const pY = player.y + player.height / 2;
+        const targetAngle = Math.atan2(mouseWorldY - pY, mouseWorldX - pX);
+        ctx.arc(pX, pY, stats.range, targetAngle - 0.5, targetAngle + 0.5);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function loop() {
+      updatePhysics();
+      renderGame();
+      requestAnimationFrame(loop);
+    }
+
+    generateLevel();
+    updateHUD();
+    loop();
+  </script>
+</body>
+</html>
