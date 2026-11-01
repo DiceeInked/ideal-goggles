@@ -19,7 +19,7 @@ The prototype is in `CUI/` in the `DiceeInked/abyssalbar` website repository.
 - Searches Wikimedia Commons through its Action API for raster images.
 - Requests license, creator, attribution, and file-page metadata. Results without a usable license label are not offered as scene choices.
 - Selects a starting result for each scene, while allowing the user to search again and choose a different candidate.
-- Queues API requests and spaces them out to stay below the currently published anonymous request limit. The browser sends an `Api-User-Agent` identifying CUI.
+- Queues API requests, spaces uncached searches by at least 6.5 seconds, caches repeated queries for the current page session, and respects `Retry-After` responses. The browser sends an `Api-User-Agent` identifying CUI.
 - Allows start/end time edits. Initial timing is estimated from the relative length of each sentence; browser speech-recognition result times are not precise word boundaries.
 - Exports an image-credit text file with the selected file pages and license information.
 
@@ -49,6 +49,14 @@ The prototype is in `CUI/` in the `DiceeInked/abyssalbar` website repository.
 3. Add per-scene motion presets and transitions, then let the user adjust crop, caption placement, and duration in a proper timeline.
 4. Add a backend render job using FFmpeg for consistent MP4 output, real job status, and recoverable exports.
 5. Add persistent project storage and a reopen-project workflow.
+
+## External API references
+
+- [Wikimedia Commons machine-readable metadata](https://commons.wikimedia.org/wiki/Commons:Machine-readable_data)
+- [MediaWiki Imageinfo API](https://www.mediawiki.org/wiki/API:Imageinfo)
+- [MediaWiki Search API](https://www.mediawiki.org/wiki/API:Search)
+- [Wikimedia API rate limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+- [Wikimedia API access policy and browser client identification](https://www.mediawiki.org/wiki/Wikimedia_APIs/Access_policy)
 
 ## Validation performed
 
