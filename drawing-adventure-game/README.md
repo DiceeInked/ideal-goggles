@@ -38,6 +38,6 @@ This folder contains the design for Drawing Adventure Game (DAG). The **master d
 
 - **The master design document is the main complete reference.** The focused files are supporting notes for individual systems.
 - Text inside curly braces in the master document describes a decision that still needs to be made. Replace the prompt with the chosen rule once it is decided.
-- **Source priority:** the creator's latest explicit clarification comes first, followed by the uploaded Games.pdf, then older repository notes. The PDF's rules override older notes wherever they conflict; if the PDF itself is unclear, preserve the question rather than guessing.
+- **Source priority:** the creator's latest explicit clarification takes priority, followed by the uploaded Games.pdf, then older repository notes. The PDF overrides older notes wherever they conflict. If two direct creator answers conflict, leave the conflict marked and ask the creator rather than choosing one. If the authoritative sources are unclear or silent, preserve a curly-brace question instead of guessing.
 - Files ending in _AI have been edited with AI help for spelling, grammar, clarity, or organization. The ideas remain the creator's unless explicitly marked otherwise.
 - The old daily, seasonal, and white-island world plan, white emergency ore, colored shards, teammate ink transfer by slashing, the old core-stone Inkoff win condition, and custom-drawn weapon skins are not part of the current design.
