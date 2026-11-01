@@ -184,21 +184,21 @@ The application should handle microphone permission denial, interrupted recordin
 - Save and replay the audio with the event log.
 
 ### Stage 2: Transcription and timeline
-- Add speech-to-text.
-- Display the transcript with timestamps.
-- Segment sentences.
-- Associate drawings with speech using timestamps and an optional attach-to-sentence action.
+- Initial browser speech recognition is implemented in the website prototype where supported.
+- Display recognized phrases as sentence cues and allow transcript editing.
+- Associate drawings with a selected sentence.
+- Still needed: a reliable server-side speech service with word-level timestamps, language selection, and stronger cross-browser support.
 
 ### Stage 3: First complete video export
-- Implement sentence mode and highlight mode.
-- Add basic captions, still images, and transitions.
-- Render a real MP4.
-- Add a truthful processing-stage display.
+- Initial client-side first-cut rendering is implemented: combine the recorded narration with selected still images, sentence captions, and sentence-linked drawing marks.
+- Scene boundaries and durations can be edited before rendering.
+- The browser exports using a MediaRecorder-supported format. A guaranteed MP4 output, richer transitions, and a server-side rendering pipeline remain future work.
+- Keep the processing display tied to actual search and render progress.
 
 ### Stage 4: Automatic visuals and editing modes
-- Add supported media search and source/license tracking.
-- Implement image-per-word, keyword, montage, and sketch-driven modes.
-- Add caching and image replacement.
+- Initial Wikimedia Commons image search, license metadata, attribution display, image replacement, and editable sentence scene planning are implemented.
+- Current search phrases come from deterministic keyword extraction. They are suggestions, not semantic AI understanding.
+- Still needed: stronger semantic scene planning, image-per-word, montage and sketch-driven modes, reusable caching, richer visual matching, and additional approved media providers.
 
 ### Stage 5: Editor and polish
 - Add preview corrections, pinned assets, aspect ratios, background music, project saving, retry handling, and more polished motion graphics.
@@ -228,4 +228,4 @@ The first usable version should be considered successful when a user can:
 
 ---
 
-**Status:** The product specification remains the design reference. A first browser prototype now lives in the `CUI/` folder of the `DiceeInked/abyssalbar` website repository. It includes local microphone/canvas recording, drawing tools, keyboard shortcuts, local WebM preview/export, and project-event JSON export. An initial Stage 2 implementation adds browser speech recognition where supported, sentence cue timestamps, transcript editing, and the ability to attach new drawing strokes to a selected sentence. Browser recognition timestamps indicate when a phrase result arrives; they are not precise word-level alignment. Automatic image discovery, AI scene planning, backend rendering, MP4 export, durable cloud project storage, and reliable cross-browser transcription are not implemented yet.
+**Status:** The product specification remains the design reference. The working browser prototype lives in `CUI/` in the `DiceeInked/abyssalbar` website repository. It includes local microphone/canvas recording, drawing tools, browser speech recognition where available, editable transcript text, sentence cues, and sentence-linked strokes. Its initial scene engine extracts topic keywords, searches Wikimedia Commons for raster images with license metadata, displays source and attribution details, allows image replacement and scene-time edits, and renders a new first-cut video with the narration, captions, selected stills, and linked drawings. The prototype also exports project JSON and an image-credit text file. Scene timing initially uses sentence-length estimates, not precise word alignment. Keyword extraction is not semantic AI. Video output uses the format supported by the user's browser and is not guaranteed to be MP4. A robust transcription service, actual semantic AI scene planning, broader media sources, durable project storage, and server-side rendering are still future work. See `IMPLEMENTATION-STATUS.md` for the current implementation details and known limits.
