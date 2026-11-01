@@ -6,9 +6,10 @@ Drawing Adventure Game (DAG) is a 2D multiplayer drawing adventure for players w
 
 The main adventure has a Camp and a large cave network on a planet. The old daily, seasonal, and white-island structure is scrapped.
 
-The latest filled answers also describe **The Grid**, a small, round neon-circle planet that players can walk around. A merchant stands at the top, and antennas represent boards the player has joined. The merchant lets players join other boards and worlds, and should feel mysterious, knowledgeable, and boastful about its capabilities.
+The latest filled answers also describe **The Grid**, a small, round neon-circle planet that players can walk around. A merchant stands at the top, and antennas represent boards the player has joined. The merchant lets players join other boards and worlds, and should feel mysterious, knowledgeable, and boastful about its capabilities. Older notes separately describe a drawing planet reached from the surface using a glitch artifact and a large antenna; whether that older drawing planet is The Grid is not yet confirmed.
 
 {CLARIFY: Is The Grid a separate antenna hub, or is it the same planet that contains the Camp and cave network?}
+{CLARIFY: Is The Grid also the older drawing planet reached with the glitch artifact and large antenna, or is that a different location?}
 
 ## The Camp and its entrances
 
