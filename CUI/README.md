@@ -228,4 +228,4 @@ The first usable version should be considered successful when a user can:
 
 ---
 
-**Status:** Product concept and technical plan. This document does not claim that the application has been implemented yet.
+**Status:** The product specification remains the design reference. A first browser prototype now lives in the `CUI/` folder of the `DiceeInked/abyssalbar` website repository. It includes local microphone/canvas recording, drawing tools, keyboard shortcuts, local WebM preview/export, and project-event JSON export. An initial Stage 2 implementation adds browser speech recognition where supported, sentence cue timestamps, transcript editing, and the ability to attach new drawing strokes to a selected sentence. Browser recognition timestamps indicate when a phrase result arrives; they are not precise word-level alignment. Automatic image discovery, AI scene planning, backend rendering, MP4 export, durable cloud project storage, and reliable cross-browser transcription are not implemented yet.
