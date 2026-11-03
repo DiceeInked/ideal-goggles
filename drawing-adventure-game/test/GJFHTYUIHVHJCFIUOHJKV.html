@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#17130f" />
+    <title>DEEPDRAW — A Cavebound Adventure</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #17130f;
+        --paper: #efe3c5;
+        --paper-dim: #b4a78b;
+        --rust: #e56b3f;
+        --gold: #f4be55;
+        --teal: #72d2bf;
+        --panel: rgba(25, 20, 16, 0.88);
+        --line: rgba(239, 227, 197, 0.18);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+      body {
+        background: #0d0b09;
+        color: var(--paper);
+        font-family: "Trebuchet MS", "Avenir Next", Avenir, sans-serif;
+        user-select: none;
+      }
+
+      button { font: inherit; }
+      canvas { display: block; width: 100%; height: 100%; }
+
+      #game {
+        position: fixed;
+        inset: 0;
+        background: #17130f;
+      }
+
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 8;
+        pointer-events: none;
+        opacity: .16;
+        mix-blend-mode: soft-light;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+      }
+
+      .hud {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: minmax(210px, 280px) 1fr minmax(220px, 300px);
+        grid-template-rows: auto 1fr auto;
+        gap: 18px;
+        pointer-events: none;
+      }
+
+      .brand {
+        align-self: start;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        filter: drop-shadow(0 2px 8px #000);
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        position: relative;
+        border: 2px solid var(--paper);
+        border-radius: 50% 42% 48% 38%;
+        transform: rotate(-8deg);
+      }
+
+      .brand-mark::before, .brand-mark::after {
+        content: "";
+        position: absolute;
+        background: var(--rust);
+        transform: rotate(45deg);
+      }
+      .brand-mark::before { width: 4px; height: 24px; left: 18px; top: 7px; }
+      .brand-mark::after { width: 24px; height: 4px; left: 8px; top: 17px; }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: .8;
+        letter-spacing: .13em;
+        font-weight: 900;
+      }
+      .brand span {
+        display: block;
+        margin-top: 7px;
+        color: var(--paper-dim);
+        font: 700 9px/1 monospace;
+        letter-spacing: .24em;
+        text-transform: uppercase;
+      }
+
+      .depth {
+        justify-self: center;
+        align-self: start;
+        min-width: 220px;
+        text-align: center;
+        text-shadow: 0 2px 8px #000;
+      }
+      .depth small {
+        display: block;
+        color: var(--paper-dim);
+        font: 700 9px/1 monospace;
+        letter-spacing: .28em;
+        text-transform: uppercase;
+      }
+      .depth strong {
+        display: block;
+        margin: 5px 0 8px;
+        font: 900 30px/.9 Georgia, serif;
+        font-style: italic;
+      }
+      .depth-track {
+        height: 3px;
+        background: rgba(239,227,197,.18);
+        position: relative;
+      }
+      .depth-track i {
+        position: absolute;
+        left: 0; top: -1px;
+        width: 4%;
+        height: 5px;
+        border-radius: 10px;
+        background: var(--rust);
+        box-shadow: 0 0 12px var(--rust);
+      }
+
+      .ore-rack {
+        justify-self: end;
+        display: flex;
+        gap: 8px;
+      }
+      .ore {
+        min-width: 68px;
+        padding: 9px 10px 8px;
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 7px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 5px 12px 5px 12px;
+        background: var(--panel);
+        box-shadow: 0 8px 30px rgba(0,0,0,.24);
+        backdrop-filter: blur(8px);
+      }
+      .ore-gem {
+        width: 14px; height: 18px;
+        clip-path: polygon(50% 0, 100% 32%, 82% 86%, 50% 100%, 8% 78%, 0 30%);
+        background: var(--ore);
+        box-shadow: inset -4px -3px rgba(0,0,0,.25);
+      }
+      .ore small {
+        color: var(--paper-dim);
+        font: 700 7px/1 monospace;
+        letter-spacing: .13em;
+        text-transform: uppercase;
+      }
+      .ore b { display: block; margin-top: 3px; font: 800 15px/1 monospace; }
+      .ore.shards { border-color: rgba(202,168,255,.35); }
+      .ore.shards .ore-gem { background: #caa8ff; transform: rotate(45deg); }
+
+      .quest {
+        grid-column: 3;
+        grid-row: 2;
+        align-self: center;
+        justify-self: end;
+        width: 100%;
+        max-width: 280px;
+        padding: 17px;
+        border-left: 2px solid var(--rust);
+        background: linear-gradient(90deg, rgba(22,17,13,.88), rgba(22,17,13,.36));
+        text-shadow: 0 2px 5px #000;
+      }
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--rust);
+        font: 800 9px/1 monospace;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+      }
+      .quest h2 { margin: 0 0 8px; font: 800 18px/1.1 Georgia, serif; font-style: italic; }
+      .quest p { margin: 0; color: var(--paper-dim); font-size: 11px; line-height: 1.5; }
+      .quest-dots { display: flex; gap: 6px; margin-top: 13px; }
+      .quest-dots i { width: 25px; height: 3px; background: rgba(239,227,197,.2); }
+      .quest-dots i.found { background: var(--rust); }
+
+      .loadout {
+        grid-column: 1;
+        grid-row: 3;
+        align-self: end;
+        display: flex;
+        gap: 8px;
+      }
+      .slot {
+        width: 66px;
+        height: 62px;
+        padding: 6px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--panel);
+        backdrop-filter: blur(8px);
+      }
+      .slot::after {
+        content: attr(data-slot);
+        position: absolute;
+        left: 7px; bottom: 6px;
+        color: var(--paper-dim);
+        font: 700 7px/1 monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .slot svg { width: 31px; height: 31px; opacity: .25; stroke: var(--paper); fill: none; stroke-width: 1.8; }
+      .slot.owned { border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
+      .slot.owned svg { opacity: 1; stroke: var(--gold); filter: drop-shadow(0 0 6px rgba(244,190,85,.3)); }
+
+      .controls {
+        grid-column: 2;
+        grid-row: 3;
+        justify-self: center;
+        align-self: end;
+        display: flex;
+        gap: 17px;
+        padding: 9px 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: rgba(15,12,10,.76);
+        backdrop-filter: blur(8px);
+        color: var(--paper-dim);
+        font: 700 9px/1 monospace;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .controls span { display: flex; align-items: center; gap: 6px; }
+      kbd {
+        min-width: 23px;
+        padding: 5px;
+        color: var(--paper);
+        text-align: center;
+        border: 1px solid rgba(239,227,197,.34);
+        border-radius: 3px;
+        background: rgba(239,227,197,.08);
+        box-shadow: inset 0 -2px rgba(0,0,0,.25);
+        font: inherit;
+      }
+
+      .prompt {
+        position: fixed;
+        z-index: 12;
+        left: 50%;
+        bottom: 106px;
+        transform: translate(-50%, 14px);
+        padding: 10px 14px;
+        border: 1px solid rgba(239,227,197,.24);
+        border-radius: 5px;
+        background: rgba(15,12,10,.92);
+        color: var(--paper);
+        font: 800 10px/1 monospace;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+        opacity: 0;
+        transition: .2s ease;
+        pointer-events: none;
+      }
+      .prompt.show { opacity: 1; transform: translate(-50%, 0); }
+      .prompt b { color: var(--gold); }
+
+      .toast-stack {
+        position: fixed;
+        z-index: 30;
+        top: 92px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: grid;
+        gap: 7px;
+        pointer-events: none;
+      }
+      .toast {
+        min-width: 230px;
+        padding: 11px 15px;
+        color: var(--paper);
+        text-align: center;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: rgba(20,16,12,.94);
+        box-shadow: 0 12px 35px #0008;
+        font-size: 11px;
+        animation: toast 2.8s ease forwards;
+      }
+      .toast b { color: var(--gold); }
+      @keyframes toast {
+        0% { opacity: 0; transform: translateY(-8px); }
+        10%, 80% { opacity: 1; transform: none; }
+        100% { opacity: 0; transform: translateY(-8px); }
+      }
+
+      .modal {
+        position: fixed;
+        z-index: 40;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: rgba(7,6,5,.66);
+        backdrop-filter: blur(6px);
+        opacity: 0;
+        visibility: hidden;
+        transition: .2s ease;
+      }
+      .modal.open { opacity: 1; visibility: visible; }
+      .shop {
+        width: min(720px, 100%);
+        max-height: min(700px, 92vh);
+        overflow: auto;
+        position: relative;
+        padding: 26px;
+        border: 1px solid rgba(239,227,197,.26);
+        border-radius: 8px 24px 8px 24px;
+        background:
+          linear-gradient(rgba(26,21,16,.96), rgba(16,13,11,.98)),
+          repeating-linear-gradient(35deg, transparent 0 10px, #fff1 11px 12px);
+        box-shadow: 0 30px 90px #000;
+      }
+      .shop::before {
+        content: "";
+        position: absolute; inset: 7px;
+        border: 1px dashed rgba(239,227,197,.12);
+        border-radius: 5px 19px 5px 19px;
+        pointer-events: none;
+      }
+      .shop-head { position: relative; display: flex; gap: 18px; align-items: center; }
+      .merchant-face {
+        flex: 0 0 72px;
+        height: 72px;
+        position: relative;
+        border: 2px solid var(--paper);
+        border-radius: 50% 44% 54% 42%;
+        transform: rotate(-3deg);
+        background: #29221b;
+      }
+      .merchant-face::before {
+        content: "+";
+        position: absolute; left: 14px; top: 13px;
+        color: var(--rust);
+        font: 900 27px/1 monospace;
+      }
+      .merchant-face::after {
+        content: "×";
+        position: absolute; right: 10px; top: 11px;
+        width: 27px; height: 32px;
+        display: grid; place-items: center;
+        color: #30271e;
+        background: var(--gold);
+        font: 900 20px/1 monospace;
+        transform: rotate(8deg);
+        box-shadow: 2px 3px #0004;
+      }
+      .shop-head h2 { margin: 1px 0 7px; font: 900 30px/.9 Georgia, serif; font-style: italic; }
+      .shop-head p { margin: 0; color: var(--paper-dim); font-size: 12px; }
+      .close {
+        position: absolute; top: 17px; right: 17px;
+        width: 36px; height: 36px;
+        color: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+      }
+      .close:hover { border-color: var(--paper); background: #fff1; }
+      .wares { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; }
+      .ware {
+        min-height: 190px;
+        padding: 17px;
+        color: var(--paper);
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 5px 14px 5px 14px;
+        background: rgba(239,227,197,.035);
+        cursor: pointer;
+        transition: .18s ease;
+      }
+      .ware:hover:not(:disabled) { transform: translateY(-3px); border-color: var(--gold); background: rgba(244,190,85,.07); }
+      .ware:disabled { opacity: .45; cursor: not-allowed; }
+      .ware-icon { height: 55px; display: flex; align-items: center; }
+      .ware-icon svg { width: 45px; height: 45px; fill: none; stroke: var(--gold); stroke-width: 1.5; }
+      .ware small { color: var(--rust); font: 800 8px/1 monospace; letter-spacing: .15em; text-transform: uppercase; }
+      .ware h3 { margin: 7px 0 5px; font: 800 17px/1.1 Georgia, serif; }
+      .ware p { margin: 0 0 13px; min-height: 31px; color: var(--paper-dim); font-size: 10px; line-height: 1.45; }
+      .price { display: flex; gap: 7px; color: var(--paper); font: 800 9px/1 monospace; }
+      .price i { width: 9px; height: 12px; display: inline-block; clip-path: polygon(50% 0,100% 30%,80% 100%,10% 80%,0 25%); }
+
+      .ritual-card {
+        width: min(520px, 100%);
+        padding: 28px;
+        position: relative;
+        text-align: center;
+        border: 1px solid rgba(239,227,197,.3);
+        border-radius: 7px 22px 7px 22px;
+        background: #17130f;
+        box-shadow: 0 30px 100px #000;
+      }
+      .ritual-card h2 { margin: 8px 0 5px; font: 900 27px/1 Georgia, serif; font-style: italic; }
+      .ritual-card > p { margin: 0 0 17px; color: var(--paper-dim); font-size: 11px; }
+      .sigil-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+      .sigil {
+        width: 50px; height: 50px;
+        display: grid; place-items: center;
+        color: var(--paper-dim);
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        font: 400 27px/1 Georgia, serif;
+        transition: .2s ease;
+      }
+      .sigil.active { color: var(--gold); border-color: var(--gold); box-shadow: 0 0 18px rgba(244,190,85,.2); }
+      .sigil.done { color: var(--teal); border-color: var(--teal); background: rgba(114,210,191,.08); }
+      .trace-wrap { position: relative; height: 230px; border: 1px dashed rgba(239,227,197,.25); background: #0e0c0a; cursor: crosshair; touch-action: none; }
+      #tracePad { width: 100%; height: 100%; }
+      .trace-hint {
+        position: absolute; inset: 0;
+        display: grid; place-items: center;
+        color: rgba(239,227,197,.08);
+        font: 400 130px/1 Georgia, serif;
+        pointer-events: none;
+      }
+      .ritual-foot { display: flex; justify-content: space-between; margin-top: 12px; color: var(--paper-dim); font: 800 9px/1 monospace; letter-spacing: .12em; text-transform: uppercase; }
+      .ritual-foot b { color: var(--rust); font-size: 13px; }
+      .transition {
+        position: fixed; z-index: 45; inset: 0;
+        display: grid; place-items: center;
+        background: #090806;
+        opacity: 0; visibility: hidden;
+        transition: opacity .45s ease;
+        pointer-events: none;
+      }
+      .transition.show { opacity: 1; visibility: visible; }
+      .transition div { text-align: center; }
+      .transition small { color: var(--paper-dim); font: 800 9px/1 monospace; letter-spacing: .28em; text-transform: uppercase; }
+      .transition strong { display: block; margin-top: 10px; font: italic 900 45px/1 Georgia, serif; }
+      .transition i { display: block; width: 1px; height: 70px; margin: 22px auto 0; background: linear-gradient(var(--rust), transparent); animation: fallLine .7s ease-in infinite; }
+      @keyframes fallLine { from { transform: translateY(-15px); opacity: 0; } 40% { opacity: 1; } to { transform: translateY(20px); opacity: 0; } }
+
+      .intro {
+        position: fixed;
+        z-index: 50;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #15110e;
+        transition: opacity .8s ease, visibility .8s;
+      }
+      .intro.hidden { opacity: 0; visibility: hidden; }
+      .intro::before {
+        content: "";
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(circle at 50% 62%, rgba(229,107,63,.12), transparent 28%),
+          linear-gradient(115deg, transparent 46%, rgba(239,227,197,.03) 46.2% 46.5%, transparent 46.7%);
+      }
+      .intro-card { position: relative; width: min(610px, 100%); text-align: center; }
+      .intro-kicker { color: var(--rust); font: 800 10px/1 monospace; letter-spacing: .3em; text-transform: uppercase; }
+      .intro h1 { margin: 20px 0 14px; font: 900 clamp(54px, 10vw, 104px)/.72 Georgia, serif; font-style: italic; letter-spacing: -.06em; }
+      .intro h1 span { display: block; margin-left: .55em; color: transparent; -webkit-text-stroke: 1px var(--paper); }
+      .intro p { max-width: 430px; margin: 28px auto; color: var(--paper-dim); font-size: 13px; line-height: 1.65; }
+      .begin {
+        position: relative;
+        padding: 14px 25px;
+        color: #17130f;
+        border: 0;
+        border-radius: 4px 12px 4px 12px;
+        background: var(--paper);
+        font: 900 11px/1 monospace;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: .2s ease;
+      }
+      .begin:hover { transform: translateY(-2px) rotate(-1deg); background: var(--gold); }
+      .intro-note { margin-top: 16px; color: #756a58; font: 700 8px/1 monospace; letter-spacing: .13em; text-transform: uppercase; }
+
+      .mobile-controls { display: none; }
+
+      @media (max-width: 760px) {
+        .hud { padding: 14px; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; }
+        .brand h1 { font-size: 17px; }
+        .brand-mark { width: 34px; height: 34px; }
+        .brand-mark::before { height: 20px; left: 14px; top: 5px; }
+        .brand-mark::after { width: 20px; left: 6px; top: 13px; }
+        .depth { display: none; }
+        .ore-rack { grid-column: 2; transform: scale(.86); transform-origin: top right; }
+        .ore { min-width: 54px; grid-template-columns: 12px 1fr; padding: 7px; }
+        .ore-gem { width: 10px; height: 14px; }
+        .ore small { display: none; }
+        .quest { grid-column: 2; grid-row: 2; max-width: 190px; padding: 12px; }
+        .quest h2 { font-size: 14px; }
+        .quest p { font-size: 9px; }
+        .controls { display: none; }
+        .loadout { transform: scale(.85); transform-origin: bottom left; }
+        .mobile-controls {
+          position: fixed; inset: auto 14px 17px; z-index: 25;
+          display: flex; justify-content: space-between; pointer-events: none;
+        }
+        .touch-group { display: flex; gap: 8px; pointer-events: auto; }
+        .touch {
+          width: 50px; height: 50px;
+          display: grid; place-items: center;
+          color: var(--paper);
+          border: 1px solid rgba(239,227,197,.3);
+          border-radius: 50%;
+          background: rgba(15,12,10,.72);
+          backdrop-filter: blur(6px);
+          font: 900 17px/1 monospace;
+          touch-action: none;
+        }
+        .touch.action { border-color: rgba(244,190,85,.5); color: var(--gold); font-size: 10px; }
+        .prompt { bottom: 84px; }
+        .wares { grid-template-columns: 1fr; }
+        .shop { padding: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div class="grain"></div>
+
+    <div class="hud">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div><h1>DEEPDRAW</h1><span>Cavebound adventure</span></div>
+      </div>
+      <div class="depth">
+        <small id="layerLabel">Layer I · The Shallows</small>
+        <strong><span id="depthValue">0</span>m</strong>
+        <div class="depth-track"><i id="depthFill"></i></div>
+      </div>
+      <div class="ore-rack">
+        <div class="ore" style="--ore:#70c9c3"><i class="ore-gem"></i><div><small>Azure</small><b id="ore0">0</b></div></div>
+        <div class="ore" style="--ore:#e56b3f"><i class="ore-gem"></i><div><small>Ember</small><b id="ore1">0</b></div></div>
+        <div class="ore" style="--ore:#f4be55"><i class="ore-gem"></i><div><small>Gilt</small><b id="ore2">0</b></div></div>
+        <div class="ore shards"><i class="ore-gem"></i><div><small>Shards</small><b id="shards">0</b></div></div>
+      </div>
+
+      <aside class="quest">
+        <div class="eyebrow">Current descent</div>
+        <h2 id="questTitle">Find the Stronghold</h2>
+        <p id="questText">Search the cave network for a stone shrine. Strike it to open the way down.</p>
+        <div class="quest-dots"><i id="dot0"></i><i id="dot1"></i><i id="dot2"></i></div>
+      </aside>
+
+      <div class="loadout">
+        <div class="slot" id="slot0" data-slot="Blade">
+          <svg viewBox="0 0 32 32"><path d="M23 3l4 4-13 16-5 2 2-5L23 3zM8 22l4 4M6 25l-2 4 4-2"/></svg>
+        </div>
+        <div class="slot" id="slot1" data-slot="Handle">
+          <svg viewBox="0 0 32 32"><path d="M11 5c7 3 10 8 9 15M8 22l4-4 7 7-4 4zM19 8l4-3 4 4-4 4"/></svg>
+        </div>
+        <div class="slot" id="slot2" data-slot="Amulet">
+          <svg viewBox="0 0 32 32"><path d="M9 5c0 8 2 10 7 12 5-2 7-4 7-12M16 17l6 5-6 7-6-7z"/></svg>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span><kbd>A</kbd><kbd>D</kbd> Move</span>
+        <span><kbd>Space</kbd> Jump</span>
+        <span><kbd>F</kbd> Mine</span>
+        <span><kbd>X</kbd> Swing</span>
+        <span><kbd>E</kbd> Interact</span>
+        <span><kbd>R</kbd> Hold for Rift</span>
+      </div>
+    </div>
+
+    <div class="prompt" id="prompt"></div>
+    <div class="toast-stack" id="toasts"></div>
+
+    <div class="modal" id="shopModal">
+      <section class="shop">
+        <button class="close" id="closeShop" aria-label="Close shop">×</button>
+        <div class="shop-head">
+          <div class="merchant-face"></div>
+          <div>
+            <div class="eyebrow">Travelling tinkerer</div>
+            <h2>YAP'S PARTS &amp; ODDITIES</h2>
+            <p>“Ore talks. So does my kettle. Only one of them makes sense.”</p>
+          </div>
+        </div>
+        <div class="wares">
+          <button class="ware" data-item="0">
+            <div class="ware-icon"><svg viewBox="0 0 48 48"><path d="M31 5l8 8-20 25-9 3 3-9L31 5zM9 37l5 5"/></svg></div>
+            <small>Main attack</small><h3>Glowsteel Blade</h3>
+            <p>A swift blade that sheds light with every strike.</p>
+            <div class="price"><span><i style="background:#70c9c3"></i> 4</span><span><i style="background:#e56b3f"></i> 2</span></div>
+          </button>
+          <button class="ware" data-item="1">
+            <div class="ware-icon"><svg viewBox="0 0 48 48"><path d="M14 9c12 5 17 14 16 26M9 34l7-7 11 11-7 7zM29 14l7-6 6 6-7 7"/></svg></div>
+            <small>Movement ability</small><h3>Hookline Handle</h3>
+            <p>Strengthens your jump with a short mid-air boost.</p>
+            <div class="price"><span><i style="background:#e56b3f"></i> 5</span><span><i style="background:#f4be55"></i> 2</span></div>
+          </button>
+          <button class="ware" data-item="2">
+            <div class="ware-icon"><svg viewBox="0 0 48 48"><path d="M13 6c0 13 4 17 11 20 7-3 11-7 11-20M24 26l9 8-9 10-9-10z"/></svg></div>
+            <small>Passive charm</small><h3>Prospector Amulet</h3>
+            <p>Ore veins yield one extra piece when mined.</p>
+            <div class="price"><span><i style="background:#70c9c3"></i> 3</span><span><i style="background:#f4be55"></i> 5</span></div>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal" id="ritualModal">
+      <section class="ritual-card">
+        <div class="eyebrow">Stronghold ritual · bonus shard</div>
+        <h2>TRACE THE THREE SIGILS</h2>
+        <p>Draw each glowing mark before the three-second timer runs dry.</p>
+        <div class="sigil-row">
+          <i class="sigil active">∨</i><i class="sigil">○</i><i class="sigil">╱</i>
+        </div>
+        <div class="trace-wrap">
+          <canvas id="tracePad"></canvas>
+          <div class="trace-hint" id="traceHint">∨</div>
+        </div>
+        <div class="ritual-foot"><span>Press and drag to draw</span><b id="ritualTimer">3.0s</b></div>
+      </section>
+    </div>
+
+    <div class="transition" id="transition">
+      <div><small>Entering deeper cave instance</small><strong id="transitionLevel">A98</strong><i></i></div>
+    </div>
+
+    <div class="intro" id="intro">
+      <div class="intro-card">
+        <div class="intro-kicker">The caves redraw themselves</div>
+        <h1>DEEP<span>DRAW</span></h1>
+        <p>Descend through shifting cave levels. Mine living ore, find each buried Stronghold, and leap through its open gate to continue deeper.</p>
+        <button class="begin" id="begin">Begin the descent</button>
+        <div class="intro-note">Headphones recommended · Progress saves automatically</div>
+      </div>
+    </div>
+
+    <div class="mobile-controls">
+      <div class="touch-group"><button class="touch" data-key="left">←</button><button class="touch" data-key="right">→</button></div>
+      <div class="touch-group"><button class="touch action" data-key="attack">SWING</button><button class="touch action" data-key="mine">MINE</button><button class="touch action" data-key="interact">USE</button><button class="touch" data-key="jump">↑</button></div>
+    </div>
+
+    <script>
+      (() => {
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+        const $ = id => document.getElementById(id);
+        let W=0,H=0,DPR=1,time=0,started=false,shopOpen=false,levelIndex=0,shards=0,transitioning=false,artifactOwned=false,biome="normal";
+        const world={width:1500,height:1180};
+        const keys={left:false,right:false,jump:false,mine:false,interact:false,rift:false,attack:false};
+        const player={x:750,y:170,w:28,h:44,vx:0,vy:0,grounded:false,face:1,coyote:0,step:0,attackStart:0,attackHit:false,lastAttack:0};
+        const camera={x:0,y:0};
+        const inventory=[0,0,0],owned=[false,false,false],opened=[];
+        const particles=[];
+        let platforms=[],ores=[],merchant=null,stronghold=null,caveShape=null,rockLayer=null,rooms=[],creatures=[],artifact=null,rift=null,activePrompt=null,lastMine=0,riftCharge=0,caveSerial=0;
+        let ritual={open:false,index:0,start:0,drawing:false,points:[],raf:0};
+
+        const palettes=[
+          {name:"The Shallows",bg:"#211c16",far:"#332b21",rock:"#4a3e30",edge:"#786953",glow:"#e9b75d"},
+          {name:"Rootreach",bg:"#13221e",far:"#20352e",rock:"#2f493e",edge:"#527462",glow:"#72d2bf"},
+          {name:"Ember Hollow",bg:"#251619",far:"#3d2024",rock:"#573036",edge:"#89454a",glow:"#e56b3f"},
+          {name:"The Gloam",bg:"#151225",far:"#24203a",rock:"#352c4e",edge:"#635681",glow:"#caa8ff"}
+        ];
+        const colors=["#70c9c3","#e56b3f","#f4be55"];
+        const runSeed=crypto.getRandomValues(new Uint32Array(1))[0];
+        const levelCode=()=>`A${String(Math.max(0,99-levelIndex)).padStart(2,"0")}`;
+        const palette=()=>palettes[levelIndex%palettes.length];
+        const rngFor=seed=>{let a=seed|0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
+        function ellipsePoint(room,angle,scale=1){const ex=Math.cos(angle)*room.rx*scale,ey=Math.sin(angle)*room.ry*scale,c=Math.cos(room.rot||0),s=Math.sin(room.rot||0);return{x:room.cx+ex*c-ey*s,y:room.cy+ex*s+ey*c}}
+
+        function generateLevel(index){
+          const r=rngFor(runSeed+index*9187+(++caveSerial)*104729);
+          platforms=[];ores=[];creatures=[];rift=null;
+          biome=index>0&&r()<.22?"water":"normal";
+          const roomCount=5+Math.floor(r()*3);
+          rooms=[{cx:620+r()*260,cy:175,rx:245+r()*70,ry:118+r()*30,rot:(r()-.5)*.22}];
+          for(let i=1;i<roomCount;i++){
+            const previous=rooms[i-1];
+            let cx=230+r()*1040;
+            if(Math.abs(cx-previous.cx)>610)cx=previous.cx+Math.sign(cx-previous.cx)*(430+r()*150);
+            cx=Math.max(220,Math.min(1280,cx));
+            rooms.push({
+              cx,
+              cy:175+i*(880/(roomCount-1))+Math.floor(r()*42-21),
+              rx:205+r()*105,
+              ry:105+r()*55,
+              rot:(r()-.5)*.42
+            });
+          }
+          rooms.forEach((room,i)=>{
+            const floor={x:room.cx-room.rx*.72,y:room.cy+room.ry*.63,w:room.rx*1.44,h:26,kind:"shelf",room:i,jag:Array.from({length:14},()=>r()*4)};
+            platforms.push(floor);
+            if(i){
+              const previous=rooms[i-1];
+              const mx=(room.cx+previous.cx)/2,my=(room.cy+previous.cy)/2+45;
+              platforms.push({x:mx-62,y:my,w:124,h:16,kind:"ledge",room:i,jag:[1,3,2,4]});
+              const wallCount=2+(r()>.55?1:0);
+              for(let n=0;n<wallCount;n++){
+                const side=n%2?-1:1;
+                const angle=side>0?-.12-r()*.55:Math.PI+.12+r()*.55;
+                const point=ellipsePoint(room,angle,.84);
+                ores.push({x:point.x,y:point.y,type:(index+i+n)%3,mined:false,wobble:r()*8,angle:angle+room.rot,wall:true});
+              }
+            }
+          });
+          const lastRoom=rooms[rooms.length-1], last=platforms.filter(p=>p.kind==="shelf").at(-1), sx=lastRoom.cx;
+          stronghold={x:sx,y:last.y,open:!!opened[index]};
+          const final=platforms.pop();
+          const actualFinal=final.kind==="shelf"?final:last;
+          if(final!==actualFinal) platforms.push(final);
+          const shelfIndex=platforms.indexOf(actualFinal);
+          if(shelfIndex>=0)platforms.splice(shelfIndex,1);
+          platforms.push({...actualFinal,w:Math.max(0,sx-52-actualFinal.x),kind:"strongfloor"});
+          platforms.push({x:sx+52,y:actualFinal.y,w:Math.max(0,actualFinal.x+actualFinal.w-sx-52),h:34,kind:"strongfloor",jag:actualFinal.jag});
+          platforms.push({x:sx-52,y:actualFinal.y,w:104,h:34,kind:"seal",jag:[1,3,2,4]});
+          platforms.push({x:0,y:0,w:54,h:world.height+100,kind:"wall"},{x:world.width-54,y:0,w:54,h:world.height+100,kind:"wall"});
+          const canSpawnMerchant=index>0&&biome!=="water"&&r()<Math.min(.34+index*.07,.78);
+          const merchantIndex=1+Math.floor(r()*Math.max(1,rooms.length-2)),merchantRoom=rooms[merchantIndex];
+          const merchantFloor=platforms.find(p=>p.kind==="shelf"&&p.room===merchantIndex);
+          merchant=canSpawnMerchant?{x:merchantRoom.cx+(r()-.5)*merchantRoom.rx*.5,y:merchantFloor?.y||merchantRoom.cy+merchantRoom.ry*.63}:null;
+          if(biome==="water"){
+            rooms.slice(1,5).forEach((room,i)=>creatures.push({kind:i===2?"phantom":"jelly",x:room.cx+(r()-.5)*room.rx,y:room.cy+(r()-.5)*room.ry*.7,t:r()*10,dropped:false}));
+          }else if(index>=2){
+            const room=rooms[2+rngFor(index)()*2|0];
+            creatures.push({kind:"spider",x:room.cx,y:room.cy-room.ry*.72,anchorY:room.cy-room.ry*.8,hp:3,t:0});
+          }
+          artifact=!artifactOwned&&index>=2?{x:rooms[2].cx+rooms[2].rx*.25,y:rooms[2].cy,found:false}:null;
+          caveShape={
+            teeth:Array.from({length:28},()=>({x:60+r()*1380,y:70+r()*990,len:18+r()*55,w:7+r()*14})),
+            bubbles:Array.from({length:38},()=>({x:r()*1500,y:r()*1150,r:12+r()*58,a:.02+r()*.05}))
+          };
+          buildRockLayer();
+          player.x=rooms[0].cx;player.y=rooms[0].cy+rooms[0].ry*.63-70;player.vx=0;player.vy=0;
+          camera.x=Math.max(0,player.x-W*.5);camera.y=0;
+          updateHUD();
+        }
+
+        function resize(){
+          DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+          canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+          const pad=$("tracePad"),box=pad.parentElement.getBoundingClientRect();
+          pad.width=Math.max(1,box.width*DPR);pad.height=Math.max(1,box.height*DPR);
+        }
+        const worldToScreen=(x,y)=>[x-camera.x,y-camera.y];
+        function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+        function buildRockLayer(){
+          rockLayer=document.createElement("canvas");rockLayer.width=world.width;rockLayer.height=world.height+120;
+          const rctx=rockLayer.getContext("2d"),p=palette();
+          rctx.fillStyle=p.rock;rctx.fillRect(0,0,rockLayer.width,rockLayer.height);
+          rctx.globalCompositeOperation="destination-out";
+          rooms.forEach(room=>{rctx.beginPath();rctx.ellipse(room.cx,room.cy,room.rx,room.ry,room.rot,0,Math.PI*2);rctx.fill()});
+          rctx.lineCap="round";rctx.lineJoin="round";rctx.lineWidth=118;
+          for(let i=1;i<rooms.length;i++){rctx.beginPath();rctx.moveTo(rooms[i-1].cx,rooms[i-1].cy);rctx.lineTo(rooms[i].cx,rooms[i].cy);rctx.stroke()}
+          rctx.lineWidth=92;rctx.beginPath();rctx.moveTo(stronghold.x,stronghold.y);rctx.lineTo(stronghold.x,world.height+120);rctx.stroke();
+          rctx.globalCompositeOperation="source-over";rctx.globalAlpha=.1;rctx.fillStyle=p.edge;
+          const random=rngFor(runSeed+4481+levelIndex*331+caveSerial*17);
+          for(let i=0;i<380;i++){rctx.beginPath();rctx.arc(random()*world.width,random()*world.height,1+random()*3,0,Math.PI*2);rctx.fill()}
+        }
+
+        function drawBackground(){
+          const p=palette();ctx.fillStyle=p.bg;ctx.fillRect(0,0,W,H);
+          ctx.save();ctx.translate(-camera.x*.18,-camera.y*.12);
+          caveShape.bubbles.forEach(b=>{ctx.globalAlpha=b.a;ctx.fillStyle=p.glow;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill()});
+          ctx.globalAlpha=.3;ctx.fillStyle=p.far;
+          for(let row=0;row<4;row++){
+            ctx.beginPath();ctx.moveTo(-200,row*320+260);
+            for(let x=-200;x<1750;x+=90)ctx.lineTo(x,row*320+220+Math.sin(x*.012+row)*55+Math.sin(x*.031)*18);
+            ctx.lineTo(1750,row*320+520);ctx.lineTo(-200,row*320+520);ctx.closePath();ctx.fill();
+          }
+          ctx.restore();ctx.globalAlpha=1;
+          const glow=ctx.createRadialGradient(W*.5,H*.48,20,W*.5,H*.48,Math.max(W,H)*.7);
+          glow.addColorStop(0,"rgba(255,226,178,.055)");glow.addColorStop(.6,"rgba(0,0,0,.08)");glow.addColorStop(1,"rgba(0,0,0,.68)");ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+          if(biome==="water"){ctx.fillStyle="rgba(30,139,157,.19)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="rgba(137,239,231,.08)";for(let y=30;y<H;y+=42){ctx.beginPath();for(let x=0;x<W;x+=24)ctx.lineTo(x,y+Math.sin(x*.025+time*.0015)*6);ctx.stroke()}}
+        }
+
+        function drawCaveShell(){
+          const p=palette();ctx.save();ctx.translate(-camera.x,-camera.y);ctx.drawImage(rockLayer,0,0);
+          ctx.strokeStyle=p.edge;ctx.lineWidth=4;ctx.globalAlpha=.24;
+          rooms.forEach(room=>{ctx.beginPath();ctx.ellipse(room.cx,room.cy,room.rx,room.ry,room.rot,0,Math.PI*2);ctx.stroke()});
+          ctx.globalAlpha=.22;ctx.fillStyle=p.edge;
+          rooms.forEach((room,i)=>{for(let n=0;n<3;n++){const x=room.cx-room.rx*.45+n*room.rx*.45+(i%2)*17,y=room.cy-room.ry*.92;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+11,y);ctx.lineTo(x+Math.sin(n+i)*8,y+24+(n*11)%25);ctx.closePath();ctx.fill()}});
+          ctx.restore();ctx.globalAlpha=1;
+        }
+
+        function drawPlatforms(){
+          const p=palette();platforms.forEach(o=>{
+            if(o.kind==="wall"||(o.kind==="seal"&&stronghold.open)||o.w<=0)return;
+            if(o.y<camera.y-100||o.y>camera.y+H+120||o.x+o.w<camera.x||o.x>camera.x+W)return;
+            const [x,y]=worldToScreen(o.x,o.y),steps=Math.max(4,Math.floor(o.w/52)),points=[];
+            for(let n=0;n<=steps;n++)points.push({x:x+o.w*n/steps,y:y-(o.jag?.[n%o.jag.length]||0)});
+            const ledge=ctx.createLinearGradient(0,y-8,0,y+30);ledge.addColorStop(0,p.edge);ledge.addColorStop(.18,p.rock);ledge.addColorStop(1,p.far);
+            ctx.fillStyle=ledge;ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+            for(let n=1;n<points.length;n++){const a=points[n-1],b=points[n];ctx.quadraticCurveTo(a.x,a.y,(a.x+b.x)/2,(a.y+b.y)/2)}
+            const end=points.at(-1);ctx.lineTo(end.x,end.y+26);ctx.quadraticCurveTo(x+o.w*.5,y+34,x,y+24);ctx.closePath();ctx.fill();
+            ctx.strokeStyle=p.edge;ctx.lineWidth=1.3;ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+            for(let n=1;n<points.length;n++){const a=points[n-1],b=points[n];ctx.quadraticCurveTo(a.x,a.y,(a.x+b.x)/2,(a.y+b.y)/2)}ctx.stroke();ctx.globalAlpha=1;
+          });
+        }
+
+        function drawOre(o){
+          if(o.mined)return;const[x,y]=worldToScreen(o.x,o.y);if(x<-40||x>W+40||y<-50||y>H+50)return;
+          ctx.save();ctx.translate(x,y+Math.sin(time*.004+o.wobble)*2);if(o.wall)ctx.rotate(o.angle-Math.PI/2);ctx.shadowBlur=16;ctx.shadowColor=colors[o.type];ctx.fillStyle=colors[o.type];
+          [[0,0,9,25],[-11,8,7,18],[11,10,6,16]].forEach(([gx,gy,w,h])=>{ctx.beginPath();ctx.moveTo(gx,gy-h);ctx.lineTo(gx+w,gy-h*.35);ctx.lineTo(gx+w*.55,gy);ctx.lineTo(gx-w*.4,gy-2);ctx.lineTo(gx-w,gy-h*.42);ctx.closePath();ctx.fill()});ctx.restore();
+        }
+
+        function drawStronghold(){
+          const s=stronghold,[x,y]=worldToScreen(s.x,s.y),p=palette();if(x<-160||x>W+160||y<-190||y>H+120)return;
+          ctx.save();ctx.translate(x,y);ctx.shadowColor=p.glow;ctx.shadowBlur=s.open?32:0;
+          if(s.open){ctx.fillStyle="#050403";ctx.beginPath();ctx.ellipse(0,3,50,15,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.2;ctx.fillStyle=p.glow;ctx.beginPath();ctx.ellipse(0,0,68,22,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+          ctx.fillStyle=p.rock;ctx.strokeStyle=s.open?p.glow:p.edge;ctx.lineWidth=3;
+          ctx.fillRect(-46,-79,92,74);ctx.beginPath();ctx.moveTo(-61,-79);ctx.lineTo(0,-132);ctx.lineTo(61,-79);ctx.closePath();ctx.fill();ctx.stroke();
+          ctx.beginPath();ctx.arc(0,-69,20,0,Math.PI*2);ctx.stroke();
+          [0,Math.PI*2/3,Math.PI*4/3].forEach(a=>{ctx.beginPath();ctx.moveTo(Math.cos(a)*8,-69+Math.sin(a)*8);ctx.lineTo(Math.cos(a)*17,-69+Math.sin(a)*17);ctx.stroke()});
+          ctx.shadowBlur=0;ctx.fillStyle=s.open?p.glow:"#c8b894";ctx.font="800 9px monospace";ctx.textAlign="center";ctx.fillText(s.open?"GATE OPEN · STEP INTO THE HOLE":"STRONGHOLD",0,21);ctx.restore();
+        }
+
+        function drawMerchant(){
+          if(!merchant||stronghold.open)return;const[x,y]=worldToScreen(merchant.x,merchant.y);if(x<-80||x>W+80||y<-120||y>H+80)return;
+          ctx.save();ctx.translate(x,y);ctx.fillStyle="#211b16";ctx.strokeStyle="#e8d9b8";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,-40,27,39,-.08,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#e8d9b8";ctx.fillRect(-28,-64,56,4);ctx.beginPath();ctx.moveTo(-34,-65);ctx.lineTo(-15,-91);ctx.lineTo(25,-70);ctx.closePath();ctx.fill();ctx.fillStyle="#e56b3f";ctx.font="900 20px monospace";ctx.fillText("+",-18,-42);ctx.save();ctx.translate(12,-52);ctx.rotate(.13);ctx.fillStyle="#f4be55";ctx.fillRect(-9,-8,20,21);ctx.fillStyle="#30271e";ctx.fillText("×",-8,9);ctx.restore();ctx.strokeStyle="#e8d9b8";ctx.beginPath();ctx.arc(0,-29,9,.2,Math.PI-.2);ctx.stroke();ctx.fillStyle="#c9b795";ctx.font="800 8px monospace";ctx.textAlign="center";ctx.fillText("YAP",0,18);ctx.restore();
+        }
+
+        function drawWorldFeatures(){
+          if(artifact&&!artifact.found){
+            const[x,y]=worldToScreen(artifact.x,artifact.y),glitch=Math.sin(time*.02)*3;ctx.save();ctx.translate(x,y);ctx.shadowBlur=20;ctx.shadowColor="#9eefff";ctx.fillStyle="#b9f5ff";ctx.fillRect(-13+glitch,-13,26,26);ctx.fillStyle="#e56b3f";ctx.fillRect(-19,-5,11,5);ctx.fillStyle="#151225";ctx.fillRect(1,-8,7,16);ctx.strokeStyle="#fff";ctx.strokeRect(-13,-13,26,26);ctx.restore()
+          }
+          creatures.forEach(c=>{
+            const[x,y]=worldToScreen(c.x,c.y);
+            if(c.kind==="spider"){
+              ctx.save();ctx.translate(x,y);ctx.strokeStyle="#0b0908";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-110);ctx.lineTo(0,-8);ctx.stroke();ctx.fillStyle="#111";ctx.beginPath();ctx.ellipse(0,0,13,10,0,0,Math.PI*2);ctx.fill();for(let i=0;i<4;i++){const sy=-5+i*4;ctx.beginPath();ctx.moveTo(-7,sy);ctx.lineTo(-24-i*2,sy-10+(i%2)*20);ctx.moveTo(7,sy);ctx.lineTo(24+i*2,sy-10+(i%2)*20);ctx.stroke()}ctx.fillStyle="#e56b3f";ctx.beginPath();ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill();ctx.restore()
+            }else{
+              const phantom=c.kind==="phantom";ctx.save();ctx.translate(x,y+Math.sin(time*.002+c.t)*14);ctx.globalAlpha=phantom ? .72 : .52;ctx.shadowBlur=phantom?24:14;ctx.shadowColor=phantom?"#caa8ff":"#72d2bf";ctx.fillStyle=phantom?"#caa8ff":"#72d2bf";ctx.beginPath();ctx.arc(0,0,phantom?18:14,Math.PI,0);ctx.lineTo(phantom?18:14,13);for(let n=2;n>=-2;n--)ctx.quadraticCurveTo(n*7,20+(n%2)*7,n*6,12);ctx.closePath();ctx.fill();ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=2;for(let n=-1;n<=1;n++){ctx.beginPath();ctx.moveTo(n*7,10);ctx.quadraticCurveTo(n*9+Math.sin(time*.003+n)*8,25,n*7,39);ctx.stroke()}ctx.restore()
+            }
+          });
+          if(rift){
+            const[x,y]=worldToScreen(rift.x,rift.y);ctx.save();ctx.translate(x,y);ctx.shadowBlur=28;ctx.shadowColor="#7cc9ff";ctx.fillStyle="#080812";ctx.strokeStyle="#9eefff";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,22,53,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=.45;for(let i=0;i<5;i++){ctx.fillStyle=i%2?"#e56b3f":"#9eefff";ctx.fillRect(-31+Math.sin(time*.01+i)*7,-43+i*19,12,3)}ctx.restore()
+          }
+        }
+
+        function drawPlayer(){
+          const[x,y]=worldToScreen(player.x,player.y),elapsed=time-player.attackStart,attacking=elapsed>=0&&elapsed<280,phase=Math.min(1,elapsed/280),swing=attacking?-1.75+(1-Math.pow(1-phase,3))*3.25:-.45;
+          ctx.save();ctx.translate(x,y);ctx.scale(player.face,1);const run=player.grounded?Math.sin(player.step)*4:0;
+          ctx.strokeStyle="#15110e";ctx.lineCap="round";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-7,13);ctx.lineTo(-9+run,28);ctx.moveTo(7,13);ctx.lineTo(9-run,28);ctx.stroke();
+          ctx.fillStyle="#e8d9b8";ctx.strokeStyle="#15110e";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,-5,14,20,-.08,0,Math.PI*2);ctx.fill();ctx.stroke();
+          ctx.fillStyle="#e56b3f";ctx.beginPath();ctx.moveTo(-11,-10);ctx.quadraticCurveTo(-30+Math.sin(time*.006)*4,6,-18,21);ctx.lineTo(0,12);ctx.closePath();ctx.fill();
+          ctx.fillStyle="#15110e";ctx.beginPath();ctx.arc(5,-8,2.2,0,Math.PI*2);ctx.fill();
+          if(attacking){ctx.strokeStyle=owned[0]?"rgba(244,190,85,.28)":"rgba(239,227,197,.18)";ctx.lineWidth=7;ctx.beginPath();ctx.arc(7,3,47,-1.75,swing);ctx.stroke()}
+          ctx.save();ctx.translate(8,3);ctx.rotate(swing);ctx.strokeStyle="#3a2c20";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-5,0);ctx.lineTo(7,0);ctx.stroke();ctx.strokeStyle=owned[0]?"#f4be55":"#b9ad93";ctx.lineWidth=4;ctx.shadowBlur=owned[0]?13:0;ctx.shadowColor="#f4be55";ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(37,0);ctx.stroke();ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(37,0);ctx.lineTo(30,-5);ctx.stroke();ctx.restore();ctx.restore();
+        }
+        function drawParticles(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life-=.018;const[x,y]=worldToScreen(p.x,p.y);ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.fillRect(x,y,p.size,p.size);if(p.life<=0)particles.splice(i,1)}ctx.globalAlpha=1}
+        function draw(){ctx.clearRect(0,0,W,H);drawBackground();drawCaveShell();drawPlatforms();ores.forEach(drawOre);drawWorldFeatures();drawStronghold();drawMerchant();drawParticles();drawPlayer()}
+
+        function segmentDistance(px,py,a,b){const dx=b.cx-a.cx,dy=b.cy-a.cy,len=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((px-a.cx)*dx+(py-a.cy)*dy)/len)),x=a.cx+t*dx,y=a.cy+t*dy;return Math.hypot(px-x,py-y)}
+        function pointInCave(x,y,margin=0){
+          if(stronghold&&x>stronghold.x-46+margin&&x<stronghold.x+46-margin&&y>stronghold.y-8)return true;
+          for(const room of rooms){const c=Math.cos(-(room.rot||0)),s=Math.sin(-(room.rot||0)),dx=x-room.cx,dy=y-room.cy,lx=dx*c-dy*s,ly=dx*s+dy*c;if((lx*lx)/((room.rx-margin)**2)+(ly*ly)/((room.ry-margin)**2)<=1)return true}
+          for(let i=1;i<rooms.length;i++)if(segmentDistance(x,y,rooms[i-1],rooms[i])<=59-margin)return true;
+          return false;
+        }
+        function playerFitsCave(x,y){const hw=player.w*.48,hh=player.h*.48;return pointInCave(x-hw,y-hh,2)&&pointInCave(x+hw,y-hh,2)&&pointInCave(x-hw,y+hh,2)&&pointInCave(x+hw,y+hh,2)}
+        function enforceCave(oldX,oldY,axis){
+          if(playerFitsCave(player.x,player.y))return;
+          if(axis==="x"){player.x=oldX;player.vx=0}
+          else{const falling=player.vy>0;player.y=oldY;player.vy=0;if(falling){player.grounded=true;player.coyote=7}}
+        }
+        function collide(){
+          player.grounded=false;
+          for(const o of platforms){
+            if((o.kind==="seal"&&stronghold.open)||o.w<=0)continue;
+            if(player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w&&player.y+player.h/2>o.y-12&&player.y+player.h/2<o.y+o.h+Math.max(8,player.vy+2)&&player.vy>=0&&player.y<o.y){player.y=o.y-player.h/2;player.vy=0;player.grounded=true;player.coyote=7}
+            if(o.kind==="wall"&&player.y+player.h/2>o.y&&player.y-player.h/2<o.y+o.h&&player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w){if(player.vx>0)player.x=o.x-player.w/2;else if(player.vx<0)player.x=o.x+o.w+player.w/2;player.vx=0}
+          }
+          if(!player.grounded)player.coyote=Math.max(0,player.coyote-1);
+        }
+        const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+        function updateInteraction(){
+          activePrompt=null;const nearOre=ores.find(o=>!o.mined&&distance(player,o)<72);const nearStrong=distance(player,{x:stronghold.x,y:stronghold.y-45})<115;const nearMerchant=merchant&&!stronghold.open&&distance(player,{x:merchant.x,y:merchant.y-30})<85;const nearArtifact=artifact&&!artifact.found&&distance(player,artifact)<75;const nearRift=rift&&distance(player,rift)<80;
+          if(nearOre)activePrompt={kind:"ore",target:nearOre,text:"<b>F</b> Mine ore vein"};
+          else if(nearArtifact)activePrompt={kind:"artifact",text:"<b>E</b> Take glitch artifact"};
+          else if(nearRift)activePrompt={kind:"rift",text:"<b>E</b> Enter Rift · return to A99"};
+          else if(nearStrong&&!stronghold.open)activePrompt={kind:"stronghold",text:"<b>F</b> Strike the Stronghold"};
+          else if(nearStrong&&stronghold.open)activePrompt={kind:"hole",text:"Step into the open gate to descend"};
+          else if(nearMerchant)activePrompt={kind:"merchant",text:"<b>E</b> Trade with YAP"};
+          $("prompt").innerHTML=activePrompt?.text||"";$("prompt").classList.toggle("show",!!activePrompt&&!shopOpen&&!ritual.open);
+        }
+        function burst(x,y,color,count=18){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:-Math.random()*5,color,size:2+Math.random()*3,life:1})}
+        function doMine(){
+          if(!activePrompt||time-lastMine<350)return;lastMine=time;
+          if(activePrompt.kind==="stronghold"){activateStronghold();return}
+          if(activePrompt.kind!=="ore")return;const o=activePrompt.target;o.mined=true;const amount=owned[2]?2:1;inventory[o.type]+=amount;burst(o.x,o.y-15,colors[o.type],14);toast(`Mined <b>+${amount} ${["Azure","Ember","Gilt"][o.type]} ore</b>`);updateHUD();
+        }
+        function swingSword(){
+          if(!started||shopOpen||ritual.open||time-player.lastAttack<360)return;
+          player.lastAttack=time;player.attackStart=time;player.attackHit=false;
+          if(activePrompt?.kind==="stronghold"){activateStronghold();return}
+          const spider=creatures.find(c=>c.kind==="spider"&&!c.fleeing&&Math.abs(c.x-player.x)<92&&Math.abs(c.y-player.y)<68&&(c.x-player.x)*player.face>-18);
+          if(spider){spider.hp--;spider.x+=player.face*38;burst(spider.x,spider.y,owned[0]?"#f4be55":"#e8d9b8",12);if(spider.hp<=1){spider.fleeing=true;toast("The wounded Scribble Spider <b>flees into the dark</b>")}else toast("Your strike sends the spider skittering back")}
+        }
+        function doInteract(){
+          if(activePrompt?.kind==="merchant")openShop();
+          else if(activePrompt?.kind==="artifact"){artifact.found=true;artifactOwned=true;burst(artifact.x,artifact.y,"#9eefff",30);toast("Glitch artifact acquired · hold <b>R</b> to open a Rift in a wall");save()}
+          else if(activePrompt?.kind==="rift"){levelIndex=0;generateLevel(0);toast("The Rift returns you to <b>A99</b>");save()}
+        }
+        function activateStronghold(){
+          stronghold.open=true;opened[levelIndex]=true;burst(stronghold.x,stronghold.y-65,palette().glow,34);toast("The <b>Stronghold opens</b>. Mob spawning has stopped.");save();openRitual();
+        }
+
+        function update(){
+          if(!started||shopOpen||ritual.open||transitioning)return;
+          const accel=player.grounded?.72:.4;if(keys.left){player.vx-=accel;player.face=-1}if(keys.right){player.vx+=accel;player.face=1}if(!keys.left&&!keys.right)player.vx*=player.grounded?.74:.96;player.vx=Math.max(-6,Math.min(6,player.vx));
+          if(keys.jump&&(player.coyote>0||biome==="water")){player.vy=biome==="water"?-5.4:(owned[1]?-12.5:-11.2);player.grounded=false;player.coyote=0;keys.jump=false}
+          player.vy=Math.min(biome==="water"?6.5:14,player.vy+(biome==="water"?.24:.55));
+          const oldX=player.x;player.x+=player.vx;enforceCave(oldX,player.y,"x");collide();
+          const oldY=player.y;player.y+=player.vy;enforceCave(player.x,oldY,"y");collide();player.step+=Math.abs(player.vx)*.08;
+          camera.x+=(Math.max(0,Math.min(world.width-W,player.x-W*.5))-camera.x)*.08;camera.y+=(Math.max(0,Math.min(world.height-H+110,player.y-H*.47))-camera.y)*.07;
+          updateInteraction();if(keys.mine)doMine();if(keys.attack){swingSword();keys.attack=false}if(keys.interact){doInteract();keys.interact=false}
+          if(keys.rift&&artifactOwned&&!rift){
+            if(!riftCharge)riftCharge=time;
+            if(time-riftCharge>5000){const room=rooms.reduce((best,r)=>Math.hypot(player.x-r.cx,player.y-r.cy)<Math.hypot(player.x-best.cx,player.y-best.cy)?r:best,rooms[0]);const side=player.x<room.cx?-1:1;rift={x:room.cx+side*room.rx*.82,y:Math.max(room.cy-room.ry*.35,Math.min(room.cy+room.ry*.35,player.y)),expires:time+30000};riftCharge=0;toast("A <b>Rift</b> tears open for 30 seconds")}
+          }else riftCharge=0;
+          if(rift&&time>rift.expires)rift=null;
+          if(!stronghold.open)creatures.forEach(c=>{
+            if(c.kind==="phantom"&&!c.dropped&&distance(player,c)<130){c.dropped=true;shards++;toast("The Phantom Jelly noticed you · <b>+1 shard</b>");save()}
+            if(c.kind==="spider"){c.t+=.02;if(c.fleeing){c.x+=Math.sign(c.x-player.x||1)*8;c.y-=3;c.anchorY-=3}else{c.x+=(player.x-c.x)*.003;c.y=c.anchorY+65+Math.sin(c.t)*38;if(distance(player,c)<38&&!c.hit){c.hit=time;player.x=rooms[0].cx;player.y=rooms[0].cy;player.vy=0;toast("The Scribble Spider drove you back through the cave")}if(c.hit&&time-c.hit>1800)c.hit=0}}
+          });
+          creatures=creatures.filter(c=>!c.fleeing||c.y>-120);
+          if(player.y>world.height+40&&stronghold.open)descend();else if(player.y>world.height+100){player.x=750;player.y=150;player.vy=0}
+          updateHUD();
+        }
+        function descend(){
+          if(transitioning)return;transitioning=true;levelIndex++;$("transitionLevel").textContent=levelCode();$("transition").classList.add("show");save();
+          setTimeout(()=>{generateLevel(levelIndex);$("transition").classList.remove("show");transitioning=false;toast(`Cave level <b>${levelCode()}</b> · ${palette().name}`)},1200);
+        }
+
+        function updateHUD(){
+          const local=Math.max(0,Math.floor((player.y-170)*.12));$("depthValue").textContent=levelIndex*100+local;$("depthFill").style.width=Math.min(100,(player.y/world.height)*100)+"%";$("layerLabel").textContent=`${levelCode()} · ${biome==="water"?"Water Cave":palette().name}`;inventory.forEach((v,i)=>$("ore"+i).textContent=v);$("shards").textContent=shards;owned.forEach((v,i)=>$("slot"+i).classList.toggle("owned",v));
+          for(let i=0;i<3;i++)$("dot"+i).classList.toggle("found",!!opened[i]);
+          if(stronghold?.open){$("questTitle").textContent="Enter the Stronghold gate";$("questText").textContent=`The shrine is lit and level ${levelCode()} is quiet. Step into the physical hole to fall deeper.`}
+          else{$("questTitle").textContent=biome==="water"?`Cross the Water Cave ${levelCode()}`:`Find Stronghold ${levelCode()}`;$("questText").textContent=biome==="water"?"Drift through the flooded chambers. Phantom Jellies may offer shards when they notice you.":"Follow the connected chambers downward. Wall crystals mark side pockets on the route to the shrine."}
+          document.querySelectorAll(".ware").forEach((el,i)=>{const costs=[[4,2,0],[0,5,2],[3,0,5]][i];el.disabled=owned[i]||costs.some((c,j)=>inventory[j]<c);if(owned[i])el.querySelector("small").textContent="Owned · Equipped"});
+        }
+        function toast(html){const el=document.createElement("div");el.className="toast";el.innerHTML=html;$("toasts").append(el);setTimeout(()=>el.remove(),2900)}
+        function openShop(){shopOpen=true;$("shopModal").classList.add("open");updateHUD()}
+        function closeShop(){shopOpen=false;$("shopModal").classList.remove("open")}
+        function buy(i){const costs=[[4,2,0],[0,5,2],[3,0,5]][i];if(owned[i]||costs.some((c,j)=>inventory[j]<c))return;costs.forEach((c,j)=>inventory[j]-=c);owned[i]=true;toast(`<b>${["Glowsteel Blade","Hookline Handle","Prospector Amulet"][i]}</b> equipped`);updateHUD();save()}
+
+        function openRitual(){ritual={open:true,index:0,start:0,drawing:false,points:[],raf:0};$("ritualModal").classList.add("open");updateSigils();clearTrace();ritual.raf=requestAnimationFrame(tickRitual)}
+        function closeRitual(success){ritual.open=false;cancelAnimationFrame(ritual.raf);$("ritualModal").classList.remove("open");if(success){shards++;toast("Three sigils complete · <b>+1 shard</b>")}else toast("Ritual missed · the descent remains open");save()}
+        function updateSigils(){document.querySelectorAll(".sigil").forEach((el,i)=>{el.classList.toggle("done",i<ritual.index);el.classList.toggle("active",i===ritual.index)});$("traceHint").textContent=["∨","○","╱"][ritual.index]||""}
+        function clearTrace(){const c=$("tracePad"),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height)}
+        function tracePos(e){const c=$("tracePad"),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*DPR,y:(e.clientY-r.top)*DPR}}
+        function traceStart(e){if(!ritual.open)return;e.preventDefault();if(!ritual.start)ritual.start=performance.now();ritual.drawing=true;ritual.points=[tracePos(e)];clearTrace();$("tracePad").setPointerCapture(e.pointerId)}
+        function traceMove(e){if(!ritual.drawing)return;e.preventDefault();const p=tracePos(e),pts=ritual.points,last=pts[pts.length-1];pts.push(p);const x=$("tracePad").getContext("2d");x.strokeStyle=palette().glow;x.lineWidth=4*DPR;x.lineCap="round";x.shadowBlur=10*DPR;x.shadowColor=palette().glow;x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke()}
+        function traceEnd(){if(!ritual.drawing)return;ritual.drawing=false;const pts=ritual.points;if(pts.length<4)return;let length=0;for(let i=1;i<pts.length;i++)length+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);const first=pts[0],last=pts[pts.length-1],xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),w=Math.max(...xs)-Math.min(...xs),h=Math.max(...ys)-Math.min(...ys);let ok=false;if(ritual.index===0)ok=length>100*DPR&&w>40*DPR&&h>35*DPR;else if(ritual.index===1)ok=length>150*DPR&&w>45*DPR&&h>45*DPR&&Math.hypot(last.x-first.x,last.y-first.y)<90*DPR;else ok=length>70*DPR&&last.x-first.x>35*DPR&&last.y-first.y<-30*DPR;if(ok){ritual.index++;updateSigils();setTimeout(clearTrace,100);if(ritual.index===3)closeRitual(true)}else{toast("Trace the glowing shape more closely");setTimeout(clearTrace,180)}}
+        function tickRitual(now){if(!ritual.open)return;if(ritual.start){const left=Math.max(0,3000-(now-ritual.start));$("ritualTimer").textContent=(left/1000).toFixed(1)+"s";if(left<=0){closeRitual(false);return}}else $("ritualTimer").textContent="3.0s";ritual.raf=requestAnimationFrame(tickRitual)}
+
+        function save(){try{localStorage.setItem("deepdraw-save",JSON.stringify({inventory,owned,opened,levelIndex,shards,artifactOwned}))}catch{}}
+        function load(){try{const d=JSON.parse(localStorage.getItem("deepdraw-save"));if(d){d.inventory?.forEach((v,i)=>inventory[i]=v);d.owned?.forEach((v,i)=>owned[i]=v);d.opened?.forEach((v,i)=>opened[i]=v);levelIndex=d.levelIndex||0;shards=d.shards||0;artifactOwned=!!d.artifactOwned}}catch{}}
+
+        const keyMap={ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",ArrowUp:"jump",KeyW:"jump",Space:"jump",KeyF:"mine",KeyE:"interact",KeyR:"rift",KeyX:"attack",KeyJ:"attack"};
+        addEventListener("keydown",e=>{if(e.code==="Escape"&&shopOpen){closeShop();return}const k=keyMap[e.code];if(k){e.preventDefault();keys[k]=true}});addEventListener("keyup",e=>{const k=keyMap[e.code];if(k){e.preventDefault();keys[k]=false}});
+        document.querySelectorAll(".touch").forEach(btn=>{const k=btn.dataset.key,on=e=>{e.preventDefault();keys[k]=true},off=e=>{e.preventDefault();keys[k]=false};btn.addEventListener("pointerdown",on);btn.addEventListener("pointerup",off);btn.addEventListener("pointercancel",off)});
+        $("tracePad").addEventListener("pointerdown",traceStart);$("tracePad").addEventListener("pointermove",traceMove);$("tracePad").addEventListener("pointerup",traceEnd);$("tracePad").addEventListener("pointercancel",traceEnd);
+        $("begin").onclick=()=>{started=true;$("intro").classList.add("hidden");toast(`Find the <b>${levelCode()} Stronghold</b>`)};$("closeShop").onclick=closeShop;$("shopModal").addEventListener("click",e=>{if(e.target===$("shopModal"))closeShop()});document.querySelectorAll(".ware").forEach((el,i)=>el.onclick=()=>buy(i));addEventListener("resize",resize);
+        let last=performance.now();function loop(now){last=now;time=now;update();draw();requestAnimationFrame(loop)}
+        load();resize();generateLevel(levelIndex);requestAnimationFrame(loop);
+      })();
+    </script>
+
+  </body>
+</html>
