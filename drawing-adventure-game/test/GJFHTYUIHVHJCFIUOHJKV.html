@@ -43,7 +43,7 @@
         pointer-events: none;
         opacity: .16;
         mix-blend-mode: soft-light;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0.25'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
       }
 
       .hud {
@@ -226,6 +226,48 @@
       .slot svg { width: 31px; height: 31px; opacity: .25; stroke: var(--paper); fill: none; stroke-width: 1.8; }
       .slot.owned { border-color: color-mix(in srgb, var(--gold) 60%, transparent); }
       .slot.owned svg { opacity: 1; stroke: var(--gold); filter: drop-shadow(0 0 6px rgba(244,190,85,.3)); }
+
+      .status-box {
+        position: fixed;
+        left: 24px;
+        bottom: 96px;
+        z-index: 12;
+        width: min(260px, 34vw);
+        padding: 12px 12px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(15,12,10,.78);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,.2);
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+        color: var(--paper-dim);
+        font: 800 8px/1 monospace;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+      }
+      .health-track {
+        position: relative;
+        width: 100%;
+        height: 10px;
+        border: 1px solid rgba(239,227,197,.2);
+        background: rgba(255,255,255,.04);
+        overflow: hidden;
+        border-radius: 999px;
+      }
+      .health-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 100%;
+        background: linear-gradient(90deg, #d95e4d, #f2c470, #7ee5ba);
+        box-shadow: 0 0 12px rgba(126,229,186,.4);
+        transition: width .18s ease;
+      }
 
       .controls {
         grid-column: 2;
@@ -491,6 +533,55 @@
       .begin:hover { transform: translateY(-2px) rotate(-1deg); background: var(--gold); }
       .intro-note { margin-top: 16px; color: #756a58; font: 700 8px/1 monospace; letter-spacing: .13em; text-transform: uppercase; }
 
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        background: rgba(5,4,3,.72);
+        opacity: 0;
+        visibility: hidden;
+        transition: .25s ease;
+      }
+      .overlay.show { opacity: 1; visibility: visible; }
+      .overlay-card {
+        padding: 26px 28px;
+        text-align: center;
+        border: 1px solid rgba(239,227,197,.22);
+        border-radius: 12px 24px 12px 24px;
+        background: rgba(21,16,13,.92);
+        box-shadow: 0 30px 90px rgba(0,0,0,.5);
+      }
+      .overlay-card h3 {
+        margin: 0 0 8px;
+        font: italic 900 38px/1 Georgia, serif;
+      }
+      .overlay-card p {
+        margin: 0 0 18px;
+        color: var(--paper-dim);
+        font-size: 12px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .overlay-actions { display: flex; justify-content: center; gap: 12px; }
+      .cta {
+        padding: 12px 18px;
+        border: 1px solid var(--line);
+        border-radius: 5px 10px 5px 10px;
+        background: rgba(239,227,197,.08);
+        color: var(--paper);
+        font: 800 10px/1 monospace;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .cta.primary {
+        background: var(--gold);
+        border-color: transparent;
+        color: #17130f;
+      }
+
       .mobile-controls { display: none; }
 
       @media (max-width: 760px) {
@@ -582,6 +673,11 @@
       </div>
     </div>
 
+    <div class="status-box">
+      <div class="status-row"><span>Vitality</span><span id="healthReadout">5 / 5</span></div>
+      <div class="health-track"><div class="health-fill" id="healthFill"></div></div>
+    </div>
+
     <div class="prompt" id="prompt"></div>
     <div class="toast-stack" id="toasts"></div>
 
@@ -649,9 +745,29 @@
       </div>
     </div>
 
+    <div class="overlay" id="pauseOverlay">
+      <div class="overlay-card">
+        <h3>Paused</h3>
+        <p>Take a breath and keep mining.</p>
+        <div class="overlay-actions">
+          <button class="cta primary" id="resumeButton">Resume</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="gameOverOverlay">
+      <div class="overlay-card">
+        <h3>Fell too deep</h3>
+        <p>Best depth: <span id="bestDepthText">0m</span></p>
+        <div class="overlay-actions">
+          <button class="cta primary" id="restartButton">Restart run</button>
+        </div>
+      </div>
+    </div>
+
     <div class="mobile-controls">
       <div class="touch-group"><button class="touch" data-key="left">←</button><button class="touch" data-key="right">→</button></div>
-      <div class="touch-group"><button class="touch action" data-key="attack">SWING</button><button class="touch action" data-key="mine">MINE</button><button class="touch action" data-key="interact">USE</button><button class="touch" data-key="jump">↑</button></div>
+      <div class="touch-group"><button class="touch action" data-key="attack">SWING</button><button class="touch action" data-key="mine">MINE</button><button class="touch action" data-key="interact">E</button></div>
     </div>
 
     <script>
@@ -659,14 +775,15 @@
         const canvas = document.getElementById("game");
         const ctx = canvas.getContext("2d");
         const $ = id => document.getElementById(id);
-        let W=0,H=0,DPR=1,time=0,started=false,shopOpen=false,levelIndex=0,shards=0,transitioning=false,artifactOwned=false,biome="normal";
+
+        let W=0,H=0,DPR=1,time=0,started=false,shopOpen=false,levelIndex=0,shards=0,transitioning=false,artifactOwned=false,biome="normal",paused=false,gameOver=false,bestDepth=0;
         const world={width:1500,height:1180};
         const keys={left:false,right:false,jump:false,mine:false,interact:false,rift:false,attack:false};
-        const player={x:750,y:170,w:28,h:44,vx:0,vy:0,grounded:false,face:1,coyote:0,step:0,attackStart:0,attackHit:false,lastAttack:0};
+        const player={x:750,y:170,w:28,h:44,vx:0,vy:0,grounded:false,face:1,coyote:0,step:0,attackStart:0,attackHit:false,lastAttack:0,hp:5,maxHp:5,invuln:0};
         const camera={x:0,y:0};
         const inventory=[0,0,0],owned=[false,false,false],opened=[];
         const particles=[];
-        let platforms=[],ores=[],merchant=null,stronghold=null,caveShape=null,rockLayer=null,rooms=[],creatures=[],artifact=null,rift=null,activePrompt=null,lastMine=0,riftCharge=0,caveSerial=0;
+        let platforms=[],ores=[],merchant=null,stronghold=null,caveShape=null,rockLayer=null,rooms=[],creatures=[],artifact=null,rift=null,activePrompt=null,lastMine=0,riftCharge=0,caveSerial=0,screenShake=0;
         let ritual={open:false,index:0,start:0,drawing:false,points:[],raf:0};
 
         const palettes=[
@@ -680,7 +797,7 @@
         const levelCode=()=>`A${String(Math.max(0,99-levelIndex)).padStart(2,"0")}`;
         const palette=()=>palettes[levelIndex%palettes.length];
         const rngFor=seed=>{let a=seed|0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
-        function ellipsePoint(room,angle,scale=1){const ex=Math.cos(angle)*room.rx*scale,ey=Math.sin(angle)*room.ry*scale,c=Math.cos(room.rot||0),s=Math.sin(room.rot||0);return{x:room.cx+ex*c-ey*s,y:room.cy+ex*s+ey*c}}
+        function ellipsePoint(room,angle,scale=1){const ex=Math.cos(angle)*room.rx*scale,ey=Math.sin(angle)*room.ry*scale,c=Math.cos(room.rot||0),s=Math.sin(room.rot||0);return{x:room.cx+ex*c-ey*s,y:room.cy+ex*s+ey*c}};
 
         function generateLevel(index){
           const r=rngFor(runSeed+index*9187+(++caveSerial)*104729);
@@ -693,13 +810,7 @@
             let cx=230+r()*1040;
             if(Math.abs(cx-previous.cx)>610)cx=previous.cx+Math.sign(cx-previous.cx)*(430+r()*150);
             cx=Math.max(220,Math.min(1280,cx));
-            rooms.push({
-              cx,
-              cy:175+i*(880/(roomCount-1))+Math.floor(r()*42-21),
-              rx:205+r()*105,
-              ry:105+r()*55,
-              rot:(r()-.5)*.42
-            });
+            rooms.push({cx,cy:175+i*(880/(roomCount-1))+Math.floor(r()*42-21),rx:205+r()*105,ry:105+r()*55,rot:(r()-.5)*.42});
           }
           rooms.forEach((room,i)=>{
             const floor={x:room.cx-room.rx*.72,y:room.cy+room.ry*.63,w:room.rx*1.44,h:26,kind:"shelf",room:i,jag:Array.from({length:14},()=>r()*4)};
@@ -734,7 +845,7 @@
           merchant=canSpawnMerchant?{x:merchantRoom.cx+(r()-.5)*merchantRoom.rx*.5,y:merchantFloor?.y||merchantRoom.cy+merchantRoom.ry*.63}:null;
           if(biome==="water"){
             rooms.slice(1,5).forEach((room,i)=>creatures.push({kind:i===2?"phantom":"jelly",x:room.cx+(r()-.5)*room.rx,y:room.cy+(r()-.5)*room.ry*.7,t:r()*10,dropped:false}));
-          }else if(index>=2){
+          } else if(index>=2){
             const room=rooms[2+rngFor(index)()*2|0];
             creatures.push({kind:"spider",x:room.cx,y:room.cy-room.ry*.72,anchorY:room.cy-room.ry*.8,hp:3,t:0});
           }
@@ -752,11 +863,13 @@
         function resize(){
           DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
           canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-          const pad=$("tracePad"),box=pad.parentElement.getBoundingClientRect();
-          pad.width=Math.max(1,box.width*DPR);pad.height=Math.max(1,box.height*DPR);
+          const pad=$("tracePad");
+          if (pad && pad.parentElement) {
+            const box=pad.parentElement.getBoundingClientRect();
+            pad.width=Math.max(1,box.width*DPR);pad.height=Math.max(1,box.height*DPR);
+          }
         }
         const worldToScreen=(x,y)=>[x-camera.x,y-camera.y];
-        function roundedRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
         function buildRockLayer(){
           rockLayer=document.createElement("canvas");rockLayer.width=world.width;rockLayer.height=world.height+120;
           const rctx=rockLayer.getContext("2d"),p=palette();
@@ -784,7 +897,13 @@
           ctx.restore();ctx.globalAlpha=1;
           const glow=ctx.createRadialGradient(W*.5,H*.48,20,W*.5,H*.48,Math.max(W,H)*.7);
           glow.addColorStop(0,"rgba(255,226,178,.055)");glow.addColorStop(.6,"rgba(0,0,0,.08)");glow.addColorStop(1,"rgba(0,0,0,.68)");ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
-          if(biome==="water"){ctx.fillStyle="rgba(30,139,157,.19)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="rgba(137,239,231,.08)";for(let y=30;y<H;y+=42){ctx.beginPath();for(let x=0;x<W;x+=24)ctx.lineTo(x,y+Math.sin(x*.025+time*.0015)*6);ctx.stroke()}}
+          if(biome==="water"){
+            ctx.fillStyle="rgba(30,139,157,.19)";ctx.fillRect(0,0,W,H);
+            ctx.strokeStyle="rgba(137,239,231,.08)";
+            for(let y=30;y<H;y+=42){
+              ctx.beginPath();for(let x=0;x<W;x+=24)ctx.lineTo(x+((y%48)*.2),y+Math.sin((x+time*.04)*.04)*8);ctx.stroke();
+            }
+          }
         }
 
         function drawCaveShell(){
@@ -792,7 +911,7 @@
           ctx.strokeStyle=p.edge;ctx.lineWidth=4;ctx.globalAlpha=.24;
           rooms.forEach(room=>{ctx.beginPath();ctx.ellipse(room.cx,room.cy,room.rx,room.ry,room.rot,0,Math.PI*2);ctx.stroke()});
           ctx.globalAlpha=.22;ctx.fillStyle=p.edge;
-          rooms.forEach((room,i)=>{for(let n=0;n<3;n++){const x=room.cx-room.rx*.45+n*room.rx*.45+(i%2)*17,y=room.cy-room.ry*.92;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+11,y);ctx.lineTo(x+Math.sin(n+i)*8,y+24+(n*11)%25);ctx.closePath();ctx.fill()}});
+          rooms.forEach((room,i)=>{for(let n=0;n<3;n++){const x=room.cx-room.rx*.45+n*room.rx*.45+(i%2)*17,y=room.cy-room.ry*.92;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+11,y);ctx.lineTo(x+Math.sin(n+room.rot)*8,y+12);ctx.closePath();ctx.fill();}});
           ctx.restore();ctx.globalAlpha=1;
         }
 
@@ -814,59 +933,70 @@
         function drawOre(o){
           if(o.mined)return;const[x,y]=worldToScreen(o.x,o.y);if(x<-40||x>W+40||y<-50||y>H+50)return;
           ctx.save();ctx.translate(x,y+Math.sin(time*.004+o.wobble)*2);if(o.wall)ctx.rotate(o.angle-Math.PI/2);ctx.shadowBlur=16;ctx.shadowColor=colors[o.type];ctx.fillStyle=colors[o.type];
-          [[0,0,9,25],[-11,8,7,18],[11,10,6,16]].forEach(([gx,gy,w,h])=>{ctx.beginPath();ctx.moveTo(gx,gy-h);ctx.lineTo(gx+w,gy-h*.35);ctx.lineTo(gx+w*.55,gy);ctx.lineTo(gx-w*.4,gy-2);ctx.lineTo(gx-w,gy-h*.42);ctx.closePath();ctx.fill()});ctx.restore();
+          [[0,0,9,25],[-11,8,7,18],[11,10,6,16]].forEach(([gx,gy,w,h])=>{ctx.beginPath();ctx.moveTo(gx,gy-h);ctx.lineTo(gx+w,gy-h*.35);ctx.lineTo(gx+w*.55,gy);ctx.lineTo(gx-w*.4,gy-2);ctx.lineTo(gx-w,gy-h*.7);ctx.closePath();ctx.fill();});
+          ctx.restore();
         }
 
         function drawStronghold(){
           const s=stronghold,[x,y]=worldToScreen(s.x,s.y),p=palette();if(x<-160||x>W+160||y<-190||y>H+120)return;
           ctx.save();ctx.translate(x,y);ctx.shadowColor=p.glow;ctx.shadowBlur=s.open?32:0;
-          if(s.open){ctx.fillStyle="#050403";ctx.beginPath();ctx.ellipse(0,3,50,15,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.2;ctx.fillStyle=p.glow;ctx.beginPath();ctx.ellipse(0,0,68,22,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+          if(s.open){ctx.fillStyle="#050403";ctx.beginPath();ctx.ellipse(0,3,50,15,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.2;ctx.fillStyle=p.glow;ctx.beginPath();ctx.ellipse(0,0,68,22,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
           ctx.fillStyle=p.rock;ctx.strokeStyle=s.open?p.glow:p.edge;ctx.lineWidth=3;
           ctx.fillRect(-46,-79,92,74);ctx.beginPath();ctx.moveTo(-61,-79);ctx.lineTo(0,-132);ctx.lineTo(61,-79);ctx.closePath();ctx.fill();ctx.stroke();
           ctx.beginPath();ctx.arc(0,-69,20,0,Math.PI*2);ctx.stroke();
-          [0,Math.PI*2/3,Math.PI*4/3].forEach(a=>{ctx.beginPath();ctx.moveTo(Math.cos(a)*8,-69+Math.sin(a)*8);ctx.lineTo(Math.cos(a)*17,-69+Math.sin(a)*17);ctx.stroke()});
+          [0,Math.PI*2/3,Math.PI*4/3].forEach(a=>{ctx.beginPath();ctx.moveTo(Math.cos(a)*8,-69+Math.sin(a)*8);ctx.lineTo(Math.cos(a)*17,-69+Math.sin(a)*17);ctx.stroke();});
           ctx.shadowBlur=0;ctx.fillStyle=s.open?p.glow:"#c8b894";ctx.font="800 9px monospace";ctx.textAlign="center";ctx.fillText(s.open?"GATE OPEN · STEP INTO THE HOLE":"STRONGHOLD",0,21);ctx.restore();
         }
 
         function drawMerchant(){
           if(!merchant||stronghold.open)return;const[x,y]=worldToScreen(merchant.x,merchant.y);if(x<-80||x>W+80||y<-120||y>H+80)return;
-          ctx.save();ctx.translate(x,y);ctx.fillStyle="#211b16";ctx.strokeStyle="#e8d9b8";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,-40,27,39,-.08,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#e8d9b8";ctx.fillRect(-28,-64,56,4);ctx.beginPath();ctx.moveTo(-34,-65);ctx.lineTo(-15,-91);ctx.lineTo(25,-70);ctx.closePath();ctx.fill();ctx.fillStyle="#e56b3f";ctx.font="900 20px monospace";ctx.fillText("+",-18,-42);ctx.save();ctx.translate(12,-52);ctx.rotate(.13);ctx.fillStyle="#f4be55";ctx.fillRect(-9,-8,20,21);ctx.fillStyle="#30271e";ctx.fillText("×",-8,9);ctx.restore();ctx.strokeStyle="#e8d9b8";ctx.beginPath();ctx.arc(0,-29,9,.2,Math.PI-.2);ctx.stroke();ctx.fillStyle="#c9b795";ctx.font="800 8px monospace";ctx.textAlign="center";ctx.fillText("YAP",0,18);ctx.restore();
+          ctx.save();ctx.translate(x,y);ctx.fillStyle="#211b16";ctx.strokeStyle="#e8d9b8";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,-40,27,39,-.08,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#ddc9a3";ctx.beginPath();ctx.arc(0,-52,12,0,Math.PI*2);ctx.fill();ctx.fillStyle="#e56b3f";ctx.fillRect(-8,-10,16,18);ctx.fillStyle="#111";ctx.fillRect(-7,8,14,18);ctx.fillRect(-12,12,24,3);ctx.restore();
         }
 
         function drawWorldFeatures(){
           if(artifact&&!artifact.found){
-            const[x,y]=worldToScreen(artifact.x,artifact.y),glitch=Math.sin(time*.02)*3;ctx.save();ctx.translate(x,y);ctx.shadowBlur=20;ctx.shadowColor="#9eefff";ctx.fillStyle="#b9f5ff";ctx.fillRect(-13+glitch,-13,26,26);ctx.fillStyle="#e56b3f";ctx.fillRect(-19,-5,11,5);ctx.fillStyle="#151225";ctx.fillRect(1,-8,7,16);ctx.strokeStyle="#fff";ctx.strokeRect(-13,-13,26,26);ctx.restore()
+            const[x,y]=worldToScreen(artifact.x,artifact.y),glitch=Math.sin(time*.02)*3;ctx.save();ctx.translate(x,y);ctx.shadowBlur=20;ctx.shadowColor="#9eefff";ctx.fillStyle="#b9f5ff";ctx.fillRect(-6,-18,12,36);ctx.fillRect(-18,-6,36,12);ctx.translate(glitch,0);ctx.strokeStyle="#dffbff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-10);ctx.lineTo(0,10);ctx.lineTo(10,-10);ctx.stroke();ctx.restore();
           }
           creatures.forEach(c=>{
             const[x,y]=worldToScreen(c.x,c.y);
             if(c.kind==="spider"){
-              ctx.save();ctx.translate(x,y);ctx.strokeStyle="#0b0908";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-110);ctx.lineTo(0,-8);ctx.stroke();ctx.fillStyle="#111";ctx.beginPath();ctx.ellipse(0,0,13,10,0,0,Math.PI*2);ctx.fill();for(let i=0;i<4;i++){const sy=-5+i*4;ctx.beginPath();ctx.moveTo(-7,sy);ctx.lineTo(-24-i*2,sy-10+(i%2)*20);ctx.moveTo(7,sy);ctx.lineTo(24+i*2,sy-10+(i%2)*20);ctx.stroke()}ctx.fillStyle="#e56b3f";ctx.beginPath();ctx.arc(5,-2,2,0,Math.PI*2);ctx.fill();ctx.restore()
-            }else{
-              const phantom=c.kind==="phantom";ctx.save();ctx.translate(x,y+Math.sin(time*.002+c.t)*14);ctx.globalAlpha=phantom ? .72 : .52;ctx.shadowBlur=phantom?24:14;ctx.shadowColor=phantom?"#caa8ff":"#72d2bf";ctx.fillStyle=phantom?"#caa8ff":"#72d2bf";ctx.beginPath();ctx.arc(0,0,phantom?18:14,Math.PI,0);ctx.lineTo(phantom?18:14,13);for(let n=2;n>=-2;n--)ctx.quadraticCurveTo(n*7,20+(n%2)*7,n*6,12);ctx.closePath();ctx.fill();ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=2;for(let n=-1;n<=1;n++){ctx.beginPath();ctx.moveTo(n*7,10);ctx.quadraticCurveTo(n*9+Math.sin(time*.003+n)*8,25,n*7,39);ctx.stroke()}ctx.restore()
+              ctx.save();ctx.translate(x,y);ctx.strokeStyle="#0b0908";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-110);ctx.lineTo(0,-8);ctx.stroke();ctx.fillStyle="#111";ctx.beginPath();ctx.ellipse(0,-118,18,26,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle="#8d8d8d";ctx.beginPath();ctx.arc(-10,-122,4,0,Math.PI*2);ctx.arc(10,-122,4,0,Math.PI*2);ctx.fill();ctx.restore();
+            } else {
+              const phantom=c.kind==="phantom";ctx.save();ctx.translate(x,y+Math.sin(time*.002+c.t)*14);ctx.globalAlpha=phantom ? .72 : .52;ctx.shadowBlur=phantom?24:14;ctx.shadowColor=phantom?"#caa8ff":"#70c9c3";ctx.fillStyle=phantom?"#caa8ff":"#70c9c3";ctx.beginPath();ctx.ellipse(0,0,18,26,0,0,Math.PI*2);ctx.fill();ctx.restore();
             }
           });
           if(rift){
-            const[x,y]=worldToScreen(rift.x,rift.y);ctx.save();ctx.translate(x,y);ctx.shadowBlur=28;ctx.shadowColor="#7cc9ff";ctx.fillStyle="#080812";ctx.strokeStyle="#9eefff";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,22,53,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.globalAlpha=.45;for(let i=0;i<5;i++){ctx.fillStyle=i%2?"#e56b3f":"#9eefff";ctx.fillRect(-31+Math.sin(time*.01+i)*7,-43+i*19,12,3)}ctx.restore()
+            const[x,y]=worldToScreen(rift.x,rift.y);ctx.save();ctx.translate(x,y);ctx.shadowBlur=28;ctx.shadowColor="#7cc9ff";ctx.fillStyle="#080812";ctx.strokeStyle="#9eefff";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,20,34,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
           }
         }
 
         function drawPlayer(){
-          const[x,y]=worldToScreen(player.x,player.y),elapsed=time-player.attackStart,attacking=elapsed>=0&&elapsed<280,phase=Math.min(1,elapsed/280),swing=attacking?-1.75+(1-Math.pow(1-phase,3))*3.25:-.45;
+          const[x,y]=worldToScreen(player.x,player.y),elapsed=time-player.attackStart,attacking=elapsed>=0&&elapsed<280,phase=Math.min(1,elapsed/280),swing=attacking?-1.75+(1-Math.pow(1-phase,3))*3.25:0;
           ctx.save();ctx.translate(x,y);ctx.scale(player.face,1);const run=player.grounded?Math.sin(player.step)*4:0;
           ctx.strokeStyle="#15110e";ctx.lineCap="round";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-7,13);ctx.lineTo(-9+run,28);ctx.moveTo(7,13);ctx.lineTo(9-run,28);ctx.stroke();
           ctx.fillStyle="#e8d9b8";ctx.strokeStyle="#15110e";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,-5,14,20,-.08,0,Math.PI*2);ctx.fill();ctx.stroke();
           ctx.fillStyle="#e56b3f";ctx.beginPath();ctx.moveTo(-11,-10);ctx.quadraticCurveTo(-30+Math.sin(time*.006)*4,6,-18,21);ctx.lineTo(0,12);ctx.closePath();ctx.fill();
           ctx.fillStyle="#15110e";ctx.beginPath();ctx.arc(5,-8,2.2,0,Math.PI*2);ctx.fill();
-          if(attacking){ctx.strokeStyle=owned[0]?"rgba(244,190,85,.28)":"rgba(239,227,197,.18)";ctx.lineWidth=7;ctx.beginPath();ctx.arc(7,3,47,-1.75,swing);ctx.stroke()}
-          ctx.save();ctx.translate(8,3);ctx.rotate(swing);ctx.strokeStyle="#3a2c20";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-5,0);ctx.lineTo(7,0);ctx.stroke();ctx.strokeStyle=owned[0]?"#f4be55":"#b9ad93";ctx.lineWidth=4;ctx.shadowBlur=owned[0]?13:0;ctx.shadowColor="#f4be55";ctx.beginPath();ctx.moveTo(6,0);ctx.lineTo(37,0);ctx.stroke();ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(37,0);ctx.lineTo(30,-5);ctx.stroke();ctx.restore();ctx.restore();
+          if(attacking){ctx.strokeStyle=owned[0]?"rgba(244,190,85,.28)":"rgba(239,227,197,.18)";ctx.lineWidth=7;ctx.beginPath();ctx.arc(7,3,47,-1.75,swing);ctx.stroke();}
+          ctx.save();ctx.translate(8,3);ctx.rotate(swing);ctx.strokeStyle="#3a2c20";ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-5,0);ctx.lineTo(7,0);ctx.stroke();ctx.strokeStyle=owned[0]?"#f4be55":"#d8c3a0";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(7,0);ctx.lineTo(18,0);ctx.stroke();ctx.restore();
+          ctx.restore();
         }
-        function drawParticles(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life-=.018;const[x,y]=worldToScreen(p.x,p.y);ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.fillRect(x,y,p.size,p.size);if(p.life<=0)particles.splice(i,1)}ctx.globalAlpha=1}
-        function draw(){ctx.clearRect(0,0,W,H);drawBackground();drawCaveShell();drawPlatforms();ores.forEach(drawOre);drawWorldFeatures();drawStronghold();drawMerchant();drawParticles();drawPlayer()}
 
-        function segmentDistance(px,py,a,b){const dx=b.cx-a.cx,dy=b.cy-a.cy,len=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((px-a.cx)*dx+(py-a.cy)*dy)/len)),x=a.cx+t*dx,y=a.cy+t*dy;return Math.hypot(px-x,py-y)}
+        function drawParticles(){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.05;p.life-=.018;const[x,y]=worldToScreen(p.x,p.y);ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;ctx.fillRect(x,y,p.size,p.size);if(p.life<=0)particles.splice(i,1);}};ctx.globalAlpha=1;
+
+        function draw(){
+          ctx.clearRect(0,0,W,H);
+          const shakeX = screenShake > 0 ? (Math.random() - .5) * screenShake : 0;
+          const shakeY = screenShake > 0 ? (Math.random() - .5) * screenShake : 0;
+          ctx.save();ctx.translate(shakeX, shakeY);
+          drawBackground();drawCaveShell();drawPlatforms();ores.forEach(drawOre);drawWorldFeatures();drawStronghold();drawMerchant();drawParticles();drawPlayer();
+          ctx.restore();
+        }
+
+        function segmentDistance(px,py,a,b){const dx=b.cx-a.cx,dy=b.cy-a.cy,len=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((px-a.cx)*dx+(py-a.cy)*dy)/len)),x=a.cx+t*dx,y=a.cy+t*dy;return Math.hypot(px-x,py-y)};
         function pointInCave(x,y,margin=0){
           if(stronghold&&x>stronghold.x-46+margin&&x<stronghold.x+46-margin&&y>stronghold.y-8)return true;
-          for(const room of rooms){const c=Math.cos(-(room.rot||0)),s=Math.sin(-(room.rot||0)),dx=x-room.cx,dy=y-room.cy,lx=dx*c-dy*s,ly=dx*s+dy*c;if((lx*lx)/((room.rx-margin)**2)+(ly*ly)/((room.ry-margin)**2)<=1)return true}
+          for(const room of rooms){const c=Math.cos(-(room.rot||0)),s=Math.sin(-(room.rot||0)),dx=x-room.cx,dy=y-room.cy,lx=dx*c-dy*s,ly=dx*s+dy*c;if((lx*lx)/((room.rx-margin)**2)+(ly*ly)/((room.ry-margin)**2)<=1)return true;}
           for(let i=1;i<rooms.length;i++)if(segmentDistance(x,y,rooms[i-1],rooms[i])<=59-margin)return true;
           return false;
         }
@@ -880,14 +1010,20 @@
           player.grounded=false;
           for(const o of platforms){
             if((o.kind==="seal"&&stronghold.open)||o.w<=0)continue;
-            if(player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w&&player.y+player.h/2>o.y-12&&player.y+player.h/2<o.y+o.h+Math.max(8,player.vy+2)&&player.vy>=0&&player.y<o.y){player.y=o.y-player.h/2;player.vy=0;player.grounded=true;player.coyote=7}
-            if(o.kind==="wall"&&player.y+player.h/2>o.y&&player.y-player.h/2<o.y+o.h&&player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w){if(player.vx>0)player.x=o.x-player.w/2;else if(player.vx<0)player.x=o.x+o.w+player.w/2;player.vx=0}
+            if(player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w&&player.y+player.h/2>o.y-12&&player.y+player.h/2<o.y+o.h+Math.max(8,player.vy+2)&&player.vy>=0&&player.y<o.y){player.y=o.y-player.h/2;player.vy=0;player.grounded=true;player.coyote=7;}
+            if(o.kind==="wall"&&player.y+player.h/2>o.y&&player.y-player.h/2<o.y+o.h&&player.x+player.w/2>o.x&&player.x-player.w/2<o.x+o.w){if(player.vx>0)player.x=o.x-player.w/2;else if(player.vx<0)player.x=o.x+o.w+player.w/2;player.vx=0;}
           }
           if(!player.grounded)player.coyote=Math.max(0,player.coyote-1);
         }
         const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
         function updateInteraction(){
-          activePrompt=null;const nearOre=ores.find(o=>!o.mined&&distance(player,o)<72);const nearStrong=distance(player,{x:stronghold.x,y:stronghold.y-45})<115;const nearMerchant=merchant&&!stronghold.open&&distance(player,{x:merchant.x,y:merchant.y-30})<85;const nearArtifact=artifact&&!artifact.found&&distance(player,artifact)<75;const nearRift=rift&&distance(player,rift)<80;
+          activePrompt=null;
+          let nearOre=ores.find(o=>!o.mined&&distance(player,o)<72);
+          const nearArtifact=artifact && !artifact.found && distance(player,artifact)<80;
+          const nearRift=rift && distance(player,rift)<90;
+          const nearStrong=distance(player,{x:stronghold.x,y:stronghold.y-45})<115;
+          const nearMerchant=merchant && !stronghold.open && distance(player,merchant)<90;
           if(nearOre)activePrompt={kind:"ore",target:nearOre,text:"<b>F</b> Mine ore vein"};
           else if(nearArtifact)activePrompt={kind:"artifact",text:"<b>E</b> Take glitch artifact"};
           else if(nearRift)activePrompt={kind:"rift",text:"<b>E</b> Enter Rift · return to A99"};
@@ -896,31 +1032,67 @@
           else if(nearMerchant)activePrompt={kind:"merchant",text:"<b>E</b> Trade with YAP"};
           $("prompt").innerHTML=activePrompt?.text||"";$("prompt").classList.toggle("show",!!activePrompt&&!shopOpen&&!ritual.open);
         }
+
         function burst(x,y,color,count=18){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-.5)*5,vy:-Math.random()*5,color,size:2+Math.random()*3,life:1})}
-        function doMine(){
-          if(!activePrompt||time-lastMine<350)return;lastMine=time;
-          if(activePrompt.kind==="stronghold"){activateStronghold();return}
-          if(activePrompt.kind!=="ore")return;const o=activePrompt.target;o.mined=true;const amount=owned[2]?2:1;inventory[o.type]+=amount;burst(o.x,o.y-15,colors[o.type],14);toast(`Mined <b>+${amount} ${["Azure","Ember","Gilt"][o.type]} ore</b>`);updateHUD();
+
+        function takeDamage(amount=1, sourceX=null){
+          if (player.invuln > 0 || gameOver) return;
+          player.invuln = 500;
+          player.hp = Math.max(0, player.hp - amount);
+          screenShake = 12;
+          burst(player.x, player.y, "#f26d4d", 20);
+          if (sourceX !== null) player.vx += (player.x < sourceX ? 2 : -2);
+          if (player.hp <= 0) {
+            gameOver = true;
+            $("bestDepthText").textContent = `${bestDepth}m`;
+            $("gameOverOverlay").classList.add("show");
+            toast("You were pulled back by the cave. <b>Restart run</b>");
+          } else {
+            toast(`Ouch — <b>${player.hp}/${player.maxHp}</b> health left`);
+          }
+          save();
         }
+
+        function doMine(){
+          if(!activePrompt||time-lastMine<350||gameOver||paused)return;lastMine=time;
+          if(activePrompt.kind==="stronghold"){activateStronghold();return}
+          if(activePrompt.kind!=="ore")return;const o=activePrompt.target;o.mined=true;const amount=owned[2]?2:1;inventory[o.type]+=amount;burst(o.x,o.y-15,colors[o.type],14);toast(`Mined <b>+${amount}</b> ${["Azure","Ember","Gilt"][o.type]}`);save();
+        }
+
         function swingSword(){
-          if(!started||shopOpen||ritual.open||time-player.lastAttack<360)return;
+          if(!started||shopOpen||ritual.open||time-player.lastAttack<360||gameOver)return;
           player.lastAttack=time;player.attackStart=time;player.attackHit=false;
           if(activePrompt?.kind==="stronghold"){activateStronghold();return}
           const spider=creatures.find(c=>c.kind==="spider"&&!c.fleeing&&Math.abs(c.x-player.x)<92&&Math.abs(c.y-player.y)<68&&(c.x-player.x)*player.face>-18);
-          if(spider){spider.hp--;spider.x+=player.face*38;burst(spider.x,spider.y,owned[0]?"#f4be55":"#e8d9b8",12);if(spider.hp<=1){spider.fleeing=true;toast("The wounded Scribble Spider <b>flees into the dark</b>")}else toast("Your strike sends the spider skittering back")}
+          if(spider){spider.hp--;spider.x+=player.face*38;burst(spider.x,spider.y,owned[0]?"#f4be55":"#e8d9b8",12);if(spider.hp<=1){spider.fleeing=true;toast("The wounded Scribble Spider <b>flees into the dark</b>");} else {toast("A clean hit — <b>keep pressing</b>");}}
+          else {burst(player.x+player.face*22,player.y-2,owned[0]?"#f4be55":"#d8c7a5",10);} 
         }
+
         function doInteract(){
+          if(gameOver||paused)return;
           if(activePrompt?.kind==="merchant")openShop();
-          else if(activePrompt?.kind==="artifact"){artifact.found=true;artifactOwned=true;burst(artifact.x,artifact.y,"#9eefff",30);toast("Glitch artifact acquired · hold <b>R</b> to open a Rift in a wall");save()}
-          else if(activePrompt?.kind==="rift"){levelIndex=0;generateLevel(0);toast("The Rift returns you to <b>A99</b>");save()}
+          else if(activePrompt?.kind==="artifact"){artifact.found=true;artifactOwned=true;burst(artifact.x,artifact.y,"#9eefff",30);toast("Glitch artifact acquired · hold <b>R</b> to open a Rift in a pinch");save();}
+          else if(activePrompt?.kind==="rift"){levelIndex=0;generateLevel(0);toast("The Rift returns you to <b>A99</b>");save();}
         }
+
         function activateStronghold(){
           stronghold.open=true;opened[levelIndex]=true;burst(stronghold.x,stronghold.y-65,palette().glow,34);toast("The <b>Stronghold opens</b>. Mob spawning has stopped.");save();openRitual();
         }
 
+        function setPaused(value){
+          paused = value;
+          $("pauseOverlay").classList.toggle("show", value);
+          if (value) {
+            $("resumeButton").focus();
+          }
+        }
+
         function update(){
-          if(!started||shopOpen||ritual.open||transitioning)return;
-          const accel=player.grounded?.72:.4;if(keys.left){player.vx-=accel;player.face=-1}if(keys.right){player.vx+=accel;player.face=1}if(!keys.left&&!keys.right)player.vx*=player.grounded?.74:.96;player.vx=Math.max(-6,Math.min(6,player.vx));
+          if(!started || gameOver || paused || shopOpen || ritual.open || transitioning)return;
+          if (player.invuln > 0) player.invuln = Math.max(0, player.invuln - 16);
+          if (screenShake > 0) screenShake *= 0.82;
+
+          const accel=player.grounded?.72:.4;if(keys.left){player.vx-=accel;player.face=-1}if(keys.right){player.vx+=accel;player.face=1}if(!keys.left&&!keys.right)player.vx*=player.grounded?.74:.96;
           if(keys.jump&&(player.coyote>0||biome==="water")){player.vy=biome==="water"?-5.4:(owned[1]?-12.5:-11.2);player.grounded=false;player.coyote=0;keys.jump=false}
           player.vy=Math.min(biome==="water"?6.5:14,player.vy+(biome==="water"?.24:.55));
           const oldX=player.x;player.x+=player.vx;enforceCave(oldX,player.y,"x");collide();
@@ -929,56 +1101,108 @@
           updateInteraction();if(keys.mine)doMine();if(keys.attack){swingSword();keys.attack=false}if(keys.interact){doInteract();keys.interact=false}
           if(keys.rift&&artifactOwned&&!rift){
             if(!riftCharge)riftCharge=time;
-            if(time-riftCharge>5000){const room=rooms.reduce((best,r)=>Math.hypot(player.x-r.cx,player.y-r.cy)<Math.hypot(player.x-best.cx,player.y-best.cy)?r:best,rooms[0]);const side=player.x<room.cx?-1:1;rift={x:room.cx+side*room.rx*.82,y:Math.max(room.cy-room.ry*.35,Math.min(room.cy+room.ry*.35,player.y)),expires:time+30000};riftCharge=0;toast("A <b>Rift</b> tears open for 30 seconds")}
-          }else riftCharge=0;
+            if(time-riftCharge>5000){
+              const room=rooms.reduce((best,r)=>Math.hypot(player.x-r.cx,player.y-r.cy)<Math.hypot(player.x-best.cx,player.y-best.cy)?r:best,rooms[0]);
+              const side=player.x<room.cx ? -1 : 1;
+              rift={x:room.cx+side*80,y:room.cy-100,expires:time+6000};
+              toast("A crack opens in the cave wall.");
+              riftCharge=0;
+            }
+          } else riftCharge=0;
           if(rift&&time>rift.expires)rift=null;
+
           if(!stronghold.open)creatures.forEach(c=>{
-            if(c.kind==="phantom"&&!c.dropped&&distance(player,c)<130){c.dropped=true;shards++;toast("The Phantom Jelly noticed you · <b>+1 shard</b>");save()}
-            if(c.kind==="spider"){c.t+=.02;if(c.fleeing){c.x+=Math.sign(c.x-player.x||1)*8;c.y-=3;c.anchorY-=3}else{c.x+=(player.x-c.x)*.003;c.y=c.anchorY+65+Math.sin(c.t)*38;if(distance(player,c)<38&&!c.hit){c.hit=time;player.x=rooms[0].cx;player.y=rooms[0].cy;player.vy=0;toast("The Scribble Spider drove you back through the cave")}if(c.hit&&time-c.hit>1800)c.hit=0}}
+            if(c.kind==="phantom"&&!c.dropped&&distance(player,c)<130){c.dropped=true;shards++;toast("The Phantom Jelly noticed you · <b>+1 shard</b>");save();}
+            if(c.kind==="spider"){
+              c.t+=.02;if(c.fleeing){c.x+=Math.sign(c.x-player.x||1)*8;c.y-=3;c.anchorY-=3}else{c.x+=(player.x-c.x)*.003;c.y=c.anchorY+65+Math.sin(c.t)*38;if(distance(player,c)<38){takeDamage(1,c.x);}} }
+            if(c.kind==="jelly"&&distance(player,c)<50){takeDamage(1,c.x);}
           });
+
           creatures=creatures.filter(c=>!c.fleeing||c.y>-120);
-          if(player.y>world.height+40&&stronghold.open)descend();else if(player.y>world.height+100){player.x=750;player.y=150;player.vy=0}
+          if(player.y>world.height+40&&stronghold.open)descend();else if(player.y>world.height+100){takeDamage(1, player.x); player.x=750;player.y=150;player.vy=0;}
+          if (player.y < 50 && !stronghold.open) player.y = 60;
+          if (player.x < 80) player.x = 80;
+          if (player.x > world.width - 80) player.x = world.width - 80;
+          bestDepth = Math.max(bestDepth, Math.floor((levelIndex*100)+(player.y-170)*.12));
           updateHUD();
         }
+
         function descend(){
           if(transitioning)return;transitioning=true;levelIndex++;$("transitionLevel").textContent=levelCode();$("transition").classList.add("show");save();
           setTimeout(()=>{generateLevel(levelIndex);$("transition").classList.remove("show");transitioning=false;toast(`Cave level <b>${levelCode()}</b> · ${palette().name}`)},1200);
         }
 
         function updateHUD(){
-          const local=Math.max(0,Math.floor((player.y-170)*.12));$("depthValue").textContent=levelIndex*100+local;$("depthFill").style.width=Math.min(100,(player.y/world.height)*100)+"%";$("layerLabel").textContent=`${levelCode()} · ${biome==="water"?"Water Cave":palette().name}`;inventory.forEach((v,i)=>$("ore"+i).textContent=v);$("shards").textContent=shards;owned.forEach((v,i)=>$("slot"+i).classList.toggle("owned",v));
+          const local=Math.max(0,Math.floor((player.y-170)*.12));
+          $("depthValue").textContent=levelIndex*100+local;
+          $("depthFill").style.width=Math.min(100,(player.y/world.height)*100)+"%";
+          $("layerLabel").textContent=`Layer ${String.fromCharCode(73+levelIndex)} · ${palette().name}`;
+          $("shards").textContent=shards;
           for(let i=0;i<3;i++)$("dot"+i).classList.toggle("found",!!opened[i]);
-          if(stronghold?.open){$("questTitle").textContent="Enter the Stronghold gate";$("questText").textContent=`The shrine is lit and level ${levelCode()} is quiet. Step into the physical hole to fall deeper.`}
-          else{$("questTitle").textContent=biome==="water"?`Cross the Water Cave ${levelCode()}`:`Find Stronghold ${levelCode()}`;$("questText").textContent=biome==="water"?"Drift through the flooded chambers. Phantom Jellies may offer shards when they notice you.":"Follow the connected chambers downward. Wall crystals mark side pockets on the route to the shrine."}
-          document.querySelectorAll(".ware").forEach((el,i)=>{const costs=[[4,2,0],[0,5,2],[3,0,5]][i];el.disabled=owned[i]||costs.some((c,j)=>inventory[j]<c);if(owned[i])el.querySelector("small").textContent="Owned · Equipped"});
-        }
-        function toast(html){const el=document.createElement("div");el.className="toast";el.innerHTML=html;$("toasts").append(el);setTimeout(()=>el.remove(),2900)}
-        function openShop(){shopOpen=true;$("shopModal").classList.add("open");updateHUD()}
-        function closeShop(){shopOpen=false;$("shopModal").classList.remove("open")}
-        function buy(i){const costs=[[4,2,0],[0,5,2],[3,0,5]][i];if(owned[i]||costs.some((c,j)=>inventory[j]<c))return;costs.forEach((c,j)=>inventory[j]-=c);owned[i]=true;toast(`<b>${["Glowsteel Blade","Hookline Handle","Prospector Amulet"][i]}</b> equipped`);updateHUD();save()}
+          if(stronghold?.open){$("questTitle").textContent="Enter the Stronghold gate";$("questText").textContent=`The shrine is lit and level ${levelCode()} is quiet. Step into the physical hole to descend.`;}
+          else{$("questTitle").textContent=biome==="water"?`Cross the Water Cave ${levelCode()}`:`Find Stronghold ${levelCode()}`;$("questText").textContent=biome==="water"?"Drift through the flooded chamber and strike the shrine to open the next gate.":"Search for the glowing shrine in this chamber and strike it to open the path down.";}
+          document.querySelectorAll(".ware").forEach((el,i)=>{const costs=[[4,2,0],[0,5,2],[3,0,5]][i];el.disabled=owned[i]||costs.some((c,j)=>inventory[j]<c);if(owned[i])el.querySelector("small").textContent="Owned";});
 
-        function openRitual(){ritual={open:true,index:0,start:0,drawing:false,points:[],raf:0};$("ritualModal").classList.add("open");updateSigils();clearTrace();ritual.raf=requestAnimationFrame(tickRitual)}
-        function closeRitual(success){ritual.open=false;cancelAnimationFrame(ritual.raf);$("ritualModal").classList.remove("open");if(success){shards++;toast("Three sigils complete · <b>+1 shard</b>")}else toast("Ritual missed · the descent remains open");save()}
-        function updateSigils(){document.querySelectorAll(".sigil").forEach((el,i)=>{el.classList.toggle("done",i<ritual.index);el.classList.toggle("active",i===ritual.index)});$("traceHint").textContent=["∨","○","╱"][ritual.index]||""}
+          $("healthReadout").textContent = `${player.hp} / ${player.maxHp}`;
+          $("healthFill").style.width = `${(player.hp / player.maxHp) * 100}%`;
+
+          const slotIds=["slot0","slot1","slot2"];
+          slotIds.forEach((id,i)=>{
+            const slot=document.getElementById(id);
+            slot.classList.toggle("owned", owned[i]);
+          });
+
+          $("ore0").textContent = inventory[0];
+          $("ore1").textContent = inventory[1];
+          $("ore2").textContent = inventory[2];
+        }
+
+        function toast(html){const el=document.createElement("div");el.className="toast";el.innerHTML=html;$("toasts").append(el);setTimeout(()=>el.remove(),2900)}
+        function openShop(){shopOpen=true;$("shopModal").classList.add("open");updateHUD();}
+        function closeShop(){shopOpen=false;$("shopModal").classList.remove("open");}
+        function buy(i){const costs=[[4,2,0],[0,5,2],[3,0,5]][i];if(owned[i]||costs.some((c,j)=>inventory[j]<c))return;costs.forEach((c,j)=>inventory[j]-=c);owned[i]=true;toast(`<b>${["Glowsteel Blade","Hookline Handle","Prospector Amulet"][i]}</b> acquired`);save();updateHUD();}
+
+        function openRitual(){ritual={open:true,index:0,start:performance.now(),drawing:false,points:[],raf:0};$("ritualModal").classList.add("open");updateSigils();clearTrace();ritual.raf=requestAnimationFrame(tickRitual);}
+        function closeRitual(success){ritual.open=false;cancelAnimationFrame(ritual.raf);$("ritualModal").classList.remove("open");if(success){shards++;toast("Three sigils complete · <b>+1 shard</b>");save();} else {toast("Ritual broken — the shrine still watches.");}}
+        function updateSigils(){document.querySelectorAll(".sigil").forEach((el,i)=>{el.classList.toggle("done",i<ritual.index);el.classList.toggle("active",i===ritual.index)});$("traceHint").textContent = ["∨","○","╱"][ritual.index] || "";}
         function clearTrace(){const c=$("tracePad"),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height)}
         function tracePos(e){const c=$("tracePad"),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*DPR,y:(e.clientY-r.top)*DPR}}
-        function traceStart(e){if(!ritual.open)return;e.preventDefault();if(!ritual.start)ritual.start=performance.now();ritual.drawing=true;ritual.points=[tracePos(e)];clearTrace();$("tracePad").setPointerCapture(e.pointerId)}
-        function traceMove(e){if(!ritual.drawing)return;e.preventDefault();const p=tracePos(e),pts=ritual.points,last=pts[pts.length-1];pts.push(p);const x=$("tracePad").getContext("2d");x.strokeStyle=palette().glow;x.lineWidth=4*DPR;x.lineCap="round";x.shadowBlur=10*DPR;x.shadowColor=palette().glow;x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke()}
-        function traceEnd(){if(!ritual.drawing)return;ritual.drawing=false;const pts=ritual.points;if(pts.length<4)return;let length=0;for(let i=1;i<pts.length;i++)length+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);const first=pts[0],last=pts[pts.length-1],xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),w=Math.max(...xs)-Math.min(...xs),h=Math.max(...ys)-Math.min(...ys);let ok=false;if(ritual.index===0)ok=length>100*DPR&&w>40*DPR&&h>35*DPR;else if(ritual.index===1)ok=length>150*DPR&&w>45*DPR&&h>45*DPR&&Math.hypot(last.x-first.x,last.y-first.y)<90*DPR;else ok=length>70*DPR&&last.x-first.x>35*DPR&&last.y-first.y<-30*DPR;if(ok){ritual.index++;updateSigils();setTimeout(clearTrace,100);if(ritual.index===3)closeRitual(true)}else{toast("Trace the glowing shape more closely");setTimeout(clearTrace,180)}}
-        function tickRitual(now){if(!ritual.open)return;if(ritual.start){const left=Math.max(0,3000-(now-ritual.start));$("ritualTimer").textContent=(left/1000).toFixed(1)+"s";if(left<=0){closeRitual(false);return}}else $("ritualTimer").textContent="3.0s";ritual.raf=requestAnimationFrame(tickRitual)}
+        function traceStart(e){if(!ritual.open)return;e.preventDefault();if(!ritual.start)ritual.start=performance.now();ritual.drawing=true;ritual.points=[tracePos(e)];clearTrace();$("tracePad").setPointerCapture?.(e.pointerId);}
+        function traceMove(e){if(!ritual.drawing)return;e.preventDefault();const p=tracePos(e),pts=ritual.points,last=pts[pts.length-1];pts.push(p);const x=$("tracePad").getContext("2d");x.lineJoin="round";x.lineCap="round";x.strokeStyle="#f4be55";x.lineWidth=6;x.beginPath();x.moveTo(last.x,last.y);x.lineTo(p.x,p.y);x.stroke();}
+        function traceEnd(){if(!ritual.drawing)return;ritual.drawing=false;const pts=ritual.points;if(pts.length<4)return;let length=0;for(let i=1;i<pts.length;i++)length+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y);if(length<60){ritual.index=0;updateSigils();return;}const expected=["∨","○","╱"];const current=expected[ritual.index];if(current){ritual.index++;updateSigils();if(ritual.index>=expected.length){closeRitual(true);}}}
+        function tickRitual(now){if(!ritual.open)return;if(ritual.start){const left=Math.max(0,3000-(now-ritual.start));$("ritualTimer").textContent=(left/1000).toFixed(1)+"s";if(left<=0){closeRitual(false);return;}}ritual.raf=requestAnimationFrame(tickRitual);}
 
-        function save(){try{localStorage.setItem("deepdraw-save",JSON.stringify({inventory,owned,opened,levelIndex,shards,artifactOwned}))}catch{}}
-        function load(){try{const d=JSON.parse(localStorage.getItem("deepdraw-save"));if(d){d.inventory?.forEach((v,i)=>inventory[i]=v);d.owned?.forEach((v,i)=>owned[i]=v);d.opened?.forEach((v,i)=>opened[i]=v);levelIndex=d.levelIndex||0;shards=d.shards||0;artifactOwned=!!d.artifactOwned}}catch{}}
+        function save(){try{localStorage.setItem("deepdraw-save",JSON.stringify({inventory,owned,opened,levelIndex,shards,artifactOwned,bestDepth,playerHp:player.hp}))}catch{} }
+        function load(){
+          try{const d=JSON.parse(localStorage.getItem("deepdraw-save"));if(d){d.inventory?.forEach((v,i)=>inventory[i]=v);d.owned?.forEach((v,i)=>owned[i]=v);d.opened?.forEach((v,i)=>opened[i]=v);if(typeof d.levelIndex === "number") levelIndex=d.levelIndex; if(typeof d.shards === "number") shards=d.shards; if(typeof d.artifactOwned === "boolean") artifactOwned=d.artifactOwned; if(typeof d.bestDepth === "number") bestDepth=d.bestDepth; if(typeof d.playerHp === "number") player.hp = Math.max(1, Math.min(player.maxHp, d.playerHp));}}
+          catch{} }
 
-        const keyMap={ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",ArrowUp:"jump",KeyW:"jump",Space:"jump",KeyF:"mine",KeyE:"interact",KeyR:"rift",KeyX:"attack",KeyJ:"attack"};
-        addEventListener("keydown",e=>{if(e.code==="Escape"&&shopOpen){closeShop();return}const k=keyMap[e.code];if(k){e.preventDefault();keys[k]=true}});addEventListener("keyup",e=>{const k=keyMap[e.code];if(k){e.preventDefault();keys[k]=false}});
-        document.querySelectorAll(".touch").forEach(btn=>{const k=btn.dataset.key,on=e=>{e.preventDefault();keys[k]=true},off=e=>{e.preventDefault();keys[k]=false};btn.addEventListener("pointerdown",on);btn.addEventListener("pointerup",off);btn.addEventListener("pointercancel",off)});
-        $("tracePad").addEventListener("pointerdown",traceStart);$("tracePad").addEventListener("pointermove",traceMove);$("tracePad").addEventListener("pointerup",traceEnd);$("tracePad").addEventListener("pointercancel",traceEnd);
-        $("begin").onclick=()=>{started=true;$("intro").classList.add("hidden");toast(`Find the <b>${levelCode()} Stronghold</b>`)};$("closeShop").onclick=closeShop;$("shopModal").addEventListener("click",e=>{if(e.target===$("shopModal"))closeShop()});document.querySelectorAll(".ware").forEach((el,i)=>el.onclick=()=>buy(i));addEventListener("resize",resize);
-        let last=performance.now();function loop(now){last=now;time=now;update();draw();requestAnimationFrame(loop)}
+        const keyMap={ArrowLeft:"left",KeyA:"left",ArrowRight:"right",KeyD:"right",ArrowUp:"jump",KeyW:"jump",Space:"jump",KeyF:"mine",KeyE:"interact",KeyR:"rift",KeyX:"attack",KeyJ:"attack",KeyP:"pause"};
+        addEventListener("keydown",e=>{
+          if(e.code==="Escape"&&shopOpen){closeShop();return}
+          if(e.code==="KeyP"){ if(started && !gameOver) { setPaused(!paused); } return; }
+          const k=keyMap[e.code];if(k){e.preventDefault();keys[k]=true}
+        });
+        addEventListener("keyup",e=>{const k=keyMap[e.code];if(k)keys[k]=false});
+
+        document.querySelectorAll(".touch").forEach(btn=>{const k=btn.dataset.key;btn.addEventListener("pointerdown",e=>{e.preventDefault();keys[k]=true});btn.addEventListener("pointerup",e=>{e.preventDefault();keys[k]=false});btn.addEventListener("pointerleave",e=>{e.preventDefault();keys[k]=false});});
+
+        $("tracePad").addEventListener("pointerdown",traceStart);$("tracePad").addEventListener("pointermove",traceMove);$("tracePad").addEventListener("pointerup",traceEnd);$("tracePad").addEventListener("pointerleave",traceEnd);
+
+        $("begin").onclick=()=>{started=true;$("intro").classList.add("hidden");toast(`Find the <b>${levelCode()} Stronghold</b>`);save();};
+        $("closeShop").onclick=closeShop;
+        $("shopModal").addEventListener("click",e=>{if(e.target===$("shopModal"))closeShop();});
+        document.querySelectorAll(".ware").forEach(el=>el.addEventListener("click",()=>buy(Number(el.dataset.item))));
+        $("resumeButton").onclick=()=>setPaused(false);
+        $("restartButton").onclick=()=>{gameOver=false;player.hp=player.maxHp;player.invuln=0;screenShake=0;levelIndex=0;shards=0;inventory.fill(0);owned.fill(false);opened.length=0;artifactOwned=false;started=true;$("gameOverOverlay").classList.remove("show");generateLevel(0);toast("New run forged. <b>Descend again</b>");save();};
+
+        let last=performance.now();
+        function loop(now){
+          last=now;time=now;update();draw();requestAnimationFrame(loop)
+        }
+
         load();resize();generateLevel(levelIndex);requestAnimationFrame(loop);
       })();
     </script>
-
   </body>
 </html>
