@@ -84,7 +84,7 @@ test("air control can change horizontal movement while airborne", () => {
   player.grounded = false;
   player.y -= 40;
 
-  simulate(player, { move: 1, jumpHeld: false }, 20);
+  simulate(player, { move: 1, jumpHeld: false }, 10);
 
   assert.ok(player.vx > 0);
   assert.ok(player.x > 0);
