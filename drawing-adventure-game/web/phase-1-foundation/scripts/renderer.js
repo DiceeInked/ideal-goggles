@@ -53,7 +53,7 @@ function drawPlayer(ctx, player) {
 
   ctx.fillStyle = "#d2d8dc";
   ctx.beginPath();
-  ctx.arc(0, -34, 11, 0, Math.PI * 2);
+  ctx.arc(0, -29, 9, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
