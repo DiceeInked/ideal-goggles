@@ -1,0 +1,82 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
+[ext_resource type="Script" path="res://scripts/touch-controls.gd" id="2_touch"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(1200, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling"]
+size = Vector2(1200, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(40, 680)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_right"]
+size = Vector2(40, 680)
+
+[node name="main" type="Node2D"]
+
+[node name="room-background" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-600, -320, 600, -320, 600, 320, -600, 320)
+color = Color(0.09, 0.1, 0.12, 1)
+
+[node name="floor-visual" type="Polygon2D" parent="."]
+position = Vector2(0, 320)
+polygon = PackedVector2Array(-600, -20, 600, -20, 600, 20, -600, 20)
+color = Color(0.42, 0.45, 0.49, 1)
+
+[node name="ceiling-visual" type="Polygon2D" parent="."]
+position = Vector2(0, -320)
+polygon = PackedVector2Array(-600, -20, 600, -20, 600, 20, -600, 20)
+color = Color(0.42, 0.45, 0.49, 1)
+
+[node name="left-wall-visual" type="Polygon2D" parent="."]
+position = Vector2(-620, 0)
+polygon = PackedVector2Array(-20, -340, 20, -340, 20, 340, -20, 340)
+color = Color(0.42, 0.45, 0.49, 1)
+
+[node name="right-wall-visual" type="Polygon2D" parent="."]
+position = Vector2(620, 0)
+polygon = PackedVector2Array(-20, -340, 20, -340, 20, 340, -20, 340)
+color = Color(0.42, 0.45, 0.49, 1)
+
+[node name="room-collisions" type="Node2D" parent="."]
+
+[node name="floor" type="StaticBody2D" parent="room-collisions"]
+position = Vector2(0, 320)
+
+[node name="collision-shape" type="CollisionShape2D" parent="room-collisions/floor"]
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="ceiling" type="StaticBody2D" parent="room-collisions"]
+position = Vector2(0, -320)
+
+[node name="collision-shape" type="CollisionShape2D" parent="room-collisions/ceiling"]
+shape = SubResource("RectangleShape2D_ceiling")
+
+[node name="left-wall" type="StaticBody2D" parent="room-collisions"]
+position = Vector2(-620, 0)
+
+[node name="collision-shape" type="CollisionShape2D" parent="room-collisions/left-wall"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="right-wall" type="StaticBody2D" parent="room-collisions"]
+position = Vector2(620, 0)
+
+[node name="collision-shape" type="CollisionShape2D" parent="room-collisions/right-wall"]
+shape = SubResource("RectangleShape2D_wall_right")
+
+[node name="player" parent="." instance=ExtResource("1_player")]
+position = Vector2(0, 245)
+
+[node name="touch-controls" type="CanvasLayer" parent="."]
+
+[node name="controls" type="Control" parent="touch-controls"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_touch")
