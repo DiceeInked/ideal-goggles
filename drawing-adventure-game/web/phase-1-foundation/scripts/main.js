@@ -1,4 +1,4 @@
-import { createPlayer, ROOM, updatePlayer } from "./physics.js";
+import { createPlayer, updatePlayer } from "./physics.js";
 import { InputController } from "./input.js";
 import { renderGame } from "./renderer.js";
 
