@@ -119,7 +119,7 @@ export function updatePlayer(player, input, delta) {
 // Mining and combat can call this when a valid airborne hit lands.
 export function applyHitImpulse(player, strength = MOVEMENT.hitImpulse) {
   const impulse = Math.max(0, Number(strength) || 0);
-  if (impulse === 0) return player.vy;
+  if (impulse === 0 || player.grounded) return player.vy;
 
   player.vy -= impulse;
   player.grounded = false;
