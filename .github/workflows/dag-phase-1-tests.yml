@@ -1,0 +1,36 @@
+name: DAG Phase 1 Browser Tests
+
+on:
+  push:
+    branches:
+      - dag-phase-1-foundation
+    paths:
+      - "drawing-adventure-game/web/phase-1-foundation/**"
+      - ".github/workflows/dag-phase-1-tests.yml"
+  pull_request:
+    paths:
+      - "drawing-adventure-game/web/phase-1-foundation/**"
+      - ".github/workflows/dag-phase-1-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        working-directory: drawing-adventure-game/web/phase-1-foundation
+        run: |
+          for file in scripts/*.js tests/*.js; do
+            node --check "$file"
+          done
+
+      - name: Run physics tests
+        working-directory: drawing-adventure-game/web/phase-1-foundation
+        run: npm test
