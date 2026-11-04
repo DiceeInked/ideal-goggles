@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/player-visual.gd" id="2_visual"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
-size = Vector2(30, 76)
+size = Vector2(40, 86)
 
 [node name="player" type="CharacterBody2D"]
 script = ExtResource("1_player")
@@ -27,13 +27,13 @@ polygon = PackedVector2Array(-10, -16, 10, -16, 11, 13, -11, 13)
 color = Color(0.66, 0.66, 0.66, 1)
 
 [node name="left-arm" type="Polygon2D" parent="player-visual"]
-position = Vector2(-15, -12)
-polygon = PackedVector2Array(-4, -4, 4, -4, 5, 19, 1, 24, -4, 19)
+position = Vector2(-15, -2)
+polygon = PackedVector2Array(-4, -12, 4, -12, 5, 9, 1, 12, -4, 9)
 color = Color(0.76, 0.76, 0.76, 1)
 
 [node name="right-arm" type="Polygon2D" parent="player-visual"]
-position = Vector2(15, -12)
-polygon = PackedVector2Array(-4, -4, 4, -4, 5, 19, 1, 24, -4, 19)
+position = Vector2(15, -2)
+polygon = PackedVector2Array(-4, -12, 4, -12, 5, 9, 1, 12, -4, 9)
 color = Color(0.76, 0.76, 0.76, 1)
 
 [node name="left-leg" type="Polygon2D" parent="player-visual"]
