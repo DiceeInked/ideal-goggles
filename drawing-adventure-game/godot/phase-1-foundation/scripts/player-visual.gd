@@ -13,7 +13,8 @@ var facing: float = 1.0
 func _process(delta: float) -> void:
 	animation_time += delta
 
-	var speed_ratio := clampf(absf(player_body.velocity.x) / player_body.move_speed, 0.0, 1.0)
+	var max_speed := maxf(float(player_body.get("move_speed")), 1.0)
+	var speed_ratio := clampf(absf(player_body.velocity.x) / max_speed, 0.0, 1.0)
 	var stride := sin(animation_time * 12.0) * speed_ratio * 0.42
 
 	left_leg.rotation = stride
