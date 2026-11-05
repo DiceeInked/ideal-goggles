@@ -53,6 +53,8 @@ Attacks use ink. Earlier ideas suggested that weapon stats determine how many hi
 
 Weapons can also mine ores. A very slow, low-damage starter pickaxe was suggested, but it's unclear whether YAP still gives one at the Camp.
 
+**Browser prototype test:** The current sandbox uses the same HIT action for melee attacks and ore mining. A generic ore deposit takes three hits and awards five units of raw test ink. This is a temporary control and balance choice, not a final mining rule. The practice target is also a test fixture and does not change the enemy-free first-cave plan.
+
 ## Still undecided
 - Is ink spent per hit, per attack, or through a continuous meter?
 - What does each weapon upgrade improve?
