@@ -43,6 +43,9 @@ The Steady is an early weapon idea: a mostly blade-shaped sword with a comically
 - Hitting a creature while airborne briefly stops the player's fall and holds them in place in midair for a couple of seconds, allowing continued attacks during that pause.
 - Hitting a solid surface such as a wall, floor, or ceiling gives the player an upward boost, like bouncing or jumping off that surface.
 - These are different effects: creature hits create a temporary hover, while surface hits create an upward rebound.
+- The current browser prototype tests creature-hit suspension at 2 seconds and uses the restored jump velocity for its first surface-rebound value. This is a test default, not final weapon balance.
+- The prototype uses a separate attack action (J on keyboard and HIT on touchscreen). The control mapping and weapon-specific eligibility are not final.
+- The prototype's visible practice creature is a test fixture, not an enemy planned for the first cave.
 - Exact duration, rebound strength, repeat limits, and weapon eligibility still need balancing.
 
 ## Ink use and cooldowns
