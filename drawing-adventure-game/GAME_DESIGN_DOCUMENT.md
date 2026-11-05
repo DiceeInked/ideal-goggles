@@ -399,12 +399,14 @@ Attacks use ink. Earlier notes suggested weapon stats determine how many hits or
 
 ### Airborne attack interactions
 
-Attacking while airborne can affect the player's vertical movement:
+Attacking can affect the player's vertical movement:
 
 - **Hitting a creature:** A successful attack against a creature briefly stops the player's fall and holds them in place in midair for a couple of seconds. During this short pause, the player can continue attacking the creature without immediately dropping away.
 - **Hitting a solid surface:** A successful attack against a wall, floor, or ceiling gives the player an upward boost, similar to bouncing or jumping off the surface. The boost is upward even when the contacted surface is a wall or ceiling.
 
 These are separate effects: creature hits create a brief midair hold, while solid-surface hits create an upward rebound. Exact durations, boost strength, repeat limits, and whether every weapon can trigger these effects remain to be tuned during implementation.
+
+**Current browser prototype defaults (temporary):** The test build uses a dedicated attack action on **J** or the touchscreen **HIT** button. A swing lasts about **0.28 seconds**, with a **0.4-second** cooldown. An airborne creature hit holds vertical movement for **2 seconds**. A solid-surface hit currently applies an upward boost using the restored jump velocity (**820**). These values are test settings, not final weapon balance or a locked control scheme. The visible practice creature and the ledges are test fixtures only; they do not change the intended enemy-free first cave.
 
 ### Mining
 
