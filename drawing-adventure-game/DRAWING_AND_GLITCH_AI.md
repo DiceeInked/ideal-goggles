@@ -61,4 +61,6 @@ The Grid is described as the access point for multiplayer features, including In
 
 The DAG browser prototype has a separate page at `DAG/drawing/`. It currently uses a 96 × 96 raster canvas, a grayscale brush, a white eraser, and an ink-fill tool that replaces a four-directionally connected region of one exact source shade. White canvas pixels are deliberately not recolored. The page also has undo/redo, local-browser save, and PNG export.
 
+Ink colors can be dragged directly onto a gray region on devices with drag-and-drop support. The same recoloring can be done by selecting INK FILL and tapping the target region, which is the touch-friendly fallback.
+
 These are temporary implementation choices to test the basic drawing and recoloring idea. They do not decide whether the final editor is raster, vector, or mixed, its resolution, the full tool set, online persistence, region-joining rules, or ink-cost formula.
