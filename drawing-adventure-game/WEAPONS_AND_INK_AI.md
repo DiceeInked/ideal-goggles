@@ -38,6 +38,13 @@ The Steady is an early weapon idea: a mostly blade-shaped sword with a comically
 - The grapple is mainly for movement, not long-range damage. It may deal a tiny amount of damage on contact.
 - It uses more ink than a normal slash and has a short recharge.
 
+## Airborne attack movement
+
+- Hitting a creature while airborne briefly stops the player's fall and holds them in place in midair for a couple of seconds, allowing continued attacks during that pause.
+- Hitting a solid surface such as a wall, floor, or ceiling gives the player an upward boost, like bouncing or jumping off that surface.
+- These are different effects: creature hits create a temporary hover, while surface hits create an upward rebound.
+- Exact duration, rebound strength, repeat limits, and weapon eligibility still need balancing.
+
 ## Ink use and cooldowns
 Attacks use ink. Earlier ideas suggested that weapon stats determine how many hits or uses a charge lasts, and that secondary abilities generally cost more ink than main attacks. When a charge runs out, the weapon briefly recharges. Exact ink use, refill rules, and upgrade effects aren't decided.
 
