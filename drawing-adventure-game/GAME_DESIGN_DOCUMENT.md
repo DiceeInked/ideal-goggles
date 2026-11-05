@@ -412,6 +412,8 @@ These are separate effects: creature hits create a brief midair hold, while soli
 
 Weapons can also mine ores. A very slow, low-damage starter pickaxe was suggested, but whether it remains part of the opening game or is provided by YAP at the Camp is unclear.
 
+**Current browser prototype test:** The same primary HIT action used for attacking also strikes ore. Three successful hits break a generic test deposit and award five units of raw test ink. This is only a quick playable test of the basic gather loop. It does not decide the final mining controls, ore colors, yields, durability, respawn behavior, or starter tool.
+
 {DECIDE: Is mining done with the equipped weapon, a dedicated tool, or both?}  
 {DECIDE: Are different ores resistant to different blades or abilities?}  
 {DECIDE: Can enemies interrupt mining, can mining attract creatures, and can mined resources be stolen?}  
