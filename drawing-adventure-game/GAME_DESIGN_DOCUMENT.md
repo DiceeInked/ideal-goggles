@@ -244,6 +244,8 @@ Custom-drawn weapon skins were an older idea and are not part of the current pla
 
 Gesture notes say characters have separate head, arm, leg, and torso parts, with outfits attached to those body parts. Gestures should animate these parts so clothing follows naturally. Paired gestures need enough room, and hugs or kisses require players to stand close before the animation starts.
 
+**Art and animation scope:** Early development should prioritize readable gameplay over detailed art. Most characters, creatures, ores, terrain, and props can use a small number of clear basic shapes. Do not spend large amounts of time polishing visual assets or building elaborate animation systems while core mechanics are still being developed. The player should have clean, readable basic movement animations and a simple weapon-swing animation; more elaborate animation and art can come later.
+
 {DECIDE: What are the exact character body parts, rig, drawing slots, outfit slots, animation rules, and customization limits?}  
 {DECIDE: Can body proportions or silhouettes change, or are only surface drawings customizable?}  
 {DECIDE: How are character skins displayed to other players before and after a handshake?}  
@@ -394,6 +396,15 @@ Attacks use ink. Earlier notes suggested weapon stats determine how many hits or
 {DECIDE: Can a player recharge while moving, mining, drawing, carrying gel, or being attacked?}  
 {DECIDE: How are attack hitboxes, hit-stun, invulnerability, knockback, and damage numbers determined?}  
 {DECIDE: Can attacks damage terrain, other players, creatures, ores, and structures, and under what rules?}
+
+### Airborne attack interactions
+
+Attacking while airborne can affect the player's vertical movement:
+
+- **Hitting a creature:** A successful attack against a creature briefly stops the player's fall and holds them in place in midair for a couple of seconds. During this short pause, the player can continue attacking the creature without immediately dropping away.
+- **Hitting a solid surface:** A successful attack against a wall, floor, or ceiling gives the player an upward boost, similar to bouncing or jumping off the surface. The boost is upward even when the contacted surface is a wall or ceiling.
+
+These are separate effects: creature hits create a brief midair hold, while solid-surface hits create an upward rebound. Exact durations, boost strength, repeat limits, and whether every weapon can trigger these effects remain to be tuned during implementation.
 
 ### Mining
 
