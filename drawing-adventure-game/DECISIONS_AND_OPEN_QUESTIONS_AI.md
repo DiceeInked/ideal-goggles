@@ -10,7 +10,7 @@ This is the short decision tracker. For the complete design, use the [Master Gam
 
 ## Current overview
 
-Drawing Adventure Game (DAG) is a 2D multiplayer drawing adventure for players who enjoy art and exploration. The tentative target age is around 8–13+. Mobile and computer are planned platforms, and web is a possibility.
+Drawing Adventure Game (DAG) is a 2D multiplayer drawing adventure for players who enjoy art and exploration. The tentative target age is around 8–13+. The current implementation is an HTML, CSS, and JavaScript browser game, developed as a single-player experience first. Account authentication, servers, matchmaking, and actual online multiplayer are deferred for later.
 
 Players begin at the Camp, enter the Mines, descend through cave Sections A–Z, collect ink and shards, build weapons from a blade, handle, and amulet, create custom drawings, meet other players, and encounter creatures and merchants. Inkoff is the competitive team experience, with gel delivery and Queen elimination as its two win conditions.
 

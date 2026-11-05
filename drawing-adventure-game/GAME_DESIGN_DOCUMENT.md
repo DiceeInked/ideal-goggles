@@ -36,7 +36,7 @@ The intended feeling is a shared journey: other players should appear along the 
 
 **Audience and target age:** Players who enjoy adventure and art; the tentative target age is around 8–13+.
 
-**Platforms:** Mobile and computer are planned; web is a possibility. {DECIDE: Which engine, input methods, and release target will be used?}
+**Current implementation:** DAG is being built as an HTML, CSS, and JavaScript browser game. Development is single-player first. Account authentication, online services, and multiplayer are postponed, but the code should leave room for those features later. {DECIDE: Which browsers and devices are the initial release targets?}
 
 **Design emphasis:** Social features should be present everywhere, even subtly. Exploration is important, especially through cave biomes and resets. Horror should grow stronger deeper underground, but the game should not become too horror-focused. Combat is very important because players carry weapons for most of the adventure. Drawing is also a major part of the experience.
 
