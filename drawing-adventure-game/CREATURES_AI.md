@@ -2,6 +2,10 @@
 
 The first cave area has a few ores but no enemies or shopkeepers. More types of creatures can appear as players go deeper. The uploaded PDF's named creatures are included below. If this file previously said only generic creature details, the PDF's creature descriptions take priority.
 
+## Player interaction during airborne combat
+
+A successful hit on a creature while the player is airborne briefly suspends the player's fall for a couple of seconds. The player can keep attacking during this midair pause. This is a player movement effect triggered by a creature hit, not a creature-specific ability; exact timing and repeat rules remain to be balanced.
+
 ## Scribble Spider
 **Creature level:** 3.
 
